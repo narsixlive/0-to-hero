@@ -1,28 +1,28 @@
 # 0 to Hero — Repo
 
-Outil open-source pour structurer son workflow Claude en workspaces efficaces avec agents specialises.
+Open-source tool to structure your Claude workflow into efficient workspaces with specialized agents.
 
 ## Structure
 - /core → Architecture + bootstrap prompt
-- /archetypes → Exemples complets (developer, creative)
-- /catalog → Base curatee de skills et tools
-- /docs → Plans et specs de developpement du repo
-- /tools → Reserve futur
+- /archetypes → Complete examples (developer, creative)
+- /catalog → Curated base of skills and tools
+- /docs → Development plans and specs for this repo
+- /tools → Reserved for future use
 
 ## Routing
-| Intention | Ressources |
-|-----------|------------|
-| Modifier l'architecture ou le bootstrap | core/ARCHITECTURE.md → core/bootstrap/bootstrap-prompt.md |
-| Travailler sur un archetype | archetypes/INDEX.md → archetypes/[nom]/ |
-| Mettre a jour le catalog | catalog/skills-database.md |
-| Planifier / executer une etape | docs/superpowers/plans/ |
+| Intent | Resources |
+|--------|-----------|
+| Modify architecture or bootstrap | core/ARCHITECTURE.md → core/bootstrap/bootstrap-prompt.md |
+| Work on an archetype | archetypes/INDEX.md → archetypes/[name]/ |
+| Update the catalog | catalog/skills-database.md |
+| Plan / execute a step | docs/superpowers/plans/ |
 
-## Ordre de lecture
-1. Ce CLAUDE.md
-2. La ressource cible selon le routing
-3. 0-to-hero-spec.md seulement si un detail de format est necessaire
+## Reading order
+1. This CLAUDE.md
+2. The target resource based on routing
+3. 0-to-hero-spec.md only if a format detail is needed
 
-## Regles globales
-- Les archetypes sont des illustrations, pas des templates a copier
-- Consulter 0-to-hero-spec.md uniquement si necessaire
-- Langue : conversation en francais, tout le contenu ecrit (fichiers, commits, code, commentaires) en anglais
+## Global rules
+- Archetypes are illustrations, not templates to copy
+- Consult 0-to-hero-spec.md only when necessary
+- Language: conversations in French, all written content (files, commits, code, comments) in English
