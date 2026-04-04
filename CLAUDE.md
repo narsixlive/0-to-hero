@@ -38,3 +38,4 @@ Outil open-source pour structurer son workflow Claude en workspaces efficaces av
 ## Regles globales
 - Les archetypes sont des illustrations, pas des templates a copier
 - Consulter 0-to-hero-spec.md uniquement si necessaire
+- Langue : conversation en francais, tout le contenu ecrit (fichiers, commits, code, commentaires) en anglais
