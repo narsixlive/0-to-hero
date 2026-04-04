@@ -25,6 +25,8 @@ Each workspace is isolated. Claude knows exactly who it is when it enters a room
 
 ## Quickstart — 15 minutes
 
+Works on a **new project** (empty folder) or an **existing one** — the bootstrap adapts either way.
+
 **Step 1** — Open Claude Code in your project directory
 
 **Step 2** — Start a new conversation and paste the full content of [`core/bootstrap/bootstrap-prompt.md`](core/bootstrap/bootstrap-prompt.md)
