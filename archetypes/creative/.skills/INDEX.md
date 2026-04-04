@@ -1,11 +1,11 @@
-# Skills disponibles
+# Available skills
 
-## Installes
-| Skill | Chemin | Mode | Description |
-|-------|--------|------|-------------|
-| pdf | /.skills/pdf/SKILL.md | on-demand | Creer et lire des PDFs (contrats, briefs) |
+## Installed
+| Skill | Path | Mode | Description |
+|-------|------|------|-------------|
+| pdf | /.skills/pdf/SKILL.md | on-demand | Create and read PDFs (contracts, briefs) |
 
-## Crees sur mesure
-| Skill | Chemin | Mode | Cree le | Description |
-|-------|--------|------|---------|-------------|
-| brief-validation | /.skills/brief-validation/SKILL.md | on-demand | 2026-03-12 | Checklist validation brief avant composition |
+## Custom-built
+| Skill | Path | Mode | Created | Description |
+|-------|------|------|---------|-------------|
+| brief-validation | /.skills/brief-validation/SKILL.md | on-demand | 2026-03-12 | Brief validation checklist before composition |

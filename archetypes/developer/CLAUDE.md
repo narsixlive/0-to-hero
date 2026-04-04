@@ -1,33 +1,33 @@
-# TaskFlow — App de gestion de taches
+# TaskFlow — Task management app
 
-App web TypeScript / React / Node.js. Solo dev.
+Web app in TypeScript / React / Node.js. Solo dev.
 
 ## Structure
-- /planning → Specs, architecture, decisions techniques
+- /planning → Specs, architecture, technical decisions
 - /src → Code, tests, review
-- /docs → Documentation technique et guides
-- /.memory → Memoire projet
-- /.skills → Competences disponibles
+- /docs → Technical documentation and guides
+- /.memory → Project memory
+- /.skills → Available skills
 
 ## Routing
-| Intention | Workspace | Lire dans l'ordre |
-|-----------|-----------|-------------------|
-| Nouvelle feature, refacto, architecture | /planning | CONTEXT.md → AGENT.md → GOTCHA.md |
-| Coder, tester, reviewer | /src | CONTEXT.md → AGENT.md → GOTCHA.md |
-| Rediger ou mettre a jour la doc | /docs | CONTEXT.md → AGENT.md → GOTCHA.md |
+| Intent | Workspace | Read in order |
+|--------|-----------|---------------|
+| New feature, refactor, architecture | /planning | CONTEXT.md → AGENT.md → GOTCHA.md |
+| Code, test, review | /src | CONTEXT.md → AGENT.md → GOTCHA.md |
+| Write or update documentation | /docs | CONTEXT.md → AGENT.md → GOTCHA.md |
 
-## Ordre de lecture (toujours le meme)
-1. CONTEXT.md (sur quoi je travaille)
-2. AGENT.md (qui je suis, quoi charger)
-3. GOTCHA.md section Critiques (ce que je ne dois pas faire)
-4. Skills seulement si AGENT.md les demande
-5. .memory/NOTES.md seulement si la tache le necessite
+## Reading order (always the same)
+1. CONTEXT.md (what I'm working on)
+2. AGENT.md (who I am, what to load)
+3. GOTCHA.md Critical section (what I must not do)
+4. Skills only if AGENT.md requests them
+5. .memory/NOTES.md only if the task requires it
 
-## Conventions de nommage
-- Composants React : PascalCase
-- Fichiers de test : [nom].test.ts
-- Branches git : feat/[nom], fix/[nom], chore/[nom]
+## Naming conventions
+- React components: PascalCase
+- Test files: [name].test.ts
+- Git branches: feat/[name], fix/[name], chore/[name]
 
-## Regles globales
-- Jamais de code sans test
-- Les decisions d'architecture passent par /planning avant /src
+## Global rules
+- No code without a test
+- Architecture decisions go through /planning before /src

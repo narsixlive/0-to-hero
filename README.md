@@ -1,49 +1,49 @@
 # 0 to Hero
 
-**Passe de "je tape dans Claude sans structure" a un workspace efficace avec agents specialises — en 15 minutes.**
+**Go from "I just type into Claude without structure" to an efficient workspace with specialized agents — in 15 minutes.**
 
 ---
 
-## C'est quoi ?
+## What is it?
 
-Un systeme open-source base sur une architecture a 4 couches :
+An open-source system based on a 4-layer architecture:
 
-- **CLAUDE.md** — La carte : routing vers les workspaces, court et scannable
-- **CONTEXT.md** — La piece : le brief du travail (quoi + pour qui)
-- **AGENT.md** — Le specialiste : role, skills, process
-- **GOTCHA.md** — Le bouclier : erreurs passees, pieges connus
+- **CLAUDE.md** — The map: routing to workspaces, short and scannable
+- **CONTEXT.md** — The room: the work brief (what + for whom)
+- **AGENT.md** — The specialist: role, skills, process
+- **GOTCHA.md** — The shield: past mistakes, known pitfalls
 
-Chaque workspace est isole. Claude sait exactement qui il est quand il entre dans une piece.
+Each workspace is isolated. Claude knows exactly who it is when it enters a room.
 
 ---
 
 ## Quickstart — 15 minutes
 
-1. Copie le contenu de [`core/bootstrap/bootstrap-prompt.md`](core/bootstrap/bootstrap-prompt.md)
-2. Colle-le dans une nouvelle conversation Claude Code
-3. Reponds aux questions (projet, modes de travail, outils, regles)
-4. Claude genere ta structure complete sur mesure
+1. Copy the content of [`core/bootstrap/bootstrap-prompt.md`](core/bootstrap/bootstrap-prompt.md)
+2. Paste it into a new Claude Code conversation
+3. Answer the questions (project, work modes, tools, rules)
+4. Claude generates your complete custom structure
 
-C'est tout.
-
----
-
-## Explorer
-
-- [`core/ARCHITECTURE.md`](core/ARCHITECTURE.md) — Comment le systeme fonctionne
-- [`archetypes/`](archetypes/) — Exemples complets (developer, creative)
-- [`catalog/skills-database.md`](catalog/skills-database.md) — Skills & tools disponibles
+That's it.
 
 ---
 
-## Principes
+## Explore
 
-- **Token efficiency** — Chaque fichier lu doit etre justifie
-- **Un fichier = un job** — Pas de contenu duplique
-- **Sur-mesure** — Le bootstrap genere ta structure, pas des templates a copier
+- [`core/ARCHITECTURE.md`](core/ARCHITECTURE.md) — How the system works
+- [`archetypes/`](archetypes/) — Full examples (developer, creative)
+- [`catalog/skills-database.md`](catalog/skills-database.md) — Available skills & tools
 
 ---
 
-## Licence
+## Principles
+
+- **Token efficiency** — Every file read must be justified
+- **One file = one job** — No duplicated content
+- **Custom-built** — The bootstrap generates your structure, not templates to copy
+
+---
+
+## License
 
 MIT

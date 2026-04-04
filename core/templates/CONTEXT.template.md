@@ -1,18 +1,18 @@
-# [Nom du workspace]
+# [Workspace name]
 
-Derniere mise a jour : [date]
+Last updated: [date]
 
-## Projet
-[Description du travail qui se fait ici. 2-5 lignes.
-Qu'est-ce qu'on construit/produit ? Pour qui ? Pourquoi ?]
+## Project
+[Description of the work done here. 2-5 lines.
+What are we building/producing? For whom? Why?]
 
-## Etat actuel
-[Ou en est-on ? Qu'est-ce qui est fait, qu'est-ce qui reste ?]
+## Current state
+[Where are we? What's done, what remains?]
 
-## Contraintes
-- [Contrainte technique ou business 1]
-- [Contrainte 2]
+## Constraints
+- [Technical or business constraint 1]
+- [Constraint 2]
 
-## Ce qui fait un bon livrable ici
-- [Critere de qualite 1]
-- [Critere de qualite 2]
+## What makes a good deliverable here
+- [Quality criterion 1]
+- [Quality criterion 2]

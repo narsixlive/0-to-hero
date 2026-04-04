@@ -1,23 +1,23 @@
 # Src — TaskFlow
 
-Derniere mise a jour : 2026-04-01
+Last updated: 2026-04-01
 
-## Projet
-Workspace de developpement pour TaskFlow.
-On code ici : features, corrections de bugs, refacto, tests.
-Toujours a partir d'une spec validee dans /planning.
+## Project
+Development workspace for TaskFlow.
+We code here: features, bug fixes, refactoring, tests.
+Always based on a validated spec from /planning.
 
-## Etat actuel
-- Stack : TypeScript, React 18, Node.js, SQLite, Vitest
-- Auth : en cours (branche feat/auth)
-- CI : GitHub Actions, lint + tests a chaque push
+## Current state
+- Stack: TypeScript, React 18, Node.js, SQLite, Vitest
+- Auth: in progress (branch feat/auth)
+- CI: GitHub Actions, lint + tests on every push
 
-## Contraintes
-- Pas de code sans test (regle globale)
-- Pas de decision d'architecture dans ce workspace — aller dans /planning
-- Les PR restent petites : une feature = une PR
+## Constraints
+- No code without a test (global rule)
+- No architecture decisions in this workspace — go to /planning
+- PRs stay small: one feature = one PR
 
-## Ce qui fait un bon livrable ici
-- Tests passent (unit + integration)
-- Pas de regression sur les tests existants
-- Code lisible sans commentaire (si besoin d'un commentaire, c'est que le code est trop complexe)
+## What makes a good deliverable here
+- Tests pass (unit + integration)
+- No regression on existing tests
+- Code readable without comments (if a comment is needed, the code is too complex)

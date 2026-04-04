@@ -1,14 +1,14 @@
-# Memoire — [Nom du projet]
+# Memory — [Project name]
 
-<!-- Format libre. Les agents et l'utilisateur ajoutent ici
-     les decisions, preferences, et lecons du projet.
-     Chaque entree est datee. -->
+<!-- Free format. Agents and the user add decisions, preferences,
+     and lessons from the project here.
+     Each entry is dated. -->
 
 ## Decisions
-<!-- YYYY-MM-DD : [decision] — [raison en 1 ligne] -->
+<!-- YYYY-MM-DD: [decision] — [reason in 1 line] -->
 
 ## Preferences
-<!-- [categorie] : [detail] -->
+<!-- [category]: [detail] -->
 
-## Lecons apprises
-<!-- YYYY-MM-DD : [ce qu'on a appris] -->
+## Lessons learned
+<!-- YYYY-MM-DD: [what we learned] -->

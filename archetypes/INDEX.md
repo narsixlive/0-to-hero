@@ -1,25 +1,25 @@
 # Archetypes — Guide
 
-Les archetypes sont des **exemples complets** de ce que le bootstrapping produirait
-pour un profil donne. Ce ne sont PAS des templates a copier — chaque utilisateur
-obtient une structure sur-mesure via le bootstrap.
+Archetypes are **complete examples** of what the bootstrapping process would produce
+for a given profile. They are NOT templates to copy — each user gets a
+custom structure through the bootstrap.
 
-## Disponibles
+## Available
 
-| Archetype | Profil | Workspaces |
-|-----------|--------|------------|
-| [developer/](developer/) | Developpeur solo (TypeScript / React / Node.js) | planning, src, docs |
-| [creative/](creative/) | Musicien freelance | creation, production |
+| Archetype | Profile | Workspaces |
+|-----------|---------|------------|
+| [developer/](developer/) | Solo developer (TypeScript / React / Node.js) | planning, src, docs |
+| [creative/](creative/) | Freelance musician | creation, production |
 
-## Comment utiliser un archetype
+## How to use an archetype
 
-1. Lis le CLAUDE.md de l'archetype pour comprendre le decoupage
-2. Regarde 1-2 AGENT.md pour saisir comment le specialiste est defini
-3. Lance ton propre bootstrap pour generer **ta** version sur mesure
+1. Read the archetype's CLAUDE.md to understand the workspace split
+2. Look at 1-2 AGENT.md files to see how the specialist is defined
+3. Run your own bootstrap to generate **your** custom version
 
 → [`../core/bootstrap/bootstrap-prompt.md`](../core/bootstrap/bootstrap-prompt.md)
 
-## Contribuer un archetype
+## Contributing an archetype
 
-Lance le bootstrap sur ton projet, peaufine ta structure apres quelques semaines d'usage,
-et propose-la en PR. Les archetypes communautaires enrichissent le projet.
+Run the bootstrap on your project, refine your structure after a few weeks of use,
+and submit it as a PR. Community archetypes enrich the project.

@@ -1,42 +1,42 @@
-# Agent : [Nom]
+# Agent: [Name]
 
-Derniere mise a jour : [date]
+Last updated: [date]
 
 ## Role
-[2-3 lignes max. Ce que cet agent fait, pour qui, pourquoi.]
+[2-3 lines max. What this agent does, for whom, and why.]
 
-## Capacites
-- [Capacite 1] — [une ligne]
-- [Capacite 2] — [une ligne]
+## Capabilities
+- [Capability 1] — [one line]
+- [Capability 2] — [one line]
 
 ## Skills
-| Skill | Chemin | Mode |
-|-------|--------|------|
-| [nom] | /.skills/[x]/SKILL.md | always |
-| [nom] | /.skills/[y]/SKILL.md | on-demand |
+| Skill | Path | Mode |
+|-------|------|------|
+| [name] | /.skills/[x]/SKILL.md | always |
+| [name] | /.skills/[y]/SKILL.md | on-demand |
 
-## Regles de chargement on-demand
-- Charger [skill-x] SI la tache mentionne "[mots-cles declencheurs]"
-- Charger [skill-y] SI la tache mentionne "[mots-cles declencheurs]"
+## On-demand loading rules
+- Load [skill-x] IF the task mentions "[trigger keywords]"
+- Load [skill-y] IF the task mentions "[trigger keywords]"
 
 ## Process
-1. [Etape 1 — ce que l'agent fait en premier]
-2. [Etape 2]
-3. [Etape 3]
-4. [Validation / output attendu]
+1. [Step 1 — what the agent does first]
+2. [Step 2]
+3. [Step 3]
+4. [Validation / expected output]
 
-## Limites
-- [Ce que cet agent ne fait PAS]
-- [Ce qu'il ne doit jamais decider seul]
+## Limits
+- [What this agent does NOT do]
+- [What it must never decide alone]
 
-## Creation de skills
-- Si un pattern se repete 3+ fois, proposer de le transformer en skill
-- Creer le skill dans /.skills/[nom]/SKILL.md
-- Mettre a jour /.skills/INDEX.md
-- L'utilisateur valide avant activation
+## Skill creation
+- If a pattern repeats 3+ times, propose turning it into a skill
+- Create the skill in /.skills/[name]/SKILL.md
+- Update /.skills/INDEX.md
+- User validates before activation
 
 ## Gotcha
-- Lire GOTCHA.md au demarrage (section Critiques obligatoire)
-- Si une erreur est detectee ou corrigee pendant le travail :
-  proposer a l'utilisateur de l'ajouter au GOTCHA.md
-- Format : ❌ [erreur] → ✅ [bonne pratique] (YYYY-MM-DD)
+- Read GOTCHA.md at startup (Critical section is mandatory)
+- If an error is detected or corrected during work:
+  propose adding it to GOTCHA.md
+- Format: ❌ [mistake] → ✅ [best practice] (YYYY-MM-DD)

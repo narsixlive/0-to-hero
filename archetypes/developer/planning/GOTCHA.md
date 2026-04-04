@@ -1,10 +1,10 @@
 # Gotchas — Planning
 
-Derniere mise a jour : 2026-04-01
+Last updated: 2026-04-01
 
-## Critiques (toujours lire)
-- ❌ Ecrire une spec sans criteres d'acceptance → ✅ Toujours finir par "Accepte quand : [liste]" (2026-03-10)
-- ❌ Decider de l'architecture dans /src sans passer par /planning → ✅ Toute decision structurelle se documente ici d'abord (2026-03-22)
+## Critical (always read)
+- ❌ Writing a spec without acceptance criteria → ✅ Always end with "Accepted when: [list]" (2026-03-10)
+- ❌ Deciding architecture in /src without going through /planning → ✅ All structural decisions are documented here first (2026-03-22)
 
-## Importants (lire si pertinent)
-- ⚠️ Les specs trop longues ne sont jamais relues → garder sous un ecran, decouper si besoin (2026-03-18)
+## Important (read if relevant)
+- ⚠️ Specs that are too long are never re-read → keep it under one screen, split if needed (2026-03-18)

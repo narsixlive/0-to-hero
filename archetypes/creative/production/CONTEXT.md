@@ -1,23 +1,23 @@
-# Production — Studio Libre
+# Production — Indie Studio
 
-Derniere mise a jour : 2026-04-01
+Last updated: 2026-04-01
 
-## Projet
-Workspace de mix, mastering et livraison.
-On travaille ici uniquement sur des morceaux dont la composition est validee
-dans /creation. Objectif : livrable final pret pour le client ou la plateforme.
+## Project
+Mix, mastering and delivery workspace.
+We work here only on tracks whose composition has been validated
+in /creation. Goal: final deliverable ready for the client or platform.
 
-## Etat actuel
-- "Neon Drift" : en attente (composition pas encore validee)
-- "Catalogue libre #1" : en mix
-- "Catalogue libre #2" : masterise, livre ✅
+## Current state
+- "Neon Drift": on hold (composition not yet validated)
+- "Free catalog #1": in mix
+- "Free catalog #2": mastered, delivered ✅
 
-## Contraintes
-- Format de livraison standard : WAV 48kHz / 24bit
-- Stems obligatoires pour les clients sync
-- Jamais livrer sans avoir passe la checklist de livraison
+## Constraints
+- Standard delivery format: WAV 48kHz / 24bit
+- Stems mandatory for sync clients
+- Never deliver without running the delivery checklist
 
-## Ce qui fait un bon livrable ici
-- Checklist de livraison complete (voir GOTCHA.md)
-- Fichiers nommes selon la convention : [client]_[titre]_FINAL_[date].wav
-- Email de livraison envoye avec recapitulatif des fichiers
+## What makes a good deliverable here
+- Delivery checklist complete (see GOTCHA.md)
+- Files named according to convention: [client]_[title]_FINAL_[date].wav
+- Delivery email sent with file summary

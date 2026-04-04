@@ -1,23 +1,23 @@
-# Creation — Studio Libre
+# Creation — Indie Studio
 
-Derniere mise a jour : 2026-04-01
+Last updated: 2026-04-01
 
-## Projet
-Workspace de composition et developpement musical.
-On travaille ici : nouvelles pistes, iterations sur des morceaux en cours,
-exploration de directions artistiques pour des briefs clients.
+## Project
+Composition and music development workspace.
+We work here on: new tracks, iterations on works in progress,
+exploring artistic directions for client briefs.
 
-## Etat actuel
-- "Neon Drift" (client : Ubisoft sync) : structure composee, en attente retour brief
-- "Requiem v3" (projet perso) : en cours, arrangement 60%
-- Catalogue libre : 3 morceaux a finir pour plateforme sync
+## Current state
+- "Neon Drift" (client: Ubisoft sync): structure composed, waiting for brief feedback
+- "Requiem v3" (personal project): in progress, arrangement 60%
+- Free catalog: 3 tracks to finish for sync platform
 
-## Contraintes
-- Un seul projet Ableton ouvert a la fois (ressources CPU)
-- Toujours travailler sur une copie, jamais sur le fichier master
-- Brief valide obligatoire avant de commencer pour un client
+## Constraints
+- Only one Ableton project open at a time (CPU resources)
+- Always work on a copy, never on the master file
+- Validated brief mandatory before starting for a client
 
-## Ce qui fait un bon livrable ici
-- Le morceau a une structure complete (intro/dev/outro)
-- L'intention artistique est notee dans .memory/NOTES.md
-- Pret a passer en production sans retour en arriere
+## What makes a good deliverable here
+- The track has a complete structure (intro/dev/outro)
+- The artistic intention is noted in .memory/NOTES.md
+- Ready to move to production without going back

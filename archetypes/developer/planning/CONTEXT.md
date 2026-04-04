@@ -1,22 +1,22 @@
 # Planning — TaskFlow
 
-Derniere mise a jour : 2026-04-01
+Last updated: 2026-04-01
 
-## Projet
-Workspace de planification pour TaskFlow, une app de gestion de taches.
-On travaille ici sur les specs de features, les decisions d'architecture,
-et les choix techniques. Tout ce qui doit etre decide avant de coder.
+## Project
+Planning workspace for TaskFlow, a task management app.
+We work here on feature specs, architecture decisions,
+and technical choices. Everything that needs to be decided before coding.
 
-## Etat actuel
-- Auth utilisateur : specifiee ✅, en cours de dev
-- Systeme de tags : a specifier
-- API REST : architecture definie, pas encore documentee formellement
+## Current state
+- User auth: specified ✅, in development
+- Tag system: to be specified
+- REST API: architecture defined, not yet formally documented
 
-## Contraintes
-- Solo dev : les specs doivent etre assez claires pour etre reprises apres une pause
-- Pas de sur-ingenierie : YAGNI, on specifie ce qu'on va coder dans les 2 prochaines semaines
+## Constraints
+- Solo dev: specs must be clear enough to pick up after a break
+- No over-engineering: YAGNI, we specify only what we'll code in the next 2 weeks
 
-## Ce qui fait un bon livrable ici
-- Une spec tient sur un ecran, avec criteres d'acceptance clairs
-- Une decision d'archi inclut le "pourquoi" en 1 ligne
-- On peut lire la spec et estimer l'effort sans demander de precisions
+## What makes a good deliverable here
+- A spec fits on one screen, with clear acceptance criteria
+- An architecture decision includes the "why" in 1 line
+- You can read the spec and estimate effort without asking for clarifications

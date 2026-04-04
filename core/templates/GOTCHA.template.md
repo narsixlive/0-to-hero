@@ -1,13 +1,13 @@
-# Gotchas — [Nom du workspace]
+# Gotchas — [Workspace name]
 
-Derniere mise a jour : [date]
+Last updated: [date]
 
-## Critiques (toujours lire)
-- ❌ [Erreur courte] → ✅ [Ce qu'il faut faire] (YYYY-MM-DD)
+## Critical (always read)
+- ❌ [Short mistake] → ✅ [What to do instead] (YYYY-MM-DD)
 
-## Importants (lire si pertinent)
-- ⚠️ [Situation] → [Lecon apprise] (YYYY-MM-DD)
+## Important (read if relevant)
+- ⚠️ [Situation] → [Lesson learned] (YYYY-MM-DD)
 
-## Resolus (archives, ne plus charger)
-<!-- Deplaces ici quand le gotcha n'est plus pertinent -->
-<!-- Sert d'historique, pas lu par l'agent -->
+## Resolved (archived, no longer load)
+<!-- Moved here when the gotcha is no longer relevant -->
+<!-- Serves as history, not read by the agent -->

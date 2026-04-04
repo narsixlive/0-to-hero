@@ -1,12 +1,12 @@
-# Skills disponibles
+# Available skills
 
-## Installes
-| Skill | Chemin | Mode | Description |
-|-------|--------|------|-------------|
+## Installed
+| Skill | Path | Mode | Description |
+|-------|------|------|-------------|
 
-## Crees sur mesure
-| Skill | Chemin | Mode | Cree le | Description |
-|-------|--------|------|---------|-------------|
+## Custom-built
+| Skill | Path | Mode | Created | Description |
+|-------|------|------|---------|-------------|
 
-<!-- Les agents peuvent proposer de nouveaux skills.
-     L'utilisateur valide avant ajout ici. -->
+<!-- Agents can propose new skills.
+     User validates before adding here. -->

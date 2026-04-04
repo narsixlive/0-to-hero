@@ -1,10 +1,10 @@
 # Gotchas — Src
 
-Derniere mise a jour : 2026-04-01
+Last updated: 2026-04-01
 
-## Critiques (toujours lire)
-- ❌ Tester les migrations SQLite sur une BDD existante → ✅ Toujours tester sur une BDD vierge (2026-03-28)
-- ❌ Mock de la BDD dans les tests d'integration → ✅ Tests d'integration sur vraie BDD en memoire (SQLite :memory:) (2026-03-15)
+## Critical (always read)
+- ❌ Testing SQLite migrations on an existing DB → ✅ Always test on a fresh empty DB (2026-03-28)
+- ❌ Mocking the DB in integration tests → ✅ Integration tests on real in-memory DB (SQLite :memory:) (2026-03-15)
 
-## Importants (lire si pertinent)
-- ⚠️ React Query cache agressif en test — reset le QueryClient entre chaque test (2026-03-20)
+## Important (read if relevant)
+- ⚠️ React Query aggressive cache in tests — reset the QueryClient between each test (2026-03-20)
