@@ -446,8 +446,10 @@ Short and scannable — if you scroll, it's too long.
   - `## Thread` (new entry appended on top, pruned to 5 most recent)
 
 **AGENT.md** (the specialist — dense and actionable)
-- Role in 2-3 lines
-- Concrete capabilities
+- Heading: `# [Workspace Name] — [Professional Role]`. Specific seniority + domain + angle (e.g., "Api — Senior Backend Engineer (REST design, auth, observability)"). Never generic ("Assistant", "Helper"). Embed the workspace name so the agent is scoped by default.
+- Invocation scope section: when to invoke (inside the workspace, aligned with the role, referenced by an active plan) and when NOT to (ad-hoc questions, cross-workspace work, project-level tasks).
+- Role in 2-3 lines (domain, deliverable, for whom)
+- Concrete capabilities (specific to the role, not generic)
 - Numbered process (what the agent does in order)
 - Limits (what it does NOT do, what it never decides alone)
 - Skills section (empty for now, filled at the Catalog step)

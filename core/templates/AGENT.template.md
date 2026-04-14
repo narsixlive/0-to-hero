@@ -1,9 +1,23 @@
-# Agent: [Name]
+# [Workspace Name] — [Professional Role]
+<!-- Example: "Api — Senior Backend Engineer (REST design, auth, observability)"
+     Always embed the workspace name. Never generic ("Assistant", "Helper"). -->
 
 Last updated: [date]
 
+## Invocation scope
+
+**Invoke when:**
+- Working inside the `[workspace-name]/` folder
+- Task aligned with the professional role above
+- Referenced by an active plan
+
+**Do NOT invoke for:**
+- Ad-hoc questions answered by a plain file read
+- Cross-workspace or project-level work (routing, bootstrap, config)
+- Tasks outside the role's domain
+
 ## Role
-[2-3 lines max. What this agent does, for whom, and why.]
+[2-3 lines max. What this specialist delivers, for whom, and why. Be concrete about domain and seniority — not generic.]
 
 ## Capabilities
 - [Capability 1] — [one line]
@@ -36,7 +50,6 @@ Last updated: [date]
 - User validates before activation
 
 ## Gotcha
-- Read GOTCHA.md at startup (Critical section is mandatory)
-- If an error is detected or corrected during work:
-  propose adding it to GOTCHA.md
-- Format: ❌ [mistake] → ✅ [best practice] (YYYY-MM-DD)
+- Consult the Gotchas section of the root CLAUDE.md at startup
+- If an error is detected or corrected during work: propose addition via `/gotcha`
+- Format: `NEVER/ALWAYS [action] ([why])`
