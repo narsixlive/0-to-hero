@@ -1,28 +1,41 @@
-# [Project name]
+# CLAUDE.md
 
-[One sentence describing the project]
+## Shell
 
-## Structure
-- /workspace-a → [short description]
-- /workspace-b → [short description]
-- /.memory → Project memory
-- /.skills → Available skills
+Everything goes through `rtk`: `rtk grep`, `rtk ls`, `rtk find`, `rtk git …`. Never call directly.
 
-## Routing
-| Intent | Workspace | Read in order |
-|--------|-----------|---------------|
-| [task type A] | /workspace-a | CONTEXT.md → AGENT.md → GOTCHA.md |
-| [task type B] | /workspace-b | CONTEXT.md → AGENT.md → GOTCHA.md |
+## Navigation (strict order, follow 1 to 6)
 
-## Reading order (always the same)
-1. CONTEXT.md first (what I'm working on)
-2. AGENT.md next (who I am, what to load)
-3. GOTCHA.md next (what I must not do)
-4. Skills only if AGENT.md requests them
-5. .memory/ only if the task requires it
+1. **"How is X linked to Y?"** → `graphify-out/GRAPH_REPORT.md`, then `graphify query "…" --budget 1500`
+2. **"Show me the code for X"** → `jcodemunch search_symbols` → `get_file_outline` → `get_symbol_source`
+3. **"Which API should I use?"** → Context7 MCP (use `/org/project` format if the lib is known)
+4. **"Find this text"** → `rtk grep "…" .`
+5. **"What did we do before?"** → `mem-search "…"`
+6. **Read a whole file** → last resort, prefer `get_file_outline`
 
-## Naming conventions
-- [file naming rules for produced files]
+No Read > 150 lines without jCodeMunch. No architecture answers without GRAPH_REPORT.md.
 
-## Global rules
-- [2-3 rules max that apply across all workspaces]
+## Modifications
+
+Surgical. Summarize first, confirm if > 3 files. Diff if > 20 lines. Do not fix adjacent problems without asking. No unsolicited suggestions.
+
+## Startup
+
+claude-mem injects the compressed context automatically. Use it to resume without redoing work.
+If more detail is needed → `mem-search "…"` → then `get_observations` on the relevant IDs only. Never load everything at once.
+
+## Memory
+
+| I say | Destination | Content |
+|---|---|---|
+| `/memorise` | claude-mem + workspace `CONTEXT.md` | Global session summary (claude-mem) + per-workspace thread update (`CONTEXT.md` of touched workspaces) |
+| `/gotcha` | Gotchas section below | One-line rule: `NEVER/ALWAYS [action] ([why])` |
+| `remember forever` | Claude native memory | Permanent preferences, conventions, identity only |
+
+Never put session context in native memory. Never put preferences in claude-mem.
+
+**Before closing**: `/memorise` → "Memorised." → `/clear`. Never `/clear` without `/memorise`.
+
+## Gotchas
+
+<!-- /gotcha appends rules here -->

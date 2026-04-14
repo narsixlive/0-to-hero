@@ -1,8 +1,8 @@
 # 0 to Hero — Bootstrap
 
 You're going to help me create the structure of my project using the
-0-to-Hero system (4-layer architecture: CLAUDE.md + Workspaces with
-CONTEXT.md, AGENT.md, GOTCHA.md + memory + skills).
+0-to-Hero system (4-layer architecture: CLAUDE.md with routing + gotchas,
+Workspaces with CONTEXT.md + AGENT.md, skills, persistent memory via claude-mem).
 
 ---
 
@@ -108,7 +108,7 @@ Explain the system to the user at generation time:
 > Claude cannot read this folder and git won't commit it.
 > Put anything containing personal data there."
 
-No dedicated GOTCHA — the technical barriers are enough.
+No Gotcha rule needed — the technical barriers are enough.
 
 If sensitive data is revealed after generation (in Q4 or later):
 retroactively generate the same barriers and explain the system.
@@ -305,19 +305,19 @@ Before generating, confirm the target folder with the user.
 The 0-to-Hero structure is created **at the root of the existing project**:
 
 ```
-my-project/              ← the user's repo/folder
-├── CLAUDE.md            ← routing (created or enriched)
-├── ROADMAP.md           ← roadmap (if plan mode was used)
-├── planning/            ← workspace 1
-│   ├── CONTEXT.md
-│   ├── AGENT.md
-│   └── GOTCHA.md
-├── src/                 ← workspace 2 (can be an existing folder)
-│   ├── CONTEXT.md
-│   ├── AGENT.md
-│   └── GOTCHA.md
-├── .memory/
-│   └── NOTES.md
+my-project/                  ← the user's repo/folder
+├── CLAUDE.md                ← routing + memory routing + Gotchas section
+├── ROADMAP.md               ← roadmap (if plan mode was used)
+├── .claude/
+│   └── commands/
+│       ├── memorise.md      ← session recap + workspace thread update
+│       └── gotcha.md        ← one-line rule appender to CLAUDE.md Gotchas
+├── planning/                ← workspace 1
+│   ├── CONTEXT.md           ← brief + Current state + Thread (updated by /memorise)
+│   └── AGENT.md
+├── src/                     ← workspace 2 (can be an existing folder)
+│   ├── CONTEXT.md           ← brief + Current state + Thread (updated by /memorise)
+│   └── AGENT.md
 └── .skills/
     └── INDEX.md
 ```
@@ -419,22 +419,31 @@ This choice impacts the AGENT.md files (an agent using an MCP server ≠ an agen
 
 Once the answers are collected, generate the complete structure:
 
-### CLAUDE.md (pure routing)
+### CLAUDE.md (routing + memory routing + gotchas)
+
+Built on top of the `core/templates/CLAUDE.template.md` base, which provides
+the reusable sections: Shell / Navigation / Modifications / Startup / Memory / Gotchas.
+
+Add project-specific sections **above** the base:
 - Project identity in 1 line
 - Routing table: intent → workspace → reading order
-- Point to ROADMAP.md if it exists
+- Pointer to ROADMAP.md if it exists
 - Naming conventions if relevant
-- 2-3 global rules max
-- Short and scannable — if you scroll, it's too long
+- 2-3 project-specific rules max
+
+Short and scannable — if you scroll, it's too long.
 
 ### One workspace per identified mode, each with:
 
-**CONTEXT.md** (the brief — essentials on one screen)
-- What we do here, for whom, why
-- Current state (even if "nothing yet")
-- Known constraints
-- What makes a good deliverable
-- 80% work description / 20% behavior max
+**CONTEXT.md** (brief + living thread)
+- Brief zone (above the `<!-- END BRIEF -->` marker, stable):
+  - What we do here, for whom, why
+  - Known constraints
+  - What makes a good deliverable
+  - 80% work description / 20% behavior max
+- Living zone (below the marker, maintained by `/memorise`):
+  - `## Current state` (overwritten each session, 3-5 lines)
+  - `## Thread` (new entry appended on top, pruned to 5 most recent)
 
 **AGENT.md** (the specialist — dense and actionable)
 - Role in 2-3 lines
@@ -442,16 +451,15 @@ Once the answers are collected, generate the complete structure:
 - Numbered process (what the agent does in order)
 - Limits (what it does NOT do, what it never decides alone)
 - Skills section (empty for now, filled at the Catalog step)
-- Gotcha section: read GOTCHA.md at startup, propose additions
+- Gotcha line: refer to the Gotchas section of the root CLAUDE.md; propose additions via `/gotcha`
 
-**GOTCHA.md** (the shield — nearly empty at the start)
-- Critical section with Q4 errors, format ❌ → ✅ (date)
-- Empty Important section
-- Empty Resolved section
+Q4 errors (if any) are injected directly into the Gotchas section of the root
+CLAUDE.md, format: `NEVER/ALWAYS [action] ([why])`. No separate GOTCHA.md file.
 
 ### Transversal files
-- `.memory/NOTES.md` — structure (Decisions / Preferences / Lessons) but empty
-- `.skills/INDEX.md` — empty table, ready to receive
+- `.claude/commands/memorise.md` — copy from `core/templates/commands/memorise.md`. Triggers session summary to claude-mem + per-workspace CONTEXT.md thread update.
+- `.claude/commands/gotcha.md` — one-line rule appender to the Gotchas section of the root CLAUDE.md (format: `NEVER/ALWAYS [action] ([why])`).
+- `.skills/INDEX.md` — empty table, ready to receive.
 
 ## Recommendations (skills + token reducers)
 
@@ -487,6 +495,24 @@ not just devs. ccusage monitors token consumption — essential for any profile.
 - **RTK** → always, all profiles
 - **ccusage** → always, all profiles
 - **ContextZip** → only technical profile with frequent debugging or stacktraces
+
+### Memory & Navigation Tools
+
+Tools that structure how Claude accesses project memory and navigates code —
+complementary to Token Reducers.
+
+| Tool | What it does | Installation |
+|------|-------------|-------------|
+| **claude-mem** | Persistent cross-session memory (SQLite + Chroma, local). Powers `/memorise` and `mem-search`. Mandatory base of the memory architecture. | `npx claude-mem@latest install` |
+| **jCodeMunch** | Code navigation by symbol (`search_symbols`, `get_file_outline`, `get_symbol_source`) instead of full-file reads. | MCP server install |
+| **graphify** | Project knowledge graph (architecture map, god nodes, cross-file relations). | See catalog |
+| **Context7** | Up-to-date documentation for external libraries (MCP server). | MCP server install |
+
+**Recommendation by profile:**
+- **claude-mem** → always, all profiles (base of the memory routing)
+- **jCodeMunch** → recommended for any code-heavy project
+- **graphify** → recommended for multi-project or large codebases
+- **Context7** → recommended when external libs/APIs are used
 
 ### Validation
 
@@ -524,10 +550,27 @@ Iterate until the user has validated.
 
 ## Generation rules
 - Each file has ONE job. No duplicated content between files.
-- Standard reading order: CONTEXT.md → AGENT.md → GOTCHA.md
+- Standard reading order: CONTEXT.md → AGENT.md → CLAUDE.md (Gotchas section)
 - Skills in always or on-demand mode, never globally
-- The agent proposes additions to GOTCHA.md, the user validates
-- Memory accessible on demand, never loaded by default
+- Gotchas live in the root CLAUDE.md; the agent proposes additions via `/gotcha`, the user validates.
+- Memory is routed: `/memorise` for session recap (claude-mem + workspace CONTEXT.md), `/gotcha` for mistakes (CLAUDE.md Gotchas), "remember forever" for permanent preferences (Claude native memory).
 - Token-efficient: no prose, no filler
 - Generate custom content based on the answers — no generic content
 - Content must be realistic and specific to the profile, not placeholders
+
+## Workspace memory pattern
+
+Each workspace's `CONTEXT.md` has two zones separated by the `<!-- END BRIEF -->` marker:
+
+- **Brief zone** (above marker, stable): Project / Constraints / Deliverable. Regenerated only at bootstrap or major pivot.
+- **Living zone** (below marker): `## Current state` (overwritten each `/memorise`) + `## Thread` (new entry appended on top, pruned to 5 most recent).
+
+The `/memorise` command:
+1. Generates the global session summary captured by claude-mem.
+2. Identifies the workspace(s) touched in the session (based on files edited).
+3. Updates the `CONTEXT.md` of each touched workspace, respecting the 2 zones:
+   - Never edits the brief zone.
+   - Overwrites `## Current state` with a 3-5 line status.
+   - Appends a new entry to `## Thread` and prunes to 5.
+
+Rationale: the agent of a workspace should resume "where we were" without being polluted by other workspaces' context. claude-mem keeps the long history globally; each workspace's CONTEXT.md keeps the last 5 sessions locally.
