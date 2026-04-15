@@ -86,7 +86,7 @@ Q4 can reveal sensitive data.
 ```
 my-project/
 ├── CLAUDE.md    ← routing + context + rules, all in one
-└── (no workspaces, no .memory/, no .skills/)
+└── (no workspaces, no .skills/)
 ```
 Do not propose plan mode for an ephemeral project.
 
@@ -308,6 +308,7 @@ The 0-to-Hero structure is created **at the root of the existing project**:
 my-project/                  ← the user's repo/folder
 ├── CLAUDE.md                ← routing + memory routing + Gotchas section
 ├── ROADMAP.md               ← roadmap (if plan mode was used)
+├── DECISIONS.md             ← archive of structural decisions (not auto-loaded)
 ├── .claude/
 │   └── commands/
 │       ├── memorise.md      ← session recap + workspace thread update
@@ -323,6 +324,48 @@ my-project/                  ← the user's repo/folder
 ```
 
 Rules:
+- **Workspaces always stay at the project root.** Never move them into `src/` or any other folder.
+  The workspace folder IS a root-level directory — its CONTEXT.md and AGENT.md live directly inside it.
+
+- **If a workspace is named `src` (or maps to an existing `src/` folder):**
+
+  | Situation | What to do |
+  |-----------|------------|
+  | `src/` exists **with existing code** | Do NOT merge workspace files into the code. Create `src/code_<firstword_of_workspace>/` to hold the code (e.g. `src/code_python/`, `src/code_api/`). Place CONTEXT.md and AGENT.md directly in `src/`. The agent's role covers all code under `src/code_*/`. |
+  | `src/` exists **empty or nearly empty** | Place CONTEXT.md and AGENT.md directly in `src/`. No sub-folder needed yet. |
+  | `src/` does **not** exist | Create it as a standard workspace with CONTEXT.md and AGENT.md at its root. |
+
+  Example with existing Python code:
+  ```
+  my-project/
+  ├── CLAUDE.md
+  ├── src/                    ← workspace (agent files here)
+  │   ├── CONTEXT.md
+  │   ├── AGENT.md
+  │   └── code_python/        ← existing code moved here
+  │       ├── main.py
+  │       └── utils.py
+  └── planning/               ← other workspace
+  ```
+
+  **Never scatter workspace files (CONTEXT.md, AGENT.md) inside code sub-folders.**
+  The agent files always live at the workspace root — the code lives in a named sub-folder.
+
+- **Post-bootstrap: adding code to an already-bootstrapped `src/` workspace**
+
+  After the bootstrap, `src/` already exists with agent files (CONTEXT.md, AGENT.md).
+  When the user wants to add existing code or start writing code there, **do not touch the workspace structure**.
+  Just create the `code_<firstword>/` sub-folder inside `src/` and put the code there.
+
+  | What exists | What to do |
+  |-------------|------------|
+  | `src/` with agent files only (post-bootstrap) | Create `src/code_<firstword>/` and place code there |
+  | `src/` with agent files + some code already scattered | Create `src/code_<firstword>/`, move the loose code into it — leave agent files untouched |
+  | User brings an existing project with `src/` containing code | Same: create `src/code_<firstword>/`, move code there, add agent files to `src/` root |
+
+  **Never propose to reorganize the workspace folder itself** — only add the `code_*/` sub-folder.
+  The agent files stay exactly where they are.
+
 - If a CLAUDE.md already exists, apply the rule based on its state:
 
   **Case 1 — Short and structured** (recognizable sections/table):
@@ -345,7 +388,7 @@ Rules:
   Write nothing until the user has decided.
 - Workspace names come from the answers to question 2 — no generic names
 - Workspaces can reuse existing project folders (e.g.: `src/`, `docs/`)
-- `.memory/` and `.skills/` are always dotfiles (hidden by default in file browsers)
+- `.skills/` is always a dotfile (hidden by default in file browsers)
 - Do NOT create a `0-to-hero/` sub-folder or similar — everything is flat at the root
 - If ROADMAP.md exists (from plan mode), CLAUDE.md points to it in its routing
 
@@ -461,6 +504,7 @@ CLAUDE.md, format: `NEVER/ALWAYS [action] ([why])`. No separate GOTCHA.md file.
 ### Transversal files
 - `.claude/commands/memorise.md` — copy from `core/templates/commands/memorise.md`. Triggers session summary to claude-mem + per-workspace CONTEXT.md thread update.
 - `.claude/commands/gotcha.md` — one-line rule appender to the Gotchas section of the root CLAUDE.md (format: `NEVER/ALWAYS [action] ([why])`).
+- `DECISIONS.md` — archive of structural decisions taken during bootstrap or later (tool choices, workspace split rationale, naming conventions, etc.). NOT loaded automatically. Consulted on demand when context is missing ("why did we choose X?"). Starts empty at bootstrap; CLAUDE.md mentions its existence in a one-liner.
 - `.skills/INDEX.md` — empty table, ready to receive.
 
 ## Recommendations (skills + token reducers)
@@ -477,26 +521,63 @@ in a single block for the user to validate at once.
    - Why this skill is relevant for THIS specific profile
    - Recommended mode (always or on-demand) and why
 
-### Token Reducers
+### Token Efficiency Stack
 
-Tools that compress CLI command output before it reaches
-the context — typical savings of 60-90% of tokens.
+Tools that reduce token consumption — installed at bootstrap, before workspace generation.
+Transparent to the user: no manual action required after installation.
+
+#### All profiles
 
 | Tool | What it does | Installation |
 |------|-------------|-------------|
-| **RTK** | Rust CLI proxy, 34 filtering modules, zero dependencies. Compresses git, cargo, npm, docker, etc. 60-90% savings. | `curl -fsSL https://rtk.sh \| sh` |
-| **ContextZip** | Extends RTK: stacktrace compression (Node/Python/Rust/Go/Java), ANSI cleanup, web extraction. +10-20% beyond RTK. | `curl -fsSL https://raw.githubusercontent.com/jee599/contextzip/main/install.sh \| bash` |
-| **ccusage** | Monitoring: reads Claude Code's local JSONL files and displays consumption metrics per session. Essential to measure savings. | `npx ccusage@latest` |
+| **RTK** | CLI proxy, 60-90% output compression. Prefix every command: `rtk git`, `rtk grep`, `rtk ls`. | `curl -fsSL https://rtk.sh \| sh` |
+| **ccusage** | Session token monitoring from local JSONL files. Not a reducer — a meter. | `npx ccusage@latest` |
+| **claude-mem** | Zero-touch persistent memory via hooks (SQLite + Chroma). Replaces manual `.memory/` system. | `npx claude-mem install` |
+
+#### Technical profile only
+
+| Tool | What it does | Installation |
+|------|-------------|-------------|
+| **graphify** | Code knowledge graph. Run once per repo (`graphify .`). Read before any architecture question. | `pip install graphifyy && graphify install && graphify claude install` |
+| **jCodeMunch** | Symbol-level code retrieval via AST. Replaces full-file reads (95% token reduction). | `pip install jcodemunch-mcp && jcodemunch-mcp init` |
+| **context7** | Current library/framework docs. Replaces web search for API/SDK/CLI questions. | Add via Claude Code MCP settings |
 
 ### Recommendation by profile
 
-RTK and ccusage are installed automatically for all profiles.
-RTK compresses all CLI output (git, ls, etc.) — it benefits everyone,
-not just devs. ccusage monitors token consumption — essential for any profile.
+| Profile | Stack |
+|---------|-------|
+| All | RTK + ccusage + claude-mem |
+| Technical | + graphify + jCodeMunch + context7 |
 
-- **RTK** → always, all profiles
-- **ccusage** → always, all profiles
-- **ContextZip** → only technical profile with frequent debugging or stacktraces
+### CLAUDE.md navigation block (technical profile only)
+
+After workspace generation, append this block verbatim to the project CLAUDE.md:
+
+```
+## Shell
+
+All commands via `rtk`: `rtk grep`, `rtk ls`, `rtk find`, `rtk git …`. No direct calls.
+
+## Navigation (strict order, 1 to 5)
+
+1. **"How is X related to Y?"** → `graphify-out/GRAPH_REPORT.md`, then `graphify query "…"`
+2. **"Show me the code for X"** → `jcodemunch search_symbols` → `get_symbol`
+3. **"Find this text"** → `rtk grep "…" .`
+4. **"What did we do before?"** → `mem-search "…"`
+5. **Read a full file** → last resort, prefer `get_file_outline`
+
+No Read > 150 lines without jCodeMunch. No architecture without GRAPH_REPORT.md.
+
+## Modifications
+
+Surgical. Summarize before, confirm if > 3 files. Diff if > 20 lines.
+Do not fix adjacent issues without asking. No unsolicited suggestions.
+
+## Startup
+
+Check silently: GRAPH_REPORT.md, claude-mem, jCodeMunch.
+If no graph → `get_repo_outline` + suggest `graphify .`.
+```
 
 ### Memory & Navigation Tools
 
@@ -535,7 +616,7 @@ to install the tools that aren't already present.
 5. Flag incompatibilities (e.g.: ContextZip hooks on Windows)
 
 ### What we install
-- Validated **token reducers** (RTK, ContextZip, ccusage)
+- **Token efficiency stack** — RTK, ccusage, claude-mem for all profiles; graphify, jCodeMunch, context7 for technical profiles
 - **MCP servers** validated at the Tooling step (e.g.: linkedin-mcp-server)
 - **Skills** that require installation (e.g.: npx for some skills)
 
@@ -555,7 +636,7 @@ Iterate until the user has validated.
 - Standard reading order: CONTEXT.md → AGENT.md → CLAUDE.md (Gotchas section)
 - Skills in always or on-demand mode, never globally
 - Gotchas live in the root CLAUDE.md; the agent proposes additions via `/gotcha`, the user validates.
-- Memory is routed: `/memorise` for session recap (claude-mem + workspace CONTEXT.md), `/gotcha` for mistakes (CLAUDE.md Gotchas), "remember forever" for permanent preferences (Claude native memory).
+- Memory is routed: `/memorise` for session recap (claude-mem + workspace CONTEXT.md), `/gotcha` for mistakes (CLAUDE.md Gotchas), `DECISIONS.md` for structural choices (archive, non auto-loaded), "remember forever" for permanent preferences (Claude native memory).
 - Token-efficient: no prose, no filler
 - Generate custom content based on the answers — no generic content
 - Content must be realistic and specific to the profile, not placeholders

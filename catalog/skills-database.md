@@ -276,15 +276,25 @@ TypeScript · Python · JavaScript · React · Next.js · Vue · Go · Rust · J
 
 ---
 
-## Token Reducers
+## Token Efficiency Stack
 
-Tools that compress CLI output before it enters the context. Recommended systematically at bootstrap.
+Installed at bootstrap, not per workspace. Transparent to the user.
+
+### All profiles
 
 | Tool | Source | Savings | What it does |
 |------|--------|---------|-------------|
-| `RTK` | rtk-ai/rtk | 60-90% | Rust CLI proxy, 34 filtering modules (git, cargo, npm, docker, tsc, etc.), zero dependencies |
-| `ContextZip` | jee599/contextzip | +10-20% vs RTK | Extends RTK: stacktraces, ANSI, web extraction. Inherits all RTK filters |
-| `ccusage` | — | — | Monitoring: token metrics per session from local JSONL files |
+| `RTK` | rtk-ai/rtk | 60-90% | CLI proxy, 34 filtering modules (git, cargo, npm, docker, tsc, etc.) |
+| `ccusage` | — | monitoring | Token metrics per session from local JSONL files |
+| `claude-mem` | thedotmack/claude-mem | — | Zero-touch persistent memory via hooks (SQLite + Chroma) |
+
+### Technical profile only
+
+| Tool | Source | Savings | What it does |
+|------|--------|---------|-------------|
+| `graphify` | safishamsi/graphify | high | Code knowledge graph — read before any architecture question |
+| `jCodeMunch` | jgravelle/jcodemunch-mcp | 95% on reads | Symbol-level code retrieval via AST — replaces full-file reads |
+| `context7` | MCP server | high | Current library/framework docs — replaces web search for API/SDK questions |
 
 ---
 
@@ -298,16 +308,18 @@ Tools that compress CLI output before it enters the context. Recommended systema
 | `memory` | Persistent memory via knowledge graph |
 | `sequential-thinking` | Problem solving through sequences |
 | `time` | Time conversion and timezone handling |
+| `context7` | Current library/framework/API docs on demand (technical profiles) |
 
 ---
 
 ## Memory
 
+`claude-mem` is the default — installed at bootstrap for all profiles. Zero-touch: hooks capture automatically, no manual writing required.
+
 | Tool | Approach | When to use |
 |------|----------|-------------|
-| `claude-mem` (thedotmack) | SQLite + auto hooks + web interface | Need exhaustive cross-session history |
-| `auto-memory` (.md files) | Curated, semi-auto, zero dependency | Lightweight projects, key decisions only |
-| MCP `memory` | Knowledge graph | Structured and queryable memory |
+| `claude-mem` (thedotmack) | SQLite + auto hooks + web interface | **Default — all projects** |
+| MCP `memory` | Knowledge graph | If structured, queryable memory is needed alongside claude-mem |
 
 ---
 

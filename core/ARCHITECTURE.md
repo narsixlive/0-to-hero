@@ -1,34 +1,107 @@
 # Architecture — 0 to Hero
 
-## The 4 layers
+## The 3 layers
 
-### Layer 1: CLAUDE.md — The map
-GPS of the project. Read first, always.
+### Layer 1: CLAUDE.md — The map (+ Gotchas)
+GPS of the project. Read first, always. Loaded at every session for free.
 - Project identity + routing to workspaces
+- Gotchas section: NEVER/ALWAYS rules, fed by `/gotcha`
 - Short and scannable (if you scroll, it's too long)
 - Does NOT describe the work, does NOT describe the agents
 
 ### Layer 2: CONTEXT.md — The room
-Workspace brief. What you'd give a new colleague.
-- Describes the work, the project, the audience, the constraints
+Workspace brief + living thread. What you'd give a new colleague.
+- Brief zone (stable): work, project, audience, constraints
+- Current state + Thread (updated by `/memorise`, captures session context)
 - The essentials fit on one screen
 - 80% work description / 20% behavior max
 
 ### Layer 3: AGENT.md — The specialist
 Brain of the workspace. Transforms Claude into a specialist.
 - Role, capabilities, skills, process, limits
+- Invocation scope: when to call this agent, when NOT to
 - Dense and actionable (no prose, only instructions)
 - Skills in `always` or `on-demand` mode
 
-### Layer 4: GOTCHA.md — The shield
-Error memory. Self-fed by the agent.
-- Past mistakes, known pitfalls, lessons learned
-- Format: ❌ [mistake] → ✅ [best practice] (YYYY-MM-DD)
-- Agent proposes additions, user validates
+## Archives (not auto-loaded)
 
-## Transversal: .memory/NOTES.md
-Free format, dated. Never loaded by default.
-Agents write with user validation.
+- **DECISIONS.md** (project root) — structural decisions: tool choices, workspace split rationale, naming conventions. Consulted on demand when context is missing.
+- **claude-mem** — persistent session memory, captured automatically via hooks.
+
+## Workspace + existing code — the `src/` case
+
+When a workspace maps to a folder that already contains code (the most common case: `src/`),
+**never mix agent files with the code**. The workspace files (CONTEXT.md, AGENT.md)
+live at the workspace root. Code goes into a named sub-folder.
+
+Convention: `src/code_<firstword_of_workspace>/`
+
+```
+my-project/
+├── CLAUDE.md
+├── src/                        ← workspace root (agent files here)
+│   ├── CONTEXT.md
+│   ├── AGENT.md
+│   └── code_python/            ← existing code, untouched
+│       ├── main.py
+│       └── utils.py
+└── planning/                   ← other workspace, unaffected
+```
+
+Rules:
+- Workspaces always stay at the project root — never nest them inside `src/` or another folder
+- If `src/` is empty: place agent files directly, no sub-folder needed yet
+- If `src/` has code: move it into `src/code_<firstword>/`, then place agent files in `src/`
+- The agent's scope covers everything under `src/`, across all `code_*/` sub-folders if there are several
+- Never put CONTEXT.md or AGENT.md inside a code sub-folder
+
+### Post-bootstrap: adding code to an already-bootstrapped workspace
+
+After the bootstrap, `src/` exists with its agent files (CONTEXT.md, AGENT.md).
+When the user wants to start coding or bring in existing code — **do not reorganize the workspace**.
+Only create `src/code_<firstword>/` inside the existing workspace and put the code there.
+
+```
+src/                  ← workspace already in place — DO NOT TOUCH
+├── CONTEXT.md        ← stays here
+├── AGENT.md          ← stays here
+└── code_python/      ← just add this with the code inside
+    ├── main.py
+    └── utils.py
+```
+
+Never propose to reorganize or restructure the workspace folder itself when adding code.
+The only permitted action is adding the `code_*/` sub-folder.
+
+## Transversal: claude-mem
+
+Persistent memory — fully automatic, zero user action.
+
+Installed via `npx claude-mem install`. Captures tool-usage observations across sessions
+via hooks, stores in SQLite + Chroma vector DB. Query with `mem-search "…"`.
+
+No `.memory/` folder. No MEMORY.md index to maintain. No agent writes at session end.
+Hooks handle capture automatically — nothing required from the user or the agent.
+
+## Transversal: Token Efficiency stack
+
+Installed at bootstrap, not per workspace. Transparent to the user.
+
+| Tool | Profile | What it does |
+|------|---------|-------------|
+| RTK | All | CLI proxy, 60-90% output compression (`rtk git`, `rtk grep`, `rtk ls`, …) |
+| ccusage | All | Session token monitoring from local JSONL files |
+| claude-mem | All | Zero-touch persistent memory via hooks |
+| graphify | Technical | Code knowledge graph — read before any architecture question |
+| jCodeMunch | Technical | Symbol-level code retrieval via AST — replaces full-file reads |
+| context7 | Technical | Current library/framework docs — replaces web search |
+
+Navigation order enforced in project CLAUDE.md (technical profiles):
+1. Architecture question → `graphify-out/GRAPH_REPORT.md` → `graphify query`
+2. Code symbol → `jcodemunch search_symbols` → `get_symbol`
+3. Text search → `rtk grep`
+4. Past context → `mem-search`
+5. Full file read → last resort, prefer `get_file_outline`
 
 ## Transversal: .skills/
 Available skills — never loaded globally, always via AGENT.md.
@@ -43,7 +116,7 @@ Project roadmap, generated by plan mode.
 ## Standard reading flow
 
 ```
-CLAUDE.md → CONTEXT.md → AGENT.md → GOTCHA.md → [skills on-demand] → [.memory/ if needed]
+CLAUDE.md (routing + gotchas) → CONTEXT.md → AGENT.md → [skills on-demand] → [mem-search if needed] → [DECISIONS.md if context missing]
 ```
 
 Principle: token-efficient. Every file read must be justified.
