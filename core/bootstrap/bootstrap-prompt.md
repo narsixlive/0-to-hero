@@ -326,18 +326,20 @@ my-project/                  ← the user's repo/folder
 ```
 
 Rules:
-- **Workspaces always stay at the project root.** Never move them into `src/` or any other folder.
+- **Workspaces always stay at the project root.** Never move them into another folder.
   The workspace folder IS a root-level directory — its CONTEXT.md and AGENT.md live directly inside it.
 
-- **If a workspace is named `src` (or maps to an existing `src/` folder):**
+- **If a workspace folder contains code** (any name — `src/`, `scripts/`, `app/`, `backend/`, `notebooks/`, `services/`, …):
+
+  The rule below applies to **any** such workspace. Do not rename an existing domain-appropriate folder (e.g. `scripts/` for standalone runnables) just to match `src/`. Keep the domain name; apply the `code_<firstword>/` pattern inside it.
 
   | Situation | What to do |
   |-----------|------------|
-  | `src/` exists **with existing code** | Do NOT merge workspace files into the code. Create `src/code_<firstword_of_workspace>/` to hold the code (e.g. `src/code_python/`, `src/code_api/`). Place CONTEXT.md and AGENT.md directly in `src/`. The agent's role covers all code under `src/code_*/`. |
-  | `src/` exists **empty or nearly empty** | Place CONTEXT.md and AGENT.md directly in `src/`. No sub-folder needed yet. |
-  | `src/` does **not** exist | Create it as a standard workspace with CONTEXT.md and AGENT.md at its root. |
+  | Workspace folder exists **with existing code** | Do NOT merge workspace files into the code. Create `<workspace>/code_<firstword_of_workspace>/` to hold the code (e.g. `src/code_python/`, `scripts/code_scraper/`, `app/code_api/`). Place CONTEXT.md and AGENT.md directly at the workspace root. The agent's role covers all code under `<workspace>/code_*/`. |
+  | Workspace folder exists **empty or nearly empty** | Place CONTEXT.md and AGENT.md directly at the workspace root. No sub-folder needed yet. |
+  | Workspace folder does **not** exist | Create it (with the domain-appropriate name) as a standard workspace with CONTEXT.md and AGENT.md at its root. |
 
-  Example with existing Python code:
+  Example 1 — existing Python app in `src/`:
   ```
   my-project/
   ├── CLAUDE.md
@@ -350,20 +352,33 @@ Rules:
   └── planning/               ← other workspace
   ```
 
+  Example 2 — standalone scrapers in `scripts/` (domain name preserved, split by target):
+  ```
+  scraper-project/
+  ├── CLAUDE.md
+  ├── scripts/                ← workspace (agent files here)
+  │   ├── CONTEXT.md
+  │   ├── AGENT.md
+  │   ├── code_linkedin/      ← one runnable scraper
+  │   ├── code_indeed/        ← another
+  │   └── code_common/        ← shared helpers
+  └── data/                   ← other workspace
+  ```
+
   **Never scatter workspace files (CONTEXT.md, AGENT.md) inside code sub-folders.**
   The agent files always live at the workspace root — the code lives in a named sub-folder.
 
-- **Post-bootstrap: adding code to an already-bootstrapped `src/` workspace**
+- **Post-bootstrap: adding code to an already-bootstrapped workspace**
 
-  After the bootstrap, `src/` already exists with agent files (CONTEXT.md, AGENT.md).
+  After the bootstrap, the workspace folder already exists with agent files (CONTEXT.md, AGENT.md).
   When the user wants to add existing code or start writing code there, **do not touch the workspace structure**.
-  Just create the `code_<firstword>/` sub-folder inside `src/` and put the code there.
+  Just create the `code_<firstword>/` sub-folder inside the workspace and put the code there.
 
   | What exists | What to do |
   |-------------|------------|
-  | `src/` with agent files only (post-bootstrap) | Create `src/code_<firstword>/` and place code there |
-  | `src/` with agent files + some code already scattered | Create `src/code_<firstword>/`, move the loose code into it — leave agent files untouched |
-  | User brings an existing project with `src/` containing code | Same: create `src/code_<firstword>/`, move code there, add agent files to `src/` root |
+  | Workspace folder with agent files only (post-bootstrap) | Create `<workspace>/code_<firstword>/` and place code there |
+  | Workspace folder with agent files + some code already scattered | Create `<workspace>/code_<firstword>/`, move the loose code into it — leave agent files untouched |
+  | User brings an existing project with a workspace folder containing code | Same: create `<workspace>/code_<firstword>/`, move code there, add agent files to the workspace root |
 
   **Never propose to reorganize the workspace folder itself** — only add the `code_*/` sub-folder.
   The agent files stay exactly where they are.

@@ -30,16 +30,22 @@ Brain of the workspace. Transforms Claude into a specialist.
 - **DECISIONS.md** (project root) — structural decisions: tool choices, workspace split rationale, naming conventions. Consulted on demand when context is missing.
 - **claude-mem** — persistent session memory, captured automatically via hooks.
 
-## Workspace + existing code — the `src/` case
+## Workspace + existing code
 
-When a workspace maps to a folder that already contains code (the most common case: `src/`),
-**never mix agent files with the code**. The workspace files (CONTEXT.md, AGENT.md)
+The rule applies to **any workspace folder that contains code** — not only `src/`.
+The folder name reflects the domain: `src/` for apps, `scripts/` for runnables,
+`app/`, `backend/`, `notebooks/`, `services/`, etc. Whichever name the project
+naturally uses, the same separation applies:
+
+**Never mix agent files with the code.** The workspace files (CONTEXT.md, AGENT.md)
 live at the workspace root. Code goes into a named sub-folder.
 
-Convention: `src/code_<firstword_of_workspace>/`
+Convention: `<workspace>/code_<firstword_of_workspace>/`
+
+### Example 1 — app code in `src/`
 
 ```
-my-project/
+my-app/
 ├── CLAUDE.md
 ├── src/                        ← workspace root (agent files here)
 │   ├── CONTEXT.md
@@ -50,18 +56,37 @@ my-project/
 └── planning/                   ← other workspace, unaffected
 ```
 
+### Example 2 — standalone scrapers in `scripts/`
+
+When a project uses a domain-specific name instead of `src/`, keep the name.
+The `code_*/` sub-folder pattern still applies — and can split by target when
+the workspace holds several independent runnables.
+
+```
+scraper-project/
+├── CLAUDE.md
+├── scripts/                    ← workspace root — domain-appropriate name
+│   ├── CONTEXT.md
+│   ├── AGENT.md
+│   ├── code_linkedin/          ← one runnable scraper
+│   ├── code_indeed/            ← another
+│   └── code_common/            ← shared helpers
+└── data/                       ← other workspace
+```
+
 Rules:
-- Workspaces always stay at the project root — never nest them inside `src/` or another folder
-- If `src/` is empty: place agent files directly, no sub-folder needed yet
-- If `src/` has code: move it into `src/code_<firstword>/`, then place agent files in `src/`
-- The agent's scope covers everything under `src/`, across all `code_*/` sub-folders if there are several
+- Workspaces always stay at the project root — never nest them inside another folder
+- The workspace folder name follows the domain (`src/`, `scripts/`, `app/`, `notebooks/`, …). Do not rename an existing folder just to match `src/`
+- If the workspace folder is empty: place agent files directly, no sub-folder needed yet
+- If the workspace folder has code: move it into `<workspace>/code_<firstword>/`, then place agent files at the workspace root
+- The agent's scope covers everything under the workspace folder, across all `code_*/` sub-folders if there are several
 - Never put CONTEXT.md or AGENT.md inside a code sub-folder
 
 ### Post-bootstrap: adding code to an already-bootstrapped workspace
 
-After the bootstrap, `src/` exists with its agent files (CONTEXT.md, AGENT.md).
+After the bootstrap, the workspace folder exists with its agent files (CONTEXT.md, AGENT.md).
 When the user wants to start coding or bring in existing code — **do not reorganize the workspace**.
-Only create `src/code_<firstword>/` inside the existing workspace and put the code there.
+Only create `<workspace>/code_<firstword>/` inside the existing workspace and put the code there.
 
 ```
 src/                  ← workspace already in place — DO NOT TOUCH
@@ -70,6 +95,16 @@ src/                  ← workspace already in place — DO NOT TOUCH
 └── code_python/      ← just add this with the code inside
     ├── main.py
     └── utils.py
+```
+
+Same applies to non-`src/` workspaces:
+
+```
+scripts/              ← any domain-named workspace — DO NOT TOUCH
+├── CONTEXT.md
+├── AGENT.md
+└── code_scraper/     ← add the code here
+    └── run.py
 ```
 
 Never propose to reorganize or restructure the workspace folder itself when adding code.
