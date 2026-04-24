@@ -18,6 +18,12 @@ What are we building/producing? For whom? Why?]
 
 ---
 
+## Learnings
+<!-- Durable workspace rules. Append-only via /memorise (auto-proposed, user validates). -->
+<!-- Format: `- ALWAYS/NEVER [action] ([why])` — same as /gotcha. -->
+<!-- Applied by the agent at task start via Pre-work checklist (see AGENT.md). -->
+<!-- If this section grows past ~20 entries, /memorise will suggest consolidation. -->
+
 ## Current state
 [Overwritten by /memorise. 3-5 lines: where we are, what's done, what remains.]
 Updated: [YYYY-MM-DD]

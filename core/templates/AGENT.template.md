@@ -4,6 +4,12 @@
 
 Last updated: [date]
 
+## Pre-work checklist (MANDATORY before any task)
+1. Read this workspace's `CONTEXT.md` — especially `## Learnings` section
+2. Apply every ALWAYS/NEVER rule as a binding constraint for the task
+3. At end of work, propose new Learnings via `/memorise` if a reusable pattern emerged
+4. If no `CONTEXT.md` exists, proceed normally and flag it to the user
+
 ## Invocation scope
 
 **Invoke when:**
@@ -49,7 +55,9 @@ Last updated: [date]
 - Update /.skills/INDEX.md
 - User validates before activation
 
-## Gotcha
-- Consult the Gotchas section of the root CLAUDE.md at startup
-- If an error is detected or corrected during work: propose addition via `/gotcha`
-- Format: `NEVER/ALWAYS [action] ([why])`
+## Rules
+- Consult the Gotchas section of the root CLAUDE.md at startup (project-level rules)
+- Consult this workspace's `CONTEXT.md` `## Learnings` section (workspace-level rules)
+- If a cross-workspace pattern emerges: propose addition via `/gotcha` (root CLAUDE.md)
+- If a workspace-specific pattern emerges: `/memorise` will auto-propose it
+- Format in both cases: `NEVER/ALWAYS [action] ([why])`

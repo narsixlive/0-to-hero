@@ -21,3 +21,9 @@ Always based on a validated spec from /planning.
 - Tests pass (unit + integration)
 - No regression on existing tests
 - Code readable without comments (if a comment is needed, the code is too complex)
+
+## Learnings
+<!-- Durable workspace rules. Append-only via /memorise (auto-proposed, user validates). Format: `- ALWAYS/NEVER [action] ([why])` -->
+- ALWAYS test SQLite migrations on a fresh empty DB (past bug: existing DB hid a schema drift)
+- NEVER mock the DB in integration tests — use SQLite `:memory:` for realism (mocks let broken migrations pass)
+- ALWAYS reset the React Query `QueryClient` between tests (aggressive cache leaks state across tests)

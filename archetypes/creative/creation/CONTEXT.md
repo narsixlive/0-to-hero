@@ -19,5 +19,10 @@ exploring artistic directions for client briefs.
 
 ## What makes a good deliverable here
 - The track has a complete structure (intro/dev/outro)
-- The artistic intention is noted in .memory/NOTES.md
+- The artistic intention is captured in the session Thread via `/memorise`
 - Ready to move to production without going back
+
+## Learnings
+<!-- Durable workspace rules. Append-only via /memorise (auto-proposed, user validates). Format: `- ALWAYS/NEVER [action] ([why])` -->
+- ALWAYS get the brief validated in writing before composing for a client (past rework: composed off an unconfirmed brief)
+- NEVER edit the master Ableton file directly — always work on a versioned copy (prevents unrecoverable overwrites)

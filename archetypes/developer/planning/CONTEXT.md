@@ -20,3 +20,8 @@ and technical choices. Everything that needs to be decided before coding.
 - A spec fits on one screen, with clear acceptance criteria
 - An architecture decision includes the "why" in 1 line
 - You can read the spec and estimate effort without asking for clarifications
+
+## Learnings
+<!-- Durable workspace rules. Append-only via /memorise (auto-proposed, user validates). Format: `- ALWAYS/NEVER [action] ([why])` -->
+- ALWAYS end specs with an "Accepted when: [list]" section (prevents ambiguous sign-off)
+- NEVER decide architecture in /src — all structural decisions go through /planning first (keeps decisions discoverable)

@@ -6,14 +6,13 @@
 
 ## What is it?
 
-An open-source system based on a 4-layer architecture:
+An open-source system based on a 3-layer architecture + a transversal learning layer:
 
-- **CLAUDE.md** — The map: routing to workspaces, short and scannable
-- **CONTEXT.md** — The room: the work brief (what + for whom)
-- **AGENT.md** — The specialist: role, skills, process
-- **GOTCHA.md** — The shield: past mistakes, known pitfalls
+- **CLAUDE.md** — The map: routing to workspaces, short and scannable, hosts the cross-workspace Gotchas section
+- **CONTEXT.md** — The room: the work brief + workspace-specific `## Learnings` (durable rules grown over time)
+- **AGENT.md** — The specialist: role, skills, process, Pre-work checklist that binds the Learnings at task start
 
-Each workspace is isolated. Claude knows exactly who it is when it enters a room.
+A `SessionStart` hook auto-injects workspace Learnings into every new session. Each workspace is isolated. Claude knows exactly who it is when it enters a room.
 
 ---
 
@@ -35,7 +34,8 @@ Works on a **new project** (empty folder) or an **existing one** — the bootstr
 
 **Step 4** — Claude generates your complete custom structure:
 - A `CLAUDE.md` at the root
-- One or more workspaces, each with `CONTEXT.md`, `AGENT.md`, `GOTCHA.md`
+- One or more workspaces, each with `CONTEXT.md` (brief + Learnings) and `AGENT.md`
+- A `.claude/settings.json` wiring the `SessionStart` hook to auto-inject Learnings
 - Skill recommendations from the catalog
 
 That's it. From the next conversation, Claude opens your project, reads the map, and knows exactly what to do.

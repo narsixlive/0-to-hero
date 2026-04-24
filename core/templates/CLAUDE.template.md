@@ -28,13 +28,21 @@ If more detail is needed → `mem-search "…"` → then `get_observations` on t
 
 | I say | Destination | Content |
 |---|---|---|
-| `/memorise` | claude-mem + workspace `CONTEXT.md` | Global session summary (claude-mem) + per-workspace thread update (`CONTEXT.md` of touched workspaces) |
-| `/gotcha` | Gotchas section below | One-line rule: `NEVER/ALWAYS [action] ([why])` |
+| `/memorise` | claude-mem + workspace `CONTEXT.md` (state + Learnings) | Global session summary (claude-mem) + per-workspace thread update + auto-proposed workspace `Learnings` |
+| `/gotcha` | Gotchas section below | One-line cross-workspace rule: `NEVER/ALWAYS [action] ([why])` |
 | `remember forever` | Claude native memory | Permanent preferences, conventions, identity only |
 
 Never put session context in native memory. Never put preferences in claude-mem.
 
 **Before closing**: `/memorise` → "Memorised." → `/clear`. Never `/clear` without `/memorise`.
+
+## Learning mode
+
+This project has the learning layer enabled.
+- **Cross-workspace rules** → Gotchas section below (fed by `/gotcha`)
+- **Workspace-specific rules** → `<workspace>/CONTEXT.md` → `## Learnings` (fed by `/memorise`)
+- Agents apply both layers at task start via the Pre-work checklist in their `AGENT.md`
+- A `SessionStart` hook auto-injects workspace Learnings at every new session
 
 ## Gotchas
 

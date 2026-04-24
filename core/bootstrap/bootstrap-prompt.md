@@ -1,8 +1,10 @@
 # 0 to Hero — Bootstrap
 
 You're going to help me create the structure of my project using the
-0-to-Hero system (4-layer architecture: CLAUDE.md with routing + gotchas,
-Workspaces with CONTEXT.md + AGENT.md, skills, persistent memory via claude-mem).
+0-to-Hero system (3-layer architecture: CLAUDE.md with routing + gotchas,
+Workspaces with CONTEXT.md + AGENT.md, skills; plus transversal claude-mem
+persistent memory and an opt-in Learning layer that accumulates workspace-specific
+rules via `/memorise` and auto-injects them at session start via a hook).
 
 ---
 
@@ -478,32 +480,46 @@ Short and scannable — if you scroll, it's too long.
 
 ### One workspace per identified mode, each with:
 
-**CONTEXT.md** (brief + living thread)
+**CONTEXT.md** (brief + Learnings + living thread)
 - Brief zone (above the `<!-- END BRIEF -->` marker, stable):
   - What we do here, for whom, why
   - Known constraints
   - What makes a good deliverable
   - 80% work description / 20% behavior max
-- Living zone (below the marker, maintained by `/memorise`):
+- Learnings zone (below the marker, durable, append-only):
+  - `## Learnings` — workspace-specific rules in `/gotcha` format (starts empty at bootstrap, grown by `/memorise` over time)
+- Living zone (maintained by `/memorise`):
   - `## Current state` (overwritten each session, 3-5 lines)
   - `## Thread` (new entry appended on top, pruned to 5 most recent)
 
 **AGENT.md** (the specialist — dense and actionable)
 - Heading: `# [Workspace Name] — [Professional Role]`. Specific seniority + domain + angle (e.g., "Api — Senior Backend Engineer (REST design, auth, observability)"). Never generic ("Assistant", "Helper"). Embed the workspace name so the agent is scoped by default.
+- Pre-work checklist section (MANDATORY, in the header): forces the agent to read `CONTEXT.md` `## Learnings` and apply every ALWAYS/NEVER rule before any task.
 - Invocation scope section: when to invoke (inside the workspace, aligned with the role, referenced by an active plan) and when NOT to (ad-hoc questions, cross-workspace work, project-level tasks).
 - Role in 2-3 lines (domain, deliverable, for whom)
 - Concrete capabilities (specific to the role, not generic)
 - Numbered process (what the agent does in order)
 - Limits (what it does NOT do, what it never decides alone)
 - Skills section (empty for now, filled at the Catalog step)
-- Gotcha line: refer to the Gotchas section of the root CLAUDE.md; propose additions via `/gotcha`
+- Rules line: refer to both the Gotchas section of the root CLAUDE.md (cross-workspace) and this workspace's `CONTEXT.md` `## Learnings` (workspace-specific); propose additions via `/gotcha` (cross) or let `/memorise` auto-propose (workspace).
 
 Q4 errors (if any) are injected directly into the Gotchas section of the root
 CLAUDE.md, format: `NEVER/ALWAYS [action] ([why])`. No separate GOTCHA.md file.
 
 ### Transversal files
-- `.claude/commands/memorise.md` — copy from `core/templates/commands/memorise.md`. Triggers session summary to claude-mem + per-workspace CONTEXT.md thread update.
-- `.claude/commands/gotcha.md` — one-line rule appender to the Gotchas section of the root CLAUDE.md (format: `NEVER/ALWAYS [action] ([why])`).
+- `.claude/commands/memorise.md` — copy from `core/templates/commands/memorise.md`. Triggers session summary to claude-mem + per-workspace CONTEXT.md thread update + auto-proposed workspace Learnings.
+- `.claude/commands/gotcha.md` — one-line cross-workspace rule appender to the Gotchas section of the root CLAUDE.md (format: `NEVER/ALWAYS [action] ([why])`).
+- `.claude/settings.json` — opt-in the project into the Learning layer by registering the `SessionStart` hook:
+  ```json
+  {
+    "hooks": {
+      "SessionStart": [
+        { "type": "command", "command": "bash ~/.claude/hooks/inject-learnings.sh" }
+      ]
+    }
+  }
+  ```
+  The hook script itself lives globally at `~/.claude/hooks/inject-learnings.sh` (install once from `core/hooks/inject-learnings.sh` in the 0-to-Hero repo). At every new session, it scans the project's `CONTEXT.md` files, extracts each `## Learnings` section, and injects them as `additionalContext` — so agents have workspace rules in hand before the first user prompt.
 - `DECISIONS.md` — archive of structural decisions taken during bootstrap or later (tool choices, workspace split rationale, naming conventions, etc.). NOT loaded automatically. Consulted on demand when context is missing ("why did we choose X?"). Starts empty at bootstrap; CLAUDE.md mentions its existence in a one-liner.
 - `.skills/INDEX.md` — empty table, ready to receive.
 
@@ -633,27 +649,35 @@ Iterate until the user has validated.
 
 ## Generation rules
 - Each file has ONE job. No duplicated content between files.
-- Standard reading order: CONTEXT.md → AGENT.md → CLAUDE.md (Gotchas section)
+- Standard reading order: CONTEXT.md (brief + Learnings + state) → AGENT.md → CLAUDE.md (Gotchas section)
 - Skills in always or on-demand mode, never globally
-- Gotchas live in the root CLAUDE.md; the agent proposes additions via `/gotcha`, the user validates.
-- Memory is routed: `/memorise` for session recap (claude-mem + workspace CONTEXT.md), `/gotcha` for mistakes (CLAUDE.md Gotchas), `DECISIONS.md` for structural choices (archive, non auto-loaded), "remember forever" for permanent preferences (Claude native memory).
+- Cross-workspace rules live in the root CLAUDE.md Gotchas (via `/gotcha`). Workspace-specific rules live in `CONTEXT.md` `## Learnings` (via `/memorise` auto-propose). Both use the format `NEVER/ALWAYS [action] ([why])`.
+- Memory is routed: `/memorise` for session recap + workspace Learnings (claude-mem + workspace CONTEXT.md), `/gotcha` for cross-workspace mistakes (CLAUDE.md Gotchas), `DECISIONS.md` for structural choices (archive, non auto-loaded), "remember forever" for permanent preferences (Claude native memory).
 - Token-efficient: no prose, no filler
 - Generate custom content based on the answers — no generic content
 - Content must be realistic and specific to the profile, not placeholders
 
 ## Workspace memory pattern
 
-Each workspace's `CONTEXT.md` has two zones separated by the `<!-- END BRIEF -->` marker:
+Each workspace's `CONTEXT.md` has three zones separated by the `<!-- END BRIEF -->` marker:
 
 - **Brief zone** (above marker, stable): Project / Constraints / Deliverable. Regenerated only at bootstrap or major pivot.
-- **Living zone** (below marker): `## Current state` (overwritten each `/memorise`) + `## Thread` (new entry appended on top, pruned to 5 most recent).
+- **Learnings zone** (below marker, durable, append-only): `## Learnings` — workspace-specific rules in `NEVER/ALWAYS [action] ([why])` format. Starts empty at bootstrap. Grown over time by `/memorise` (auto-proposed, user validates each entry).
+- **Living zone** (below marker, volatile): `## Current state` (overwritten each `/memorise`) + `## Thread` (new entry appended on top, pruned to 5 most recent).
 
 The `/memorise` command:
 1. Generates the global session summary captured by claude-mem.
 2. Identifies the workspace(s) touched in the session (based on files edited).
-3. Updates the `CONTEXT.md` of each touched workspace, respecting the 2 zones:
+3. Updates the `CONTEXT.md` of each touched workspace, respecting the 3 zones:
    - Never edits the brief zone.
    - Overwrites `## Current state` with a 3-5 line status.
    - Appends a new entry to `## Thread` and prunes to 5.
+   - Proposes 0-3 candidate Learnings per workspace, asks the user `y/n` per candidate, appends validated ones to `## Learnings`.
 
-Rationale: the agent of a workspace should resume "where we were" without being polluted by other workspaces' context. claude-mem keeps the long history globally; each workspace's CONTEXT.md keeps the last 5 sessions locally.
+The `SessionStart` hook (`~/.claude/hooks/inject-learnings.sh`):
+1. Runs automatically when Claude Code opens a session in this project.
+2. Scans all `CONTEXT.md` files in the project (depth 1-3).
+3. Extracts the `## Learnings` section from each, labels them by workspace name.
+4. Injects them as `additionalContext` — so agents have workspace rules in hand before the first prompt.
+
+Rationale: the agent of a workspace should resume "where we were" without being polluted by other workspaces' context, AND it should automatically apply hard-earned rules without waiting for the user to re-state them. claude-mem keeps the long history globally; each workspace's CONTEXT.md keeps its own Learnings + last 5 sessions locally; the hook guarantees the Learnings are in the agent's context from turn 0.
