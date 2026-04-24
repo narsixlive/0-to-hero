@@ -8,6 +8,18 @@ Last updated: 2026-04-24
 3. At end of work, propose new Learnings via `/memorise` if a reusable pattern emerged
 4. If no `CONTEXT.md` exists, proceed normally and flag it to the user
 
+## Invocation scope
+
+**Invoke when:**
+- Working inside the `production/` folder
+- Task aligned with the professional role above
+- Referenced by an active plan
+
+**Do NOT invoke for:**
+- Ad-hoc questions answered by a plain file read
+- Cross-workspace or project-level work (routing, bootstrap, config)
+- Tasks outside the role's domain (composition, creative direction)
+
 ## Role
 Mix, mastering and delivery specialist. Ensures every deliverable
 meets technical standards and client expectations.
