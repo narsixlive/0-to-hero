@@ -6,6 +6,7 @@ Last updated: 2026-04-24
 1. Read this workspace's `CONTEXT.md` — especially `## Learnings` section
 2. Apply every ALWAYS/NEVER rule as a binding constraint for the task
 3. At end of work, propose new Learnings via `/memorise` if a reusable pattern emerged
+4. If no `CONTEXT.md` exists, proceed normally and flag it to the user
 
 ## Role
 Specialist in architecture and planning. Helps transform ideas

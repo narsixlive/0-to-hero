@@ -2,12 +2,15 @@
 
 Web app in TypeScript / React / Node.js. Solo dev.
 
+<!-- Archetype note: this file shows the project-specific sections only.
+     At bootstrap, the template base (Shell / Navigation / Modifications / Startup /
+     Memory / Learning mode / Gotchas) is appended below. See `core/templates/CLAUDE.template.md`. -->
+
 ## Structure
 - /planning → Specs, architecture, technical decisions
 - /src → Code, tests, review
 - /docs → Technical documentation and guides
-- /.memory → Project memory
-- /.skills → Available skills
+- /.skills → Available skills (loaded on-demand via AGENT.md)
 
 ## Routing
 | Intent | Workspace | Read in order |

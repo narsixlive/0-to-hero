@@ -2,11 +2,14 @@
 
 Music composition and production for sync, video games, and direct clients.
 
+<!-- Archetype note: this file shows the project-specific sections only.
+     At bootstrap, the template base (Shell / Navigation / Modifications / Startup /
+     Memory / Learning mode / Gotchas) is appended below. See `core/templates/CLAUDE.template.md`. -->
+
 ## Structure
 - /creation → Composition, writing, track development
 - /production → Mix, mastering, client file delivery
-- /.memory → Project memory
-- /.skills → Available skills
+- /.skills → Available skills (loaded on-demand via AGENT.md)
 
 ## Routing
 | Intent | Workspace | Read in order |

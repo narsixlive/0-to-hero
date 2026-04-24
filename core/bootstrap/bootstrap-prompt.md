@@ -467,7 +467,7 @@ Once the answers are collected, generate the complete structure:
 ### CLAUDE.md (routing + memory routing + gotchas)
 
 Built on top of the `core/templates/CLAUDE.template.md` base, which provides
-the reusable sections: Shell / Navigation / Modifications / Startup / Memory / Gotchas.
+the reusable sections: Shell / Navigation / Modifications / Startup / Memory / Learning mode / Gotchas.
 
 Add project-specific sections **above** the base:
 - Project identity in 1 line

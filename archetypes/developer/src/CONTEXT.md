@@ -1,16 +1,11 @@
 # Src — TaskFlow
 
-Last updated: 2026-04-01
+<!-- BRIEF — stable zone, regenerated only at bootstrap or major pivot -->
 
 ## Project
 Development workspace for TaskFlow.
 We code here: features, bug fixes, refactoring, tests.
 Always based on a validated spec from /planning.
-
-## Current state
-- Stack: TypeScript, React 18, Node.js, SQLite, Vitest
-- Auth: in progress (branch feat/auth)
-- CI: GitHub Actions, lint + tests on every push
 
 ## Constraints
 - No code without a test (global rule)
@@ -22,8 +17,22 @@ Always based on a validated spec from /planning.
 - No regression on existing tests
 - Code readable without comments (if a comment is needed, the code is too complex)
 
+<!-- END BRIEF — zone below is maintained by /memorise -->
+
+---
+
 ## Learnings
 <!-- Durable workspace rules. Append-only via /memorise (auto-proposed, user validates). Format: `- ALWAYS/NEVER [action] ([why])` -->
 - ALWAYS test SQLite migrations on a fresh empty DB (past bug: existing DB hid a schema drift)
 - NEVER mock the DB in integration tests — use SQLite `:memory:` for realism (mocks let broken migrations pass)
 - ALWAYS reset the React Query `QueryClient` between tests (aggressive cache leaks state across tests)
+
+## Current state
+- Stack: TypeScript, React 18, Node.js, SQLite, Vitest
+- Auth: in progress (branch feat/auth)
+- CI: GitHub Actions, lint + tests on every push
+Updated: 2026-04-01
+
+## Thread
+<!-- Appended by /memorise, pruned to the 5 most recent entries. -->
+<!-- Older entries live in claude-mem (retrievable via mem-search). -->
