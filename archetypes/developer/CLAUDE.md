@@ -1,10 +1,8 @@
 # TaskFlow — Task management app
 
-Web app in TypeScript / React / Node.js. Solo dev.
+> **Archetype — illustration only.** Not a runnable project. Base sections (Shell / Navigation / Modifications / Startup / Memory / Learning mode / Gotchas) come from `core/templates/CLAUDE.template.md` at bootstrap.
 
-<!-- Archetype note: this file shows the project-specific sections only.
-     At bootstrap, the template base (Shell / Navigation / Modifications / Startup /
-     Memory / Learning mode / Gotchas) is appended below. See `core/templates/CLAUDE.template.md`. -->
+Web app in TypeScript / React / Node.js. Solo dev.
 
 ## Structure
 - /planning → Specs, architecture, technical decisions
