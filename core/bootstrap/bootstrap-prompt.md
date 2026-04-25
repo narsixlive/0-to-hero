@@ -331,11 +331,13 @@ Rules:
 
 - **If a workspace folder contains code** (any name — `src/`, `scripts/`, `app/`, `backend/`, `notebooks/`, `services/`, …):
 
-  The rule below applies to **any** such workspace. Do not rename an existing domain-appropriate folder (e.g. `scripts/` for standalone runnables) just to match `src/`. Keep the domain name; apply the `code_<firstword>/` pattern inside it.
+  The rule below applies to **any** such workspace. Do not rename an existing domain-appropriate folder (e.g. `scripts/` for standalone runnables) just to match `src/`. Keep the domain name; apply the `code_<descriptor>/` pattern inside it.
+
+  `<descriptor>` is a short label that distinguishes this code from other code that could live in the same workspace. Pick the dimension that makes the cut meaningful: **language** (`code_python/`, `code_rust/`), **target** (`code_linkedin/`, `code_indeed/`), **role** (`code_api/`, `code_worker/`), or `code_common/` for shared helpers. It is NOT derived from the workspace name. When unsure, ask the user.
 
   | Situation | What to do |
   |-----------|------------|
-  | Workspace folder exists **with existing code** | Do NOT merge workspace files into the code. Create `<workspace>/code_<firstword_of_workspace>/` to hold the code (e.g. `src/code_python/`, `scripts/code_scraper/`, `app/code_api/`). Place CONTEXT.md and AGENT.md directly at the workspace root. The agent's role covers all code under `<workspace>/code_*/`. |
+  | Workspace folder exists **with existing code** | Do NOT merge workspace files into the code. Create `<workspace>/code_<descriptor>/` to hold the code (e.g. `src/code_python/`, `scripts/code_scraper/`, `app/code_api/`). Place CONTEXT.md and AGENT.md directly at the workspace root. The agent's role covers all code under `<workspace>/code_*/`. |
   | Workspace folder exists **empty or nearly empty** | Place CONTEXT.md and AGENT.md directly at the workspace root. No sub-folder needed yet. |
   | Workspace folder does **not** exist | Create it (with the domain-appropriate name) as a standard workspace with CONTEXT.md and AGENT.md at its root. |
 
@@ -372,13 +374,13 @@ Rules:
 
   After the bootstrap, the workspace folder already exists with agent files (CONTEXT.md, AGENT.md).
   When the user wants to add existing code or start writing code there, **do not touch the workspace structure**.
-  Just create the `code_<firstword>/` sub-folder inside the workspace and put the code there.
+  Just create the `code_<descriptor>/` sub-folder inside the workspace and put the code there.
 
   | What exists | What to do |
   |-------------|------------|
-  | Workspace folder with agent files only (post-bootstrap) | Create `<workspace>/code_<firstword>/` and place code there |
-  | Workspace folder with agent files + some code already scattered | Create `<workspace>/code_<firstword>/`, move the loose code into it — leave agent files untouched |
-  | User brings an existing project with a workspace folder containing code | Same: create `<workspace>/code_<firstword>/`, move code there, add agent files to the workspace root |
+  | Workspace folder with agent files only (post-bootstrap) | Create `<workspace>/code_<descriptor>/` and place code there |
+  | Workspace folder with agent files + some code already scattered | Create `<workspace>/code_<descriptor>/`, move the loose code into it — leave agent files untouched |
+  | User brings an existing project with a workspace folder containing code | Same: create `<workspace>/code_<descriptor>/`, move code there, add agent files to the workspace root |
 
   **Never propose to reorganize the workspace folder itself** — only add the `code_*/` sub-folder.
   The agent files stay exactly where they are.
@@ -663,6 +665,7 @@ After installation, ask:
 Iterate until the user has validated.
 
 ## Generation rules
+- **Section markers stay in English. Prose adapts to the project's language.** Headings like `## Learnings`, `## Current state`, `## Thread`, `## Pre-work checklist`, `## Invocation scope`, `## Rules` are machine-readable anchors — `/memorise`, the `inject-learnings.sh` hook, and `bootstrap-upgrade` all match them literally. Translating them breaks the tooling. Everything else (descriptions, examples, comments) follows the user's project language. The 0-to-Hero repo itself is English-only because it ships publicly on GitHub; user projects keep their own language.
 - Each file has ONE job. No duplicated content between files.
 - Standard reading order: CONTEXT.md (brief + Learnings + state) → AGENT.md → CLAUDE.md (Gotchas section)
 - Skills in always or on-demand mode, never globally

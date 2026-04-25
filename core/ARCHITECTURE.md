@@ -40,7 +40,9 @@ naturally uses, the same separation applies:
 **Never mix agent files with the code.** The workspace files (CONTEXT.md, AGENT.md)
 live at the workspace root. Code goes into a named sub-folder.
 
-Convention: `<workspace>/code_<firstword_of_workspace>/`
+Convention: `<workspace>/code_<descriptor>/`
+
+`<descriptor>` is a short label that distinguishes this code from other code that could live in the same workspace — typically the **language** (`code_python/`, `code_rust/`), the **target** (`code_linkedin/`, `code_indeed/` for scrapers), the **role** (`code_api/`, `code_worker/`), or `code_common/` for shared helpers. It is NOT derived from the workspace name.
 
 ### Example 1 — app code in `src/`
 
@@ -78,7 +80,7 @@ Rules:
 - Workspaces always stay at the project root — never nest them inside another folder
 - The workspace folder name follows the domain (`src/`, `scripts/`, `app/`, `notebooks/`, …). Do not rename an existing folder just to match `src/`
 - If the workspace folder is empty: place agent files directly, no sub-folder needed yet
-- If the workspace folder has code: move it into `<workspace>/code_<firstword>/`, then place agent files at the workspace root
+- If the workspace folder has code: move it into `<workspace>/code_<descriptor>/`, then place agent files at the workspace root
 - The agent's scope covers everything under the workspace folder, across all `code_*/` sub-folders if there are several
 - Never put CONTEXT.md or AGENT.md inside a code sub-folder
 
@@ -86,7 +88,7 @@ Rules:
 
 After the bootstrap, the workspace folder exists with its agent files (CONTEXT.md, AGENT.md).
 When the user wants to start coding or bring in existing code — **do not reorganize the workspace**.
-Only create `<workspace>/code_<firstword>/` inside the existing workspace and put the code there.
+Only create `<workspace>/code_<descriptor>/` inside the existing workspace and put the code there.
 
 ```
 src/                  ← workspace already in place — DO NOT TOUCH

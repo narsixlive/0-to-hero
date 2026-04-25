@@ -40,17 +40,34 @@ here, in `DECISIONS.md` (archive, not auto-loaded, consulted on demand).
 
 ---
 
-## 2026-04-15 — Workspace `src/` + existing code: `src/code_<firstword>/` convention
+## 2026-04-15 — Workspace `src/` + existing code: `src/code_<descriptor>/` convention
 
 When a workspace maps to `src/` and `src/` already contains code, never merge
 agent files (CONTEXT.md, AGENT.md) with the code. Code moves into
-`src/code_<firstword_of_workspace>/`; agent files stay at `src/` root.
+`src/code_<descriptor>/`; agent files stay at `src/` root.
 
 **Why:** mixing agent files and code clutters imports, breaks language tooling
 (Python picks up CONTEXT.md as a stray file), and makes the workspace hard to
 navigate. A named sub-folder keeps the code isolated while letting the agent
 scope span all `code_*/` sub-folders.
 
-**How to apply:** the `<firstword>` is the first word of the workspace's
-professional role (e.g. `python` for "Python Backend Engineer" → `code_python/`).
-Used to disambiguate when multiple code bases live under the same workspace.
+**How to apply:** the `<descriptor>` is a short label that distinguishes this
+code from other code that could live in the same workspace — typically the
+language (`code_python/`), target (`code_linkedin/`), role (`code_api/`), or
+`code_common/` for shared helpers. Used to disambiguate when multiple code
+bases live under the same workspace.
+
+## 2026-04-25 — Renamed `<firstword>` → `<descriptor>` in the workspace code-folder convention
+
+The placeholder name `<firstword>` (and `<firstword_of_workspace>`) was misleading:
+it suggested deriving the label from the workspace folder name, but examples
+like `src/code_python/` and `scripts/code_linkedin/` have no such relationship.
+Renamed to `<descriptor>` everywhere, with an explicit glose at first occurrence
+in `core/ARCHITECTURE.md` and `core/bootstrap/bootstrap-prompt.md`.
+
+**Why:** during a bootstrap-upgrade test, Claude tried to mechanically derive
+the label from the workspace name, got stuck, and produced inconsistent
+sub-folder names. Renaming + gloss eliminates the ambiguity.
+
+**How to apply:** any reference to the rule (templates, archetypes, agent docs)
+must use `<descriptor>` and refer to the language/target/role/common dimensions.
