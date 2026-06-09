@@ -15,7 +15,7 @@ Open-source tool to structure your Claude workflow into efficient workspaces wit
 | Modify architecture or bootstrap | core/ARCHITECTURE.md → core/bootstrap/bootstrap-prompt.md |
 | Work on an archetype | archetypes/INDEX.md → archetypes/[name]/ |
 | Update the catalog | catalog/skills-database.md |
-| Plan / execute a step | docs/superpowers/plans/ |
+| Plan / execute a step | docs/plans/ |
 
 ## Reading order
 1. This CLAUDE.md
@@ -41,6 +41,12 @@ Everything goes through `rtk`: `rtk grep`, `rtk ls`, `rtk find`, `rtk git …`. 
 6. **Read a whole file** → last resort, prefer `get_file_outline`
 
 No Read > 150 lines without jCodeMunch. No architecture answers without GRAPH_REPORT.md.
+
+## Before acting
+- State assumptions explicitly. If uncertain, ask — don't guess.
+- If several interpretations exist, surface them; never pick silently.
+- Turn the task into a verifiable goal, then loop until met ("fix bug" → write a failing test, make it pass).
+- Multi-workspace: state the active workspace at task start ("working in `scripts` as <role>"). If the task shifts workspace, say so.
 
 ## Modifications
 

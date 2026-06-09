@@ -310,7 +310,7 @@ The 0-to-Hero structure is created **at the root of the existing project**:
 my-project/                  ← the user's repo/folder
 ├── CLAUDE.md                ← routing + memory routing + Gotchas section
 ├── ROADMAP.md               ← roadmap (if plan mode was used)
-├── DECISIONS.md             ← archive of structural decisions (not auto-loaded)
+├── DECISIONS.md             ← facts-of-record ledger (injected) + ADR archive (on-demand)
 ├── .claude/
 │   └── commands/
 │       ├── memorise.md      ← session recap + workspace thread update
@@ -536,8 +536,8 @@ CLAUDE.md, format: `NEVER/ALWAYS [action] ([why])`. No separate GOTCHA.md file.
     }
   }
   ```
-  The hook script itself lives globally at `~/.claude/hooks/inject-learnings.sh` (install once from `core/hooks/inject-learnings.sh` in the 0-to-Hero repo). At every new session, it scans the project's `CONTEXT.md` files, extracts each `## Learnings` section, and injects them as `additionalContext` — so agents have workspace rules in hand before the first user prompt.
-- `DECISIONS.md` — archive of structural decisions taken during bootstrap or later (tool choices, workspace split rationale, naming conventions, etc.). NOT loaded automatically. Consulted on demand when context is missing ("why did we choose X?"). Starts empty at bootstrap; CLAUDE.md mentions its existence in a one-liner.
+  The hook script itself lives globally at `~/.claude/hooks/inject-learnings.sh` (install once from `core/hooks/inject-learnings.sh` in the 0-to-Hero repo). At every new session, it scans the project's `CONTEXT.md` files, extracts each `## Learnings` section, and also extracts the `## Ledger` section from the root `DECISIONS.md`, injecting both as `additionalContext` — so agents have workspace rules and durable project facts in hand before the first user prompt.
+- `DECISIONS.md` — scaffolded from `core/templates/DECISIONS.template.md`. Two zones: a `## Ledger (facts of record)` at the top — durable project facts (domain, app name, accounts, commitments), terse dated one-liners, **injected at every SessionStart** and fed by `/memorise` (auto-proposed, user validates) — and a `## ADR archive` below for narrative rationale ("why did we choose X?"), NOT injected, consulted on demand. Do NOT leave the file empty: it starts with both section headers and their format comments, so the ledger exists and gets used from session one. Rationale: an empty, on-demand, never-injected file is invisible and stays unused — the injected ledger is what keeps important facts from being lost.
 - `.skills/INDEX.md` — empty table, ready to receive.
 
 ## Recommendations (skills + token reducers)
@@ -670,7 +670,7 @@ Iterate until the user has validated.
 - Standard reading order: CONTEXT.md (brief + Learnings + state) → AGENT.md → CLAUDE.md (Gotchas section)
 - Skills in always or on-demand mode, never globally
 - Cross-workspace rules live in the root CLAUDE.md Gotchas (via `/gotcha`). Workspace-specific rules live in `CONTEXT.md` `## Learnings` (via `/memorise` auto-propose). Both use the format `NEVER/ALWAYS [action] ([why])`.
-- Memory is routed: `/memorise` for session recap + workspace Learnings (claude-mem + workspace CONTEXT.md), `/gotcha` for cross-workspace mistakes (CLAUDE.md Gotchas), `DECISIONS.md` for structural choices (archive, non auto-loaded), "remember forever" for permanent preferences (Claude native memory).
+- Memory is routed: `/memorise` for session recap + workspace Learnings + facts of record (claude-mem + workspace CONTEXT.md + DECISIONS.md ledger), `/gotcha` for cross-workspace mistakes (CLAUDE.md Gotchas), `DECISIONS.md` for durable project facts (`## Ledger`, injected) and structural rationale (`## ADR archive`, on-demand), "remember forever" for permanent preferences (Claude native memory).
 - Token-efficient: no prose, no filler
 - Generate custom content based on the answers — no generic content
 - Content must be realistic and specific to the profile, not placeholders

@@ -33,13 +33,27 @@ No collision — each tool listens to different events.
 
 Claude Code has access to several memory systems that do not communicate with each other. Without explicit routing, Claude stores information in the wrong place and memory fragments.
 
-### The 3 destinations
+### The 4 destinations
 
 **Claude native memory** — Anthropic servers (claude.ai) or local Session Memory (Claude Code). For what does not change: identity, preferences, conventions. Rarely modified. Triggered by "remember forever".
 
 **claude-mem** — local SQLite + Chroma database (`~/.claude-mem/`). For what happened: work sessions, decisions, episodic context. Captured automatically by the hooks. Summary triggered by `/memorise`.
 
 **CLAUDE.md (Gotchas section)** — file versioned in the project. For mistakes not to repeat. Short NEVER/ALWAYS rules. Triggered by `/gotcha`.
+
+**DECISIONS.md (Ledger section)** — file versioned in the project. For durable project facts that must never be lost: domain bought, app renamed, accounts, low-reversibility commitments. Terse dated one-liners. Auto-proposed by `/memorise`, validated by the user. Injected at every SessionStart by the learning hook (only the `## Ledger` section, not the whole file).
+
+### Why facts of record need their own destination
+
+claude-mem captures observations by **inference of importance**. A one-line factual statement from the user ("I bought the domain", "renamed the app") rarely trips a high-importance observation, and even when captured it drowns among dozens of others. These facts are a different storage class: rare, factual, durable, and needed reliably — not episodic context. They get their own home so they can be injected, not searched for.
+
+### Why DECISIONS.md, a separate file, stays cheap
+
+The Gotchas argument (no separate GOTCHA.md, to avoid a Read at startup) still holds for full files. The ledger sidesteps it the same way workspace Learnings do: the `SessionStart` hook extracts and injects **only the terse `## Ledger` section** as `additionalContext` — no Read tool call, no full-file load. The on-demand `## ADR archive` below it is never injected.
+
+### Why an empty, on-demand DECISIONS.md was a no-op
+
+The original `DECISIONS.md` started empty at bootstrap and was "consulted on demand only". In practice an empty + on-demand + never-injected file is invisible: nothing reminds anyone it exists or to fill it, and Claude never reads it spontaneously. Important facts ended up recorded nowhere. The injected ledger makes the file self-reinforcing — present in context every session, so it gets used.
 
 ### Why no separate GOTCHA.md
 
@@ -104,7 +118,7 @@ Decision: tell Claude to always use `rtk grep`, `rtk git`, etc. rather than rely
 
 ### /memorise (.claude/commands/memorise.md)
 
-Triggers a structured summary: decisions, changes, blockers, next steps. The summary is captured by claude-mem via the PostToolUse and Stop hooks. The "Memorised." confirmation signals to the user that they can `/clear`.
+Triggers a structured summary: decisions, changes, blockers, next steps. The summary is captured by claude-mem via the PostToolUse and Stop hooks. It also proposes per-workspace Learnings and facts of record (`DECISIONS.md` ledger), each validated by the user before writing. The "Memorised." confirmation signals to the user that they can `/clear`.
 
 ### /gotcha (.claude/commands/gotcha.md)
 
