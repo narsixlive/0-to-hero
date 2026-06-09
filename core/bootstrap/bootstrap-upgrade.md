@@ -6,7 +6,14 @@ Only projects already following the 0-to-Hero pattern (have a `CLAUDE.md` at roo
 
 ## Sources of truth (read from the 0-to-Hero repo)
 
-Base path: `d:/CLAUDE/project 0 to Hero/`
+**Resolve the repo root first (`$REPO`).** The canonical sources live in a clone of the 0-to-Hero repo, whose location varies per machine — never hardcode it. Resolve `$REPO` once, in this order, and use it for every path below (all paths are relative to `$REPO/`):
+
+1. **Env var** — if `$ZERO_TO_HERO_HOME` is set and contains `core/templates/CLAUDE.template.md`, use it.
+2. **Inside the repo** — if `$CWD` (or an ancestor) contains `core/templates/CLAUDE.template.md` and `core/bootstrap/bootstrap-upgrade.md`, that's the repo root.
+3. **Locate the clone** — search the user's usual code roots for a `0-to-hero` / `0 to Hero` checkout (`git remote get-url origin` matching `0-to-hero`), e.g. `find ~ -maxdepth 4 -name CLAUDE.template.md -path '*core/templates*'`.
+4. **Ask** — if still unresolved, ask the user for the repo path.
+
+Abort if `$REPO` can't be resolved (the skill can't migrate without the canonical templates).
 
 - `core/templates/CLAUDE.template.md` — canonical CLAUDE.md sections (Shell, Navigation, Modifications, Startup, Memory, Learning mode, Gotchas)
 - `core/templates/AGENT.template.md` — agent template (Pre-work checklist + pro role + Invocation scope + Rules)
@@ -124,7 +131,7 @@ If the user approves migrating the Learning layer, execute in order. **Note on t
 > **The hook is global but refresh-safe by design.** `~/.claude/hooks/inject-learnings.sh` is shared by **every** 0-to-Hero project on the machine. It injects `## Active Learnings` uncapped (user-curated) but caps a legacy `## Learnings` section at **5 lines** — so refreshing the hook can never blow up the per-session injection of an un-migrated project. The cap is the safety net.
 > Curating a fat legacy section into the Active/Archived split (step 3) is therefore a **quality** improvement (the *right* 5 rules get injected instead of an arbitrary first-5, and you can lift the cap), **not a safety prerequisite**. Still nice to show the user the before/after injection size when a section is large, so they see the value of curating.
 
-1. **Install / refresh the hook globally (idempotent)** — if `~/.claude/hooks/inject-learnings.sh` does not exist, copy it from `d:/CLAUDE/project 0 to Hero/core/hooks/inject-learnings.sh` and `chmod +x` it. If it exists, verify byte-identical with the source; if different, show the diff AND the before/after injection size for each affected project (see caveat above), then ask. Treat "exists but not byte-identical" as `stale global infra`, not "already installed".
+1. **Install / refresh the hook globally (idempotent)** — if `~/.claude/hooks/inject-learnings.sh` does not exist, copy it from `$REPO/core/hooks/inject-learnings.sh` (see Sources of truth) and `chmod +x` it. If it exists, verify byte-identical with the source; if different, show the diff AND the before/after injection size for each affected project (see caveat above), then ask. Treat "exists but not byte-identical" as `stale global infra`, not "already installed".
 
 2. **Opt the project into the hook** — merge the SessionStart hook entry into the project's `.claude/settings.json`:
    ```json
