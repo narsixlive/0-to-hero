@@ -17,10 +17,11 @@ Abort if `$REPO` can't be resolved (the skill can't migrate without the canonica
 
 - `core/templates/CLAUDE.template.md` — canonical CLAUDE.md sections (Shell, Navigation, Modifications, Startup, Memory, Learning mode, Gotchas)
 - `core/templates/AGENT.template.md` — agent template (Pre-work checklist + pro role + Invocation scope + Rules)
-- `core/templates/CONTEXT.template.md` — workspace context template (Brief / Active Learnings / Archived Learnings / Current state / Thread)
+- `core/templates/CONTEXT.template.md` — workspace context template (Brief / Current state / Thread — purely situational)
+- `core/templates/LEARNINGS.template.md` — workspace rule register (`## Active Learnings` / `## Archived Learnings` / `## Drift log`), Durcir lifecycle
 - `core/templates/DECISIONS.template.md` — DECISIONS.md dual-zone template (`## Ledger (facts of record)` injected + `## ADR archive` on-demand)
-- `core/templates/commands/memorise.md` — `/memorise` command with Learnings auto-propose + facts-of-record proposal logic
-- `core/hooks/inject-learnings.sh` — SessionStart hook that auto-injects workspace `## Active Learnings` and the DECISIONS.md `## Ledger`
+- `core/templates/commands/memorise.md` — `/memorise` command with Durcir Learnings (bump / graduate / archive / drift) + facts-of-record proposal + stack-freshness check
+- `core/hooks/inject-learnings.sh` — SessionStart hook that auto-injects workspace `## Active Learnings` (from `LEARNINGS.md`, legacy `CONTEXT.md`) and the DECISIONS.md `## Ledger`
 - `core/ARCHITECTURE.md` — 3-layer model + Learning layer, DECISIONS.md as dual-zone (Ledger injected / ADR archive on-demand), `<workspace>/code_<descriptor>/` rule
 
 If any source is missing, abort and tell the user.
@@ -50,7 +51,7 @@ Run these audits. Use `rtk` prefixes on shell commands.
 
 2bis. **Structural marker drift (CRITICAL)** — `/memorise`, the `inject-learnings.sh` hook, and several upgrade checks match section headings literally. If the project was bootstrapped in a non-English language, the markers may have been translated and tooling silently breaks.
 
-   For every `CONTEXT.md`, check it has the canonical English headings exactly: `## Active Learnings`, `## Archived Learnings`, `## Current state`, `## Thread`. Common drifts to flag:
+   On the current stack, `CONTEXT.md` holds `## Current state`, `## Thread`; `LEARNINGS.md` holds `## Active Learnings`, `## Archived Learnings`, `## Drift log`. Check each file has the canonical English headings exactly (on a pre-Durcir project the learnings still sit in `CONTEXT.md` — that's the split, check 10). Common drifts to flag:
    - `## État actuel` / `## Etat actuel` → should be `## Current state`
    - `## Apprentissages` / `## Apprentissages actifs` → should be `## Active Learnings`
    - `## Apprentissages archivés` → should be `## Archived Learnings`
@@ -97,21 +98,27 @@ Run these audits. Use `rtk` prefixes on shell commands.
 7. **Agents refactored** — for every `AGENT.md` in the project, check:
    - Heading has a professional role (e.g. "`# Api — Senior Backend Engineer`") — not generic ("Assistant", "Helper", just workspace name)
    - Has an `## Invocation scope` section with "Invoke when" / "Do NOT invoke for"
-   - Has a `## Pre-work checklist` section in the header that forces reading `CONTEXT.md` `## Active Learnings` before any task
+   - Has a `## Pre-work checklist` section in the header that forces reading `LEARNINGS.md` `## Active Learnings` (legacy: `CONTEXT.md`) before any task
    - No stale `GOTCHA.md` references in the Rules/Gotcha section
    Agents missing any of these = upgrade candidates.
 
 8. **Learning layer installed** — check the opt-in state of the project:
-   - Every `CONTEXT.md` has a `## Active Learnings` section (empty section is fine — the marker must exist; legacy `## Learnings` counts but flag it for the split per check 2bis)
+   - Every workspace has a `LEARNINGS.md` with a `## Active Learnings` section (empty is fine — the marker must exist). On a pre-Durcir project the learnings still live in `CONTEXT.md` (`## Active Learnings` or legacy `## Learnings`) — that counts, but flag it for the split per check 10. Do NOT flag a migrated project (rules in LEARNINGS.md, none in CONTEXT.md) as missing the layer.
    - `DECISIONS.md` has a `## Ledger (facts of record)` section (the hook injects it alongside Learnings — without it, half the injection is dead; cross-ref check #5)
    - `.claude/settings.json` contains a `SessionStart` hook entry pointing to `bash ~/.claude/hooks/inject-learnings.sh`
    - `~/.claude/hooks/inject-learnings.sh` exists globally and is executable
-   - **Hook freshness (CRITICAL — not just existence)** — a stale global hook is worse than a missing one: it exists, the audit looks green, but it silently injects only half. Verify the installed `~/.claude/hooks/inject-learnings.sh` is **byte-identical** to the repo source `core/hooks/inject-learnings.sh`. Cheap proxy if a full diff is overkill: grep the installed hook for `Ledger` and for `Active` — both must be present (Ledger extraction + Active/Archived awareness are the latest-architecture markers). If it exists but lacks either → flag as **`stale global infra`**, not aligned. The fix is migration step 1 (re-copy), which must run before DECISIONS.md/Learnings migrations are meaningful.
+   - **Hook freshness (CRITICAL — not just existence)** — a stale global hook is worse than a missing one: it exists, the audit looks green, but it silently injects only half. Verify the installed `~/.claude/hooks/inject-learnings.sh` is **byte-identical** to the repo source `core/hooks/inject-learnings.sh`. Cheap proxy if a full diff is overkill: grep the installed hook for `Ledger`, `Active`, and `LEARNINGS` — all three must be present (Ledger extraction + Active/Archived awareness + LEARNINGS.md scanning are the latest-architecture markers). If it exists but lacks any → flag as **`stale global infra`**, not aligned. The fix is migration step 1 (re-copy), which must run before DECISIONS.md/Learnings migrations are meaningful.
    - CLAUDE.md has a `## Learning mode` section
-   - **`/memorise` freshness** — determine which command the project actually runs: project-local `.claude/commands/memorise.md` if present, else the global `~/.claude/commands/memorise.md`. Whichever one is live must include **both** the "Propose workspace Learnings" and "Propose facts of record" blocks. A project relying on a global `/memorise` that predates the facts-of-record block = **`stale global infra`** (the Ledger never gets fed). Flag it; the fix is to refresh the global command or install a current project-local copy (ask the user which).
+   - **`/memorise` freshness** — determine which command the project actually runs: project-local `.claude/commands/memorise.md` if present, else the global `~/.claude/commands/memorise.md`. Whichever one is live must include the **Durcir Learnings block** (bump-not-skip / ×N / graduation / drift log), the **"Propose facts of record"** block, and the **"Stack freshness check"**. A project relying on a global `/memorise` that predates these = **`stale global infra`** (rules never harden, the Ledger never gets fed). Flag it; the fix is to refresh the global command or install a current project-local copy (ask the user which).
    Any missing piece = upgrade candidate. Distinguish **`missing`** (never installed) from **`stale`** (installed but pre-dates a feature) in the report — they have different fixes and the stale case is the silent-failure trap.
 
 9. **Stale worktrees** — run `rtk git worktree list` and flag non-master worktrees under `.claude/worktrees/`. Propose cleanup.
+
+10. **Durcir stack — LEARNINGS.md split + stack marker** — the current learning stack (`durcir-v1`) keeps workspace rules in a dedicated `LEARNINGS.md` per workspace (not in `CONTEXT.md`), adds a `## Drift log`, and stamps the root `CLAUDE.md` `## Learning mode` with `<!-- learning-stack: durcir-v1 -->`. Detect the project's state:
+   - **Marker `durcir-v1` present** → ✅ on the current stack.
+   - **No marker, learnings still inside `CONTEXT.md`** (`## Active Learnings` / `## Archived Learnings`, or a legacy `## Learnings`, sitting under the brief) → **pre-Durcir**. Propose the split migration (Step 3, learning-layer step 3 below): move the rules verbatim into a new `<workspace>/LEARNINGS.md`, add the `## Drift log`, purify `CONTEXT.md`, stamp the marker. **The hook is already backward-compatible** (it reads both `LEARNINGS.md` and `CONTEXT.md`), so this is a **quality** migration, never a break-fix — nothing stops working if deferred.
+   - **No marker, no learnings anywhere** → just add the marker and create an empty `LEARNINGS.md` per workspace.
+   Report which workspaces still carry learnings in `CONTEXT.md` (the migration candidates) and whether the marker is present.
 
 ### Step 3 — Patch, section-by-section, with validation
 
@@ -145,12 +152,15 @@ If the user approves migrating the Learning layer, execute in order. **Note on t
    ```
    Preserve any existing hooks. If a SessionStart hook with the same command already exists, skip (idempotent).
 
-3. **Add `## Active Learnings` + `## Archived Learnings` sections to every `CONTEXT.md`** — insert both between `<!-- END BRIEF -->` and `## Current state`. Both start empty with the HTML comments describing their purpose (see `core/templates/CONTEXT.template.md`). Do NOT invent content.
+3. **Create `<workspace>/LEARNINGS.md` and move the rules out of `CONTEXT.md` (Durcir split)** — the current stack keeps workspace rules in a dedicated `LEARNINGS.md` (three sections: `## Active Learnings` / `## Archived Learnings` / `## Drift log`) and keeps `CONTEXT.md` purely situational (brief + Current state + Thread). For each workspace:
 
-   **Migrating a legacy `## Learnings` section that already holds rules — count first:**
-   - The hook injects `## Active Learnings` **uncapped** but caps legacy `## Learnings` at 5 lines. So a fat Active section is a per-session token tax + cross-workspace noise — keep Active lean.
-   - **≤ 5 rules** → just rename `## Learnings` → `## Active Learnings`, add an empty `## Archived Learnings` below. Nothing to curate.
-   - **> 5 rules** → do NOT blindly rename all N into Active (that lifts the cap and injects everything every session). Curate: keep the ~5 most load-bearing rules in `## Active Learnings`, move the rest **verbatim** into `## Archived Learnings` (kept, not injected). Never delete, never reword — only sort. If you can't confidently pick the top-5, show the user the list and ask them to mark the keepers. (If left as legacy `## Learnings`, the hook's 5-cap keeps it safe but injects an arbitrary first-5 — curating picks the *right* 5.)
+   - Create `LEARNINGS.md` from `core/templates/LEARNINGS.template.md` (empty sections + format comments) if absent.
+   - **Move any existing learnings out of `CONTEXT.md` verbatim** into `LEARNINGS.md`:
+     - Existing `## Active Learnings` / `## Archived Learnings` in CONTEXT.md → move them as-is into the same sections of LEARNINGS.md.
+     - A legacy single `## Learnings` section → move its rules into `## Active Learnings`; if **> 5 rules**, keep the ~5 most load-bearing in `## Active Learnings` and move the rest **verbatim** into `## Archived Learnings` (never delete, never reword — only sort; ask the user to pick the keepers if unsure).
+     - Then **remove the learnings sections from `CONTEXT.md`** so it is brief + Current state + Thread only.
+   - Never invent rules or `×N` counts. A migrated Active rule with no counter is fine (the hook tolerates a missing `×N`); add `×1` only if you want.
+   - **Safe by design**: the hook reads both files, so a workspace not yet migrated keeps injecting from `CONTEXT.md` until you get to it.
 
 3bis. **Scaffold the DECISIONS.md Ledger** — the hook installed in step 1 injects the `## Ledger (facts of record)` section, so it must exist or the injection is half-dead.
    - If `./DECISIONS.md` is missing → create it from `core/templates/DECISIONS.template.md` (both zones, empty, with format comments).
@@ -160,13 +170,13 @@ If the user approves migrating the Learning layer, execute in order. **Note on t
 
 4. **Add Pre-work checklist to every `AGENT.md`** — insert the section right after the `Last updated:` line and before `## Invocation scope`. Content from `core/templates/AGENT.template.md`. Also replace the legacy `## Gotcha` section (if present) with the updated `## Rules` section from the template.
 
-5. **Update CLAUDE.md `## Memory` table and add `## Learning mode` section** — merge from `core/templates/CLAUDE.template.md`. Preserve any project-specific content elsewhere in CLAUDE.md.
+5. **Update CLAUDE.md `## Memory` table and `## Learning mode` section** — merge from `core/templates/CLAUDE.template.md`, including the **`<!-- learning-stack: durcir-v1 -->` marker** and the 3-level Durcir ladder (L1 LEARNINGS.md → L2 AGENT.md Rules → L3 Gotchas). Preserve any project-specific content elsewhere in CLAUDE.md. The marker is what `/memorise`'s stack-freshness check reads — without it the project keeps proposing the upgrade.
 
 6. **Update `/memorise` command** — replace `.claude/commands/memorise.md` content with `core/templates/commands/memorise.md` (the auto-propose Learnings block AND the "Propose facts of record" block are part of the standard command now). If the project has added custom instructions to `/memorise`, flag them and ask before overwriting.
 
 7. **Verify** — run the hook once in the project root to confirm it produces valid JSON (or exits silently if both the `## Active Learnings` sections and the `## Ledger` are empty). Show the output to the user.
 
-Commit message: `feat: install 0-to-Hero learning layer (hook + CONTEXT.md Active Learnings + DECISIONS.md Ledger + agent checklist)`
+Commit message: `feat: install 0-to-Hero learning layer (hook + LEARNINGS.md Durcir split + DECISIONS.md Ledger + agent checklist + durcir-v1 marker)`
 
 ### Step 4 — Final summary
 

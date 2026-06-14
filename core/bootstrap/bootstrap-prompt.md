@@ -2,9 +2,10 @@
 
 You're going to help me create the structure of my project using the
 0-to-Hero system (3-layer architecture: CLAUDE.md with routing + gotchas,
-Workspaces with CONTEXT.md + AGENT.md, skills; plus transversal claude-mem
-persistent memory and an opt-in Learning layer that accumulates workspace-specific
-rules via `/memorise` and auto-injects them at session start via a hook).
+Workspaces with CONTEXT.md + AGENT.md + LEARNINGS.md, skills; plus transversal claude-mem
+persistent memory and an opt-in Learning layer (Durcir stack) where workspace rules
+harden through 3 levels — L1 `LEARNINGS.md` → L2 `AGENT.md ## Rules` → L3 root Gotchas —
+fed via `/memorise` and auto-injected at session start via a hook).
 
 ---
 
@@ -317,9 +318,11 @@ my-project/                  ← the user's repo/folder
 │       └── gotcha.md        ← one-line rule appender to CLAUDE.md Gotchas
 ├── planning/                ← workspace 1
 │   ├── CONTEXT.md           ← brief + Current state + Thread (updated by /memorise)
+│   ├── LEARNINGS.md         ← workspace rules (Durcir: Active / Archived / Drift log)
 │   └── AGENT.md
 ├── src/                     ← workspace 2 (can be an existing folder)
 │   ├── CONTEXT.md           ← brief + Current state + Thread (updated by /memorise)
+│   ├── LEARNINGS.md         ← workspace rules (Durcir: Active / Archived / Drift log)
 │   └── AGENT.md
 └── .skills/
     └── INDEX.md
@@ -497,34 +500,38 @@ Short and scannable — if you scroll, it's too long.
 
 ### One workspace per identified mode, each with:
 
-**CONTEXT.md** (brief + Learnings + living thread)
+**CONTEXT.md** (purely situational: brief + living thread)
 - Brief zone (above the `<!-- END BRIEF -->` marker, stable):
   - What we do here, for whom, why
   - Known constraints
   - What makes a good deliverable
   - 80% work description / 20% behavior max
-- Learnings zone (below the marker, durable, append-only):
-  - `## Learnings` — workspace-specific rules in `/gotcha` format (starts empty at bootstrap, grown by `/memorise` over time)
 - Living zone (maintained by `/memorise`):
   - `## Current state` (overwritten each session, 3-5 lines)
   - `## Thread` (new entry appended on top, pruned to 5 most recent)
 
+**LEARNINGS.md** (workspace rules — Durcir lifecycle, starts empty at bootstrap)
+- `## Active Learnings` — in-flight rules `- ALWAYS/NEVER [action] ([why]) ×N`, auto-injected at SessionStart, grown/bumped by `/memorise`
+- `## Archived Learnings` — demoted / non-recurrent rules, kept, NOT injected
+- `## Drift log` — audit trail of rules ignored despite being capitalized, NOT injected
+- Rules graduate L1 (here) → L2 (`AGENT.md ## Rules`) → L3 (root `CLAUDE.md ## Gotchas`)
+
 **AGENT.md** (the specialist — dense and actionable)
 - Heading: `# [Workspace Name] — [Professional Role]`. Specific seniority + domain + angle (e.g., "Api — Senior Backend Engineer (REST design, auth, observability)"). Never generic ("Assistant", "Helper"). Embed the workspace name so the agent is scoped by default.
-- Pre-work checklist section (MANDATORY, in the header): forces the agent to read `CONTEXT.md` `## Learnings` and apply every ALWAYS/NEVER rule before any task.
+- Pre-work checklist section (MANDATORY, in the header): forces the agent to read `LEARNINGS.md` `## Active Learnings` + this file's `## Rules` and apply every ALWAYS/NEVER rule before any task.
 - Invocation scope section: when to invoke (inside the workspace, aligned with the role, referenced by an active plan) and when NOT to (ad-hoc questions, cross-workspace work, project-level tasks).
 - Role in 2-3 lines (domain, deliverable, for whom)
 - Concrete capabilities (specific to the role, not generic)
 - Numbered process (what the agent does in order)
 - Limits (what it does NOT do, what it never decides alone)
 - Skills section (empty for now, filled at the Catalog step)
-- Rules line: refer to both the Gotchas section of the root CLAUDE.md (cross-workspace) and this workspace's `CONTEXT.md` `## Learnings` (workspace-specific); propose additions via `/gotcha` (cross) or let `/memorise` auto-propose (workspace).
+- Rules section (`## Rules`, L2): refer to the root CLAUDE.md Gotchas (L3, cross-workspace) and this workspace's `LEARNINGS.md` `## Active Learnings` (L1); stable/recurring rules graduate into this `## Rules` section (L2); propose cross-workspace additions via `/gotcha` (L3), and `/memorise` auto-proposes workspace Learnings and graduations.
 
 Q4 errors (if any) are injected directly into the Gotchas section of the root
 CLAUDE.md, format: `NEVER/ALWAYS [action] ([why])`. No separate GOTCHA.md file.
 
 ### Transversal files
-- `.claude/commands/memorise.md` — copy from `core/templates/commands/memorise.md`. Triggers session summary to claude-mem + per-workspace CONTEXT.md thread update + auto-proposed workspace Learnings.
+- `.claude/commands/memorise.md` — copy from `core/templates/commands/memorise.md`. Triggers session summary to claude-mem + per-workspace CONTEXT.md thread update + Durcir Learnings in LEARNINGS.md (bump/graduate/archive) + facts of record + a stack-freshness check.
 - `.claude/commands/gotcha.md` — one-line cross-workspace rule appender to the Gotchas section of the root CLAUDE.md (format: `NEVER/ALWAYS [action] ([why])`).
 - `.claude/settings.json` — opt-in the project into the Learning layer by registering the `SessionStart` hook:
   ```json
@@ -536,7 +543,7 @@ CLAUDE.md, format: `NEVER/ALWAYS [action] ([why])`. No separate GOTCHA.md file.
     }
   }
   ```
-  The hook script itself lives globally at `~/.claude/hooks/inject-learnings.sh` (install once from `core/hooks/inject-learnings.sh` in the 0-to-Hero repo). At every new session, it scans the project's `CONTEXT.md` files, extracts each `## Learnings` section, and also extracts the `## Ledger` section from the root `DECISIONS.md`, injecting both as `additionalContext` — so agents have workspace rules and durable project facts in hand before the first user prompt.
+  The hook script itself lives globally at `~/.claude/hooks/inject-learnings.sh` (install once from `core/hooks/inject-learnings.sh` in the 0-to-Hero repo). At every new session, it scans the project's `LEARNINGS.md` files (and legacy `CONTEXT.md` for un-migrated projects), extracts each `## Active Learnings` section, and also extracts the `## Ledger` section from the root `DECISIONS.md`, injecting both as `additionalContext` — so agents have workspace rules and durable project facts in hand before the first user prompt.
 - `DECISIONS.md` — scaffolded from `core/templates/DECISIONS.template.md`. Two zones: a `## Ledger (facts of record)` at the top — durable project facts (domain, app name, accounts, commitments), terse dated one-liners, **injected at every SessionStart** and fed by `/memorise` (auto-proposed, user validates) — and a `## ADR archive` below for narrative rationale ("why did we choose X?"), NOT injected, consulted on demand. Do NOT leave the file empty: it starts with both section headers and their format comments, so the ledger exists and gets used from session one. Rationale: an empty, on-demand, never-injected file is invisible and stays unused — the injected ledger is what keeps important facts from being lost.
 - `.skills/INDEX.md` — empty table, ready to receive.
 
@@ -665,37 +672,41 @@ After installation, ask:
 Iterate until the user has validated.
 
 ## Generation rules
-- **Section markers stay in English. Prose adapts to the project's language.** Headings like `## Learnings`, `## Current state`, `## Thread`, `## Pre-work checklist`, `## Invocation scope`, `## Rules` are machine-readable anchors — `/memorise`, the `inject-learnings.sh` hook, and `bootstrap-upgrade` all match them literally. Translating them breaks the tooling. Everything else (descriptions, examples, comments) follows the user's project language. The 0-to-Hero repo itself is English-only because it ships publicly on GitHub; user projects keep their own language.
+- **Section markers stay in English. Prose adapts to the project's language.** Headings like `## Active Learnings`, `## Archived Learnings`, `## Drift log`, `## Current state`, `## Thread`, `## Pre-work checklist`, `## Invocation scope`, `## Rules` are machine-readable anchors — `/memorise`, the `inject-learnings.sh` hook, and `bootstrap-upgrade` all match them literally. Translating them breaks the tooling. Everything else (descriptions, examples, comments) follows the user's project language. The 0-to-Hero repo itself is English-only because it ships publicly on GitHub; user projects keep their own language.
 - Each file has ONE job. No duplicated content between files.
-- Standard reading order: CONTEXT.md (brief + Learnings + state) → AGENT.md → CLAUDE.md (Gotchas section)
+- Standard reading order: LEARNINGS.md (`## Active Learnings`) + CONTEXT.md (brief + state) → AGENT.md (`## Rules`) → CLAUDE.md (Gotchas section)
 - Skills in always or on-demand mode, never globally
-- Cross-workspace rules live in the root CLAUDE.md Gotchas (via `/gotcha`). Workspace-specific rules live in `CONTEXT.md` `## Learnings` (via `/memorise` auto-propose). Both use the format `NEVER/ALWAYS [action] ([why])`.
-- Memory is routed: `/memorise` for session recap + workspace Learnings + facts of record (claude-mem + workspace CONTEXT.md + DECISIONS.md ledger), `/gotcha` for cross-workspace mistakes (CLAUDE.md Gotchas), `DECISIONS.md` for durable project facts (`## Ledger`, injected) and structural rationale (`## ADR archive`, on-demand), "remember forever" for permanent preferences (Claude native memory).
+- Durcir ladder for rules: L1 workspace `LEARNINGS.md` `## Active Learnings` (via `/memorise`) → L2 `AGENT.md` `## Rules` (graduated when stable/recurring) → L3 root CLAUDE.md Gotchas (via `/gotcha`, cross-workspace). All use the format `NEVER/ALWAYS [action] ([why])`.
+- Memory is routed: `/memorise` for session recap + workspace Learnings (LEARNINGS.md) + facts of record (claude-mem + DECISIONS.md ledger), `/gotcha` for cross-workspace doctrine (CLAUDE.md Gotchas), `DECISIONS.md` for durable project facts (`## Ledger`, injected) and structural rationale (`## ADR archive`, on-demand), "remember forever" for permanent preferences (Claude native memory).
 - Token-efficient: no prose, no filler
 - Generate custom content based on the answers — no generic content
 - Content must be realistic and specific to the profile, not placeholders
 
 ## Workspace memory pattern
 
-Each workspace's `CONTEXT.md` has three zones separated by the `<!-- END BRIEF -->` marker:
+Each workspace splits its memory across two files, by lifetime:
 
+**`CONTEXT.md`** — purely situational, two zones separated by the `<!-- END BRIEF -->` marker:
 - **Brief zone** (above marker, stable): Project / Constraints / Deliverable. Regenerated only at bootstrap or major pivot.
-- **Learnings zone** (below marker, durable, append-only): `## Learnings` — workspace-specific rules in `NEVER/ALWAYS [action] ([why])` format. Starts empty at bootstrap. Grown over time by `/memorise` (auto-proposed, user validates each entry).
-- **Living zone** (below marker, volatile): `## Current state` (overwritten each `/memorise`) + `## Thread` (new entry appended on top, pruned to 5 most recent).
+- **Living zone** (below marker, volatile): `## Current state` (overwritten each `/memorise`) + `## Thread` (new entry on top, pruned to 5 most recent).
+
+**`LEARNINGS.md`** — the workspace rule register (Durcir lifecycle), three sections:
+- `## Active Learnings` — in-flight rules `NEVER/ALWAYS [action] ([why]) ×N`. Starts empty. Injected every session. Kept lean (~5).
+- `## Archived Learnings` — demoted / non-recurrent rules. Kept, NOT injected.
+- `## Drift log` — rules ignored despite being capitalized. NOT injected.
+
+Rules harden through 3 levels: **L1** `LEARNINGS.md ## Active Learnings` → **L2** `AGENT.md ## Rules` (role doctrine, graduated when a rule hits ×3 / stabilises / blocks) → **L3** root `CLAUDE.md ## Gotchas` (cross-workspace, via `/gotcha` or graduation). Graduating copies the rule verbatim to the higher level and removes it from Active — the Active list drains upward instead of growing.
 
 The `/memorise` command:
 1. Generates the global session summary captured by claude-mem.
-2. Identifies the workspace(s) touched in the session (based on files edited).
-3. Updates the `CONTEXT.md` of each touched workspace, respecting the 3 zones:
-   - Never edits the brief zone.
-   - Overwrites `## Current state` with a 3-5 line status.
-   - Appends a new entry to `## Thread` and prunes to 5.
-   - Proposes 0-3 candidate Learnings per workspace, asks the user `y/n` per candidate, appends validated ones to `## Learnings`.
+2. Identifies the workspace(s) touched, updates each `CONTEXT.md` (Current state + Thread only — never the brief).
+3. For each touched workspace's `LEARNINGS.md`: proposes new Learnings; on a recurring rule it **bumps `×N`** instead of skipping (and logs a `## Drift log` line if the rule was ignored); proposes graduations at the thresholds; archives stale ones. User validates each write.
+4. Proposes facts of record for the `DECISIONS.md` ledger, then runs a stack-freshness check.
 
 The `SessionStart` hook (`~/.claude/hooks/inject-learnings.sh`):
 1. Runs automatically when Claude Code opens a session in this project.
-2. Scans all `CONTEXT.md` files in the project (depth 1-3).
-3. Extracts the `## Learnings` section from each, labels them by workspace name.
-4. Injects them as `additionalContext` — so agents have workspace rules in hand before the first prompt.
+2. Scans all `LEARNINGS.md` (and legacy `CONTEXT.md`) files in the project (depth 1-3).
+3. Extracts each `## Active Learnings` section, labels them by workspace name, plus the `## Ledger` from root `DECISIONS.md`.
+4. Injects them as `additionalContext` — so agents have workspace rules and durable facts in hand before the first prompt.
 
-Rationale: the agent of a workspace should resume "where we were" without being polluted by other workspaces' context, AND it should automatically apply hard-earned rules without waiting for the user to re-state them. claude-mem keeps the long history globally; each workspace's CONTEXT.md keeps its own Learnings + last 5 sessions locally; the hook guarantees the Learnings are in the agent's context from turn 0.
+Rationale: a workspace agent should resume "where we were" (CONTEXT.md) without being polluted by other workspaces, AND automatically apply hard-earned rules (LEARNINGS.md) without the user re-stating them — while the rule lifecycle (graduation, archival, drift) lives on its own surface so the situational context stays pure. claude-mem keeps the long history globally; the hook guarantees the Active Learnings are in the agent's context from turn 0.
