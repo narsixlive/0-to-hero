@@ -136,6 +136,19 @@ Triggers a structured summary: decisions, changes, blockers, next steps. The sum
 
 After a Claude mistake, appends a ONE-LINE rule to the Gotchas section of CLAUDE.md. NEVER/ALWAYS format. No narrative, no dates. The rule is loaded automatically at every subsequent session.
 
+### /bootstrap-upgrade (~/.claude/commands/bootstrap-upgrade.md — global DELEGATOR STUB)
+
+Migrates an existing project to the latest architecture. Installed as a **thin stub** that resolves the repo (`$REPO`) and reads `core/bootstrap/bootstrap-upgrade.md` live — not a copy of the procedure.
+
+### Global commands: copy vs delegate (the anti-drift rule)
+
+A frozen per-machine copy of a command silently drifts from the template as the architecture evolves — the recurring failure mode (a project stops proposing upgrades; an installed `/bootstrap-upgrade` runs an old architecture). Two shapes, chosen by **runtime dependency on the repo**:
+
+- **Self-contained generic command → refreshed global copy.** `/memorise`, `/gotcha` carry only generic logic and must work with no repo present, so they live as global copies at `~/.claude/commands/`, refreshed idempotently from `core/templates/commands/`. Drift is caught by `/memorise`'s stack-freshness check.
+- **Command that already reads the repo at runtime → delegator stub.** `/bootstrap-upgrade` needs the repo's canonical templates anyway, so copying its procedure adds drift risk for zero benefit. The global install is a ~17-line stub that reads the live `core/bootstrap/bootstrap-upgrade.md`. One source of truth → drift impossible. The stub adds no new requirement (the procedure already needed the repo).
+
+Rule of thumb: **never freeze logic that the repo already owns.** If a command must read the repo to run, it delegates to the repo; it does not carry a copy.
+
 ## Inspirations
 
 ### Boris Cherny (creator of Claude Code)
