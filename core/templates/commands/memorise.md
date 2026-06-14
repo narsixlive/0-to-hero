@@ -14,28 +14,37 @@ Then identify the dominant workspace(s) touched this session, based on the files
 3. **Append to `## Thread`** — new entry at the top using format: `### YYYY-MM-DD — [one-line session title]` followed by the summary bullets.
 4. **Prune `## Thread`** — keep only the 5 most recent entries; drop older ones. claude-mem keeps the long history (retrievable via `mem-search`).
 
-If no workspace was touched, skip the CONTEXT.md updates.
+`CONTEXT.md` is purely situational now (brief + state + thread). Workspace rules live in `LEARNINGS.md` — handled in the next step. If no workspace was touched, skip the CONTEXT.md updates.
 
-## Propose workspace Learnings (after state update)
+## Workspace Learnings — Durcir lifecycle (after state update)
+
+Workspace rules live in `<workspace>/LEARNINGS.md`, NOT in `CONTEXT.md`. If a touched workspace has no `LEARNINGS.md`, create it first with three empty sections and their format comments: `## Active Learnings`, `## Archived Learnings`, `## Drift log` (see the Learning mode section of the root `CLAUDE.md` for the ladder).
 
 For each touched workspace, scan the session for **reusable patterns specific to that workspace**. A good Learning candidate:
 
 - Is reformulable in one line, format `ALWAYS/NEVER [action] ([why])`
 - Generalizes beyond the single file or task that triggered it
 - Will likely apply to future sessions in the same workspace
-- Is NOT a cross-workspace rule (those go via `/gotcha` to the root CLAUDE.md)
-- Is NOT already present in the workspace's existing `## Learnings` section (check first)
 
-For each candidate (0 to 3 per workspace max):
+For each candidate, **first check for recurrence** — read the workspace's `LEARNINGS.md` `## Active Learnings` AND `## Archived Learnings` (and `mem-search` the pattern if unsure):
 
-1. State it in `/gotcha` format
-2. Ask the user: `[workspace] Add this learning? (y/n): ALWAYS/NEVER [action] ([why])`
-3. On `y` → append to the `## Learnings` section of that workspace's `CONTEXT.md`
-4. On `n` → skip, do not write
+**A) Already present (recurrence) — do NOT skip. The duplicate IS the signal.**
+- Bump its `×N` counter by 1. If it was in `## Archived Learnings`, move it back into `## Active Learnings`.
+- If the recurrence happened because the rule was *not followed* this session (you had to re-learn or re-apply it the hard way), add a line to `## Drift log`: `- [rule] | captured <date if known, else ?> | drift <today> | delay <Nd or ?> | L1→? | <short note>`.
+- If you are not confident it is the same rule, ask: `[workspace] Same as existing "<rule>" (×N)? bump / new (b/n)`.
 
-If the workspace has more than 20 entries in `## Learnings`, include a one-line suggestion at the end: `[workspace] has 20+ Learnings — consider consolidating duplicates or promoting stable patterns to a skill.`
+**B) New — ask before writing.** `[workspace] Add learning? (y/n): ALWAYS/NEVER [action] ([why])`. On `y` → append to `## Active Learnings` as `- <rule> ×1`. On `n` → skip.
 
-Never propose a Learning that is not grounded in what actually happened this session (no generic best-practice noise).
+**Graduation (the list drains upward, never just grows).** After bumping/adding, for any Active rule that now meets a threshold, propose promotion — ask per rule, never auto-apply:
+
+- **×3 reached, OR stable (applied cleanly across ~3 sessions), OR it blocked work** → propose graduating to this workspace's `AGENT.md` `## Rules` (L2 — role doctrine): `[workspace] Graduate to AGENT.md Rules (L2)? (y/n): <rule>`
+- **Cross-workspace in nature, OR high-criticality (security / personal data / money / legal)** → propose graduating via `/gotcha` to the root `CLAUDE.md` `## Gotchas` (L3 — cross-workspace doctrine). A high-criticality rule may jump straight to L3 on first sight.
+
+On `y` for a graduation → copy the rule **verbatim, with its `(why)`**, into the target section, then **remove it from `## Active Learnings`**. On `n` → leave it in Active. Drift diagnostic: if a rule's `## Drift log` lines show it drifts in **< 7 days repeatedly**, it is in the wrong layer — recommend graduating it straight to L3.
+
+**Decay (keep Active lean).** If `## Active Learnings` holds more than ~5 rules after the above, propose moving the least-recently-relevant non-graduating ones to `## Archived Learnings` (kept, NOT injected — never deleted): `[workspace] Archive stale learning? (y/n): <rule>`.
+
+Never propose a Learning not grounded in what actually happened this session (no generic best-practice noise). Never invent `×N` counts or drift entries.
 
 ## Propose facts of record (after Learnings)
 
@@ -61,4 +70,12 @@ For each candidate (0 to 3 per session max):
 
 Never invent a fact not grounded in this session. Never write narrative in the ledger — rationale belongs in the ADR archive below it, not the ledger.
 
-When done, confirm with: **Memorised.** — then list the workspaces updated, the number of Learnings added, and any facts of record added (e.g., `scrapperSite: +2 learnings`, `+1 fact of record`).
+## Stack freshness check (before confirming)
+
+Read the project root `CLAUDE.md`. If it does **not** contain the marker `<!-- learning-stack: durcir-v1 -->` (missing, or an older version like `durcir-v0` / no marker at all), the project predates the current learning stack — its rules are probably still inside `CONTEXT.md` with no graduation or drift log. Print exactly one line and do nothing else automatic:
+
+`⚠️ This project isn't on the current learning stack (durcir-v1). Run /bootstrap-upgrade to migrate (splits rules into LEARNINGS.md + adds graduation/drift log). Want me to run it now?`
+
+Do NOT migrate automatically — only offer. If the marker is present and current, say nothing.
+
+When done, confirm with: **Memorised.** — then list the workspaces updated, learnings added/bumped, any graduations (→ L2 / L3), any facts of record added, and whether a stack upgrade was suggested (e.g., `scrapers: +1 learning, app: ×3→L2 graduation, +1 fact of record`).
