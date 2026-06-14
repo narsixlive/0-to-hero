@@ -3,8 +3,11 @@
 #
 # What it does:
 #   1. Detects if CWD is a 0-to-Hero project (presence of CLAUDE.md at root).
-#   2. Finds all CONTEXT.md files in workspace folders (depth 1-3).
+#   2. Finds all LEARNINGS.md and CONTEXT.md files in workspace folders (depth 1-3).
 #   3. Extracts each file's `## Active Learnings` section (legacy `## Learnings` too).
+#      LEARNINGS.md is the current home (Durcir stack); CONTEXT.md is still scanned for
+#      backward compatibility with projects not yet migrated. Same extractor for both,
+#      so refreshing this hook never breaks an un-migrated project.
 #   4. Extracts the `## Ledger` (facts of record) section from root DECISIONS.md.
 #   5. Concatenates and returns JSON per Claude Code hook spec:
 #        {"hookSpecificOutput": {"hookEventName": "SessionStart", "additionalContext": "..."}}
@@ -29,18 +32,18 @@ fi
 
 # Collect Learnings per workspace.
 output=""
-while IFS= read -r context_file; do
-    # Workspace name = immediate parent folder of CONTEXT.md (e.g., src, planning, docs).
-    workspace_dir="$(dirname "${context_file}")"
+while IFS= read -r mem_file; do
+    # Workspace name = immediate parent folder of the memory file (e.g., src, planning, docs).
+    workspace_dir="$(dirname "${mem_file}")"
     workspace_name="$(basename "${workspace_dir}")"
 
     # Extract content between the Learnings heading and the next "## " heading.
-    # Two paths, by design:
+    # Runs on both LEARNINGS.md (current home) and CONTEXT.md (legacy home), same rules:
     #   - "## Active Learnings" (current template) → user-curated, injected UNCAPPED.
     #   - "## Learnings" (legacy, pre-split)       → uncurated, injected CAPPED AT 5,
     #     so refreshing this hook never blows up the per-session injection of an
     #     un-migrated project (the cap is the safety net; migrate to Active to lift it).
-    # Never matches "## Archived Learnings" — those are kept for reference, not injected.
+    # Never matches "## Archived Learnings" or "## Drift log" — kept for reference, not injected.
     # Skip HTML comments (<!-- ... -->) — section description, not content.
     # Only keep lines starting with "- " (actual rules).
     learnings="$(awk '
@@ -51,12 +54,12 @@ while IFS= read -r context_file; do
             if (legacy) { count++; if (count <= 5) print }
             else print
         }
-    ' "${context_file}")"
+    ' "${mem_file}")"
 
     if [[ -n "${learnings}" ]]; then
         output+=$'\n### '"${workspace_name}"$'\n'"${learnings}"$'\n'
     fi
-done < <(find "${cwd}" -maxdepth 3 -name "CONTEXT.md" -type f -not -path "*/node_modules/*" -not -path "*/.git/*" | sort)
+done < <(find "${cwd}" -maxdepth 3 \( -name "LEARNINGS.md" -o -name "CONTEXT.md" \) -type f -not -path "*/node_modules/*" -not -path "*/.git/*" | sort)
 
 # Collect facts-of-record Ledger from the project root DECISIONS.md.
 # Same contract as Learnings: only "- " lines inside the "## Ledger" section,
