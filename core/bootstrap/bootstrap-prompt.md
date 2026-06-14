@@ -195,8 +195,9 @@ Expected Opus behavior:
 
 Iterate until both parties are satisfied.
 
-### Generate ROADMAP.md
+### Generate docs/ROADMAP.md
 
+Write it to `docs/ROADMAP.md` (create `docs/` if absent) — never at the project root.
 Format adapted to the user's profile (inferred from answers, not asked):
 
 **Solo / personal project:**
@@ -310,8 +311,10 @@ The 0-to-Hero structure is created **at the root of the existing project**:
 ```
 my-project/                  ← the user's repo/folder
 ├── CLAUDE.md                ← routing + memory routing + Gotchas section
-├── ROADMAP.md               ← roadmap (if plan mode was used)
 ├── DECISIONS.md             ← facts-of-record ledger (injected) + ADR archive (on-demand)
+├── docs/                    ← ALL meta-docs (roadmap, plan, audits, research) — never at root
+│   ├── ROADMAP.md           ← roadmap (if plan mode was used)
+│   └── PLAN.md              ← construction/reference plan (if any)
 ├── .claude/
 │   └── settings.json        ← registers the global SessionStart hook (/memorise + /gotcha live globally — never copied here)
 ├── planning/                ← workspace 1
@@ -407,10 +410,13 @@ Rules:
   >    and you pick what interests you"
   Write nothing until the user has decided.
 - Workspace names come from the answers to question 2 — no generic names
-- Workspaces can reuse existing project folders (e.g.: `src/`, `docs/`)
+- Workspaces can reuse existing project folders (e.g.: `src/`, `scripts/`)
+- **A workspace is exactly a folder containing `AGENT.md`** (and listed in the Routing table). Everything else at the root — `.claude/`, `.github/`, `docs/`, `_private/`, data/output dirs — is support, never a workspace. The `## Repo layout` section in `CLAUDE.template.md` states this law; keep it in the generated CLAUDE.md.
+- **All meta-docs go in `docs/`** (roadmap, construction/reference plan, audits, readiness, research) — never scatter them at the root. Create `docs/` at bootstrap. CLAUDE.md routing points to the living ones (`docs/ROADMAP.md`, `docs/PLAN.md`); snapshot/finished docs sit in `docs/` unreferenced.
+- **`docs/` is reserved for meta-docs — never name a workspace `docs/`.** A documentation workspace takes a role name (`documentation/`, `writing/`). If an existing project already has a `docs/` workspace (it has `AGENT.md`), the law keeps it a workspace — don't force-rename it; put meta-docs in `_docs/` and flag the collision to the user.
 - `.skills/` is always a dotfile (hidden by default in file browsers)
 - Do NOT create a `0-to-hero/` sub-folder or similar — everything is flat at the root
-- If ROADMAP.md exists (from plan mode), CLAUDE.md points to it in its routing
+- If a roadmap exists (from plan mode), it lives at `docs/ROADMAP.md` and CLAUDE.md points to it in its routing
 
 If the user doesn't have a project yet, ask them to create the folder first.
 
@@ -489,10 +495,12 @@ the reusable sections: Shell / Navigation / Modifications / Startup / Memory / L
 
 Add project-specific sections **above** the base:
 - Project identity in 1 line
-- Routing table: intent → workspace → reading order
-- Pointer to ROADMAP.md if it exists
+- `## Structure`: workspaces + the support folders (`docs/`, `.claude/`, data/output, …), one line each
+- Routing table: intent → workspace → reading order (point meta-doc intents at `docs/ROADMAP.md`, `docs/PLAN.md`)
+- Pointer to `docs/ROADMAP.md` if it exists
 - Naming conventions if relevant
 - 2-3 project-specific rules max
+- The base `## Repo layout` section (from `CLAUDE.template.md`) carries the workspace law + `docs/` convention — keep it
 
 Short and scannable — if you scroll, it's too long.
 

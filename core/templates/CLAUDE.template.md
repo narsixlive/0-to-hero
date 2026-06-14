@@ -1,5 +1,12 @@
 # CLAUDE.md
 
+## Repo layout
+
+- **A workspace = a folder containing `AGENT.md`, listed in the Routing table.** Nothing else at the root is a workspace, ever. Enumerate workspaces with `rtk find AGENT.md` — never by guessing from folder names.
+- **Everything else at the root is support, never a workspace** — config (`.claude/`), CI (`.github/`), local data/output, `_private/` (sensitive data), and `docs/`. Each is declared in `## Structure`; none is routed as a workspace.
+- **All meta-docs live in `docs/`** — roadmap, construction/reference plan, audits, readiness reports, research notes. Never create them at the root. Routing points to the *living* ones (`docs/ROADMAP.md`, `docs/PLAN.md`); finished or snapshot docs stay in `docs/` unreferenced (consulted on demand). A doc stays findable because something **points** to it, not because of where it sits.
+- **`docs/` is reserved for meta-docs — never name a workspace `docs/`.** A documentation workspace takes a role name (`documentation/`, `writing/`).
+
 ## Shell
 
 Everything goes through `rtk`: `rtk grep`, `rtk ls`, `rtk find`, `rtk git …`. Never call directly.

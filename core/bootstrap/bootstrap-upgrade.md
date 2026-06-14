@@ -45,7 +45,7 @@ Scan the target project and produce a report with 3 sections:
 
 Run these audits. Use `rtk` prefixes on shell commands.
 
-1. **CLAUDE.md structure** — compare section headers against `CLAUDE.template.md`. Required sections: `## Shell`, `## Navigation`, `## Modifications`, `## Startup`, `## Memory`, `## Gotchas`. Flag missing or extra sections.
+1. **CLAUDE.md structure** — compare section headers against `CLAUDE.template.md`. Required sections: `## Repo layout`, `## Shell`, `## Navigation`, `## Modifications`, `## Startup`, `## Memory`, `## Gotchas`. Flag missing or extra sections. (A project predating the layout convention won't have `## Repo layout` — propose adding it from the template; cross-ref check 11.)
 
 2. **Stale `GOTCHA.md` references** — grep the whole project for `GOTCHA.md`. Every match is stale (the file was removed; gotchas now live in CLAUDE.md). List occurrences.
 
@@ -120,6 +120,12 @@ Run these audits. Use `rtk` prefixes on shell commands.
    - **No marker, no learnings anywhere** → just add the marker and create an empty `LEARNINGS.md` per workspace.
    Report which workspaces still carry learnings in `CONTEXT.md` (the migration candidates) and whether the marker is present.
 
+11. **Repo layout — workspace law + `docs/` convention** — four sub-checks. Declaration is free and safe; physical moves are opt-in and diff-reviewed only.
+   - **Undeclared workspaces** — every folder with an `AGENT.md` must be named in CLAUDE.md (Structure or Routing). Run `rtk find . -maxdepth 2 -name AGENT.md`; for each, grep its folder name in CLAUDE.md. A folder with `AGENT.md` absent from CLAUDE.md = drift (the SessionStart hook flags this live too). Propose adding it to the Routing table + `## Structure`.
+   - **Missing `## Repo layout` section** — if CLAUDE.md has no `## Repo layout` section, propose adding it from `CLAUDE.template.md` (the workspace law + `docs/` convention). Cross-ref check 1.
+   - **Meta-docs at the root** — list root-level docs other than `CLAUDE.md`, `DECISIONS.md`, `README.md` (e.g. `ROADMAP.md`, `PLAN*.md`, `AUDIT.md`, `READINESS.md`) and first-party doc folders that are neither workspaces nor framework support (e.g. `legal/`, `.planning/`). These belong in `docs/`. Propose the tidy (Step 3, repo-layout step) — opt-in, diff-reviewed.
+   - **`docs/` collision** — if a `docs/` folder has its own `AGENT.md` (it's a workspace), the law keeps it a workspace: do NOT move meta-docs into it, do NOT force-rename it. Flag it — meta-docs go to `_docs/` instead, and note new documentation workspaces should use a role name (`documentation/`).
+
 ### Step 3 — Patch, section-by-section, with validation
 
 After the audit, ask the user which sections to migrate. For each approved section:
@@ -177,6 +183,17 @@ If the user approves migrating the Learning layer, execute in order. **Note on t
 7. **Verify** — run the hook once in the project root to confirm it produces valid JSON (or exits silently if both the `## Active Learnings` sections and the `## Ledger` are empty). Show the output to the user.
 
 Commit message: `feat: install 0-to-Hero learning layer (hook + LEARNINGS.md Durcir split + DECISIONS.md Ledger + agent checklist + durcir-v1 marker)`
+
+### Repo layout tidy (check #11)
+
+Declaration is free and safe; physical moves carry reference-breakage risk, so they are opt-in and diff-reviewed.
+
+1. **Add the `## Repo layout` section** to CLAUDE.md from `CLAUDE.template.md` if absent (the workspace law + `docs/` convention). Translate the prose to the project language; keep the heading English.
+2. **Declare undeclared workspaces** — for each folder with `AGENT.md` not referenced in CLAUDE.md, add it to the Routing table + `## Structure`. No file moves.
+3. **Tidy meta-docs into `docs/` (opt-in)** — present the list of root meta-docs + non-workspace doc folders. On approval: `git mv` each into `docs/`, then update every reference (CLAUDE.md routing/structure pointers, cross-doc links, any path in scripts/CI). Show the diff first (it crosses the 20-line / 3-file thresholds). **Never move** framework/path-contract folders — `.claude/`, `.github/`, `.git/`, or any data/output dir referenced by code or CI by hardcoded path — declare those in `## Structure` instead. Skip any move that would break a reference the user can't easily update; leave the file and just declare it.
+4. **`docs/` collision** — if `docs/` is itself a workspace (`AGENT.md` present), keep it; route meta-docs to `_docs/` and flag it to the user.
+
+Commit message: `refactor: adopt repo-layout convention (workspace law + docs/ for meta-docs)`
 
 ### Step 4 — Final summary
 

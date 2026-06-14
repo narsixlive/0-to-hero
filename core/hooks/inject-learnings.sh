@@ -73,8 +73,24 @@ if [[ -f "${cwd}/DECISIONS.md" ]]; then
     ' "${cwd}/DECISIONS.md")"
 fi
 
-# If neither Learnings nor Ledger collected, exit silently.
-if [[ -z "${output}" && -z "${ledger}" ]]; then
+# Workspace layout drift check.
+# A workspace is, by definition, a folder containing AGENT.md (depth 1 — workspaces always
+# live at the project root). If CLAUDE.md never names such a folder, the Routing/Structure
+# has drifted from reality and the undeclared workspace gets missed. Surface it; stays
+# silent when every workspace is referenced. Folder name matched as a path token (word
+# boundaries) to avoid colliding with prose mentions.
+layout=""
+if [[ -f "${cwd}/CLAUDE.md" ]]; then
+    while IFS= read -r agent_file; do
+        ws_name="$(basename "$(dirname "${agent_file}")")"
+        if ! grep -qE "(^|[^[:alnum:]_-])${ws_name}([^[:alnum:]_-]|$)" "${cwd}/CLAUDE.md"; then
+            layout+=$'\n- ⚠ workspace `'"${ws_name}"$'` has an AGENT.md but is not referenced in CLAUDE.md — add it to ## Structure / Routing, or it gets missed.'
+        fi
+    done < <(find "${cwd}" -maxdepth 2 -name "AGENT.md" -type f -not -path "*/node_modules/*" -not -path "*/.git/*")
+fi
+
+# If nothing collected (Learnings, Ledger, or layout drift), exit silently.
+if [[ -z "${output}" && -z "${ledger}" && -z "${layout}" ]]; then
     exit 0
 fi
 
@@ -85,6 +101,9 @@ if [[ -n "${ledger}" ]]; then
 fi
 if [[ -n "${output}" ]]; then
     context+=$'# Workspace Learnings\n\nDurable rules scoped per workspace. Apply every ALWAYS/NEVER as a binding constraint when working in that workspace.\n'"${output}"
+fi
+if [[ -n "${layout}" ]]; then
+    context+=$'\n# Repo Layout Check\n\nWorkspace folders (have AGENT.md) not declared in CLAUDE.md. Surface to the user so Routing/Structure stays honest:\n'"${layout}"$'\n'
 fi
 
 # Emit JSON per Claude Code hook schema.

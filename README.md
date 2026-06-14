@@ -35,7 +35,8 @@ Works on a **new project** (empty folder) or an **existing one** — the bootstr
 
 **Step 4** — Claude generates your complete custom structure:
 - A `CLAUDE.md` at the root
-- One or more workspaces, each with `CONTEXT.md` (brief + state), `LEARNINGS.md` (rules), and `AGENT.md`
+- One or more workspaces, each with `CONTEXT.md` (brief + state), `LEARNINGS.md` (rules), and `AGENT.md` — a workspace is exactly a folder with an `AGENT.md`; everything else at the root is support
+- A `docs/` folder for all meta-docs (roadmap, plan, audits, research) — never scattered at the root
 - A `.claude/settings.json` wiring the `SessionStart` hook to auto-inject Learnings
 - Skill recommendations from the catalog
 
