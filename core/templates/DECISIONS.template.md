@@ -10,7 +10,8 @@ Two zones, two purposes. Do not mix them.
   consulted on demand when context is missing. One H2 per decision, dated.
 
 A fact goes in the **Ledger**; the reasoning behind a structural choice goes in
-the **ADR archive**. A behavioral rule is neither — that's `/gotcha`.
+the **ADR archive**. A behavioral rule is neither — a cross-workspace one goes via `/gotcha`
+(root CLAUDE.md), a workspace one is a Learning in `<workspace>/LEARNINGS.md`.
 
 ## Ledger (facts of record)
 <!-- Injected at SessionStart. Treat each line as current ground truth. -->

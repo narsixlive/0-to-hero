@@ -28,7 +28,7 @@ If more detail is needed → `mem-search "…"` → then `get_observations` on t
 
 | I say | Destination | Content |
 |---|---|---|
-| `/memorise` | claude-mem + workspace `CONTEXT.md` (state + Learnings) + `DECISIONS.md` ledger | Global session summary (claude-mem) + per-workspace thread update + auto-proposed workspace `Learnings` + auto-proposed facts of record |
+| `/memorise` | claude-mem + workspace `LEARNINGS.md` (rules) + `CONTEXT.md` (state) + `DECISIONS.md` ledger | Global session summary (claude-mem) + per-workspace thread update + auto-proposed / graduated `Learnings` + auto-proposed facts of record |
 | `/gotcha` | Gotchas section below | One-line cross-workspace rule: `NEVER/ALWAYS [action] ([why])` |
 | (via `/memorise`) | `DECISIONS.md` → `## Ledger` (injected at SessionStart) | Durable project facts: domain, app name, accounts, commitments. One dated line each. |
 | `remember forever` | Claude native memory | Permanent preferences, conventions, identity only |
@@ -38,13 +38,16 @@ Never put session context in native memory. Never put preferences in claude-mem.
 **Before closing**: `/memorise` → "Memorised." → `/clear`. Never `/clear` without `/memorise`.
 
 ## Learning mode
+<!-- learning-stack: durcir-v1 -->
 
-This project has the learning layer enabled.
-- **Cross-workspace rules** → Gotchas section below (fed by `/gotcha`)
-- **Workspace-specific rules** → `<workspace>/CONTEXT.md` → `## Learnings` (fed by `/memorise`)
+This project has the learning layer enabled (Durcir stack — rules harden through 3 levels).
+- **L1 — in-flight workspace rules** → `<workspace>/LEARNINGS.md` → `## Active Learnings` (fed by `/memorise`, auto-injected)
+- **L2 — role doctrine** → `<workspace>/AGENT.md` → `## Rules` (graduated from L1 at ×3 / cross-task / high-criticality)
+- **L3 — cross-workspace doctrine** → Gotchas section below (fed by `/gotcha`, or graduated from L1/L2)
 - **Durable project facts** → `DECISIONS.md` → `## Ledger` (fed by `/memorise`)
-- Agents apply both layers at task start via the Pre-work checklist in their `AGENT.md`
-- A `SessionStart` hook auto-injects workspace Learnings **and the `DECISIONS.md` ledger** at every new session
+- Demotions, archival and the drift log live in `LEARNINGS.md` (`## Archived Learnings`, `## Drift log`) — kept, not injected
+- Agents apply all rule layers at task start via the Pre-work checklist in their `AGENT.md`
+- A `SessionStart` hook auto-injects `## Active Learnings` **and the `DECISIONS.md` ledger** at every new session
 
 ## Gotchas
 

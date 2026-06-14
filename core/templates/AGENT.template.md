@@ -5,10 +5,10 @@
 Last updated: [date]
 
 ## Pre-work checklist (MANDATORY before any task)
-1. Read this workspace's `CONTEXT.md` — especially `## Learnings` section
-2. Apply every ALWAYS/NEVER rule as a binding constraint for the task
+1. Read this workspace's `LEARNINGS.md` `## Active Learnings` + this file's `## Rules` + `CONTEXT.md` `## Current state`
+2. Apply every ALWAYS/NEVER rule (Active Learnings + this file's Rules + root CLAUDE.md Gotchas) as a binding constraint
 3. At end of work, propose new Learnings via `/memorise` if a reusable pattern emerged
-4. If no `CONTEXT.md` exists, proceed normally and flag it to the user
+4. If no `LEARNINGS.md` / `CONTEXT.md` exists yet, proceed normally and flag it to the user
 
 ## Invocation scope
 
@@ -56,8 +56,12 @@ Last updated: [date]
 - User validates before activation
 
 ## Rules
-- Consult the Gotchas section of the root CLAUDE.md at startup (project-level rules)
-- Consult this workspace's `CONTEXT.md` `## Learnings` section (workspace-level rules)
-- If a cross-workspace pattern emerges: propose addition via `/gotcha` (root CLAUDE.md)
-- If a workspace-specific pattern emerges: `/memorise` will auto-propose it
-- Format in both cases: `NEVER/ALWAYS [action] ([why])`
+<!-- L2 (Contract) of the Durcir ladder: hardened doctrine for THIS role. Stable rules graduate
+     here from LEARNINGS.md `## Active Learnings` (at ×3 / cross-task / high-criticality):
+     copy the rule verbatim with its (why), then remove it from Active. -->
+
+- Consult the Gotchas section of the root CLAUDE.md at startup (L3 — cross-workspace doctrine)
+- Consult this workspace's `LEARNINGS.md` `## Active Learnings` (L1 — in-flight rules, also auto-injected)
+- A workspace rule that recurs/stabilises graduates here (L2); a cross-workspace one graduates via `/gotcha` to root CLAUDE.md (L3)
+- `/memorise` auto-proposes new L1 Learnings and the graduations
+- Format in all cases: `NEVER/ALWAYS [action] ([why])`

@@ -16,18 +16,10 @@ What are we building/producing? For whom? Why?]
 
 <!-- END BRIEF — zone below is maintained by /memorise -->
 
+<!-- Workspace rules (ALWAYS/NEVER) live in LEARNINGS.md (Durcir lifecycle), not here.
+     CONTEXT.md stays purely situational: where we are + the session thread. -->
+
 ---
-
-## Active Learnings
-<!-- TOP 5 rules currently most critical for this workspace. Auto-injected at SessionStart. -->
-<!-- Format: `- ALWAYS/NEVER [action] ([why])` — same as /gotcha. -->
-<!-- When promoting a rule from Archived, demote a stale one to keep the cap. -->
-<!-- Applied by the agent at task start via Pre-work checklist (see AGENT.md). -->
-
-## Archived Learnings
-<!-- Durable workspace rules no longer in the active top-5. Kept for reference, NOT auto-injected. -->
-<!-- Append-only via /memorise (auto-proposed, user validates). -->
-<!-- Promote back to Active Learnings when a relevant scenario re-emerges. -->
 
 ## Current state
 [Overwritten by /memorise. 3-5 lines: where we are, what's done, what remains.]
