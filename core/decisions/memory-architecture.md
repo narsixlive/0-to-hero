@@ -128,11 +128,11 @@ Decision: tell Claude to always use `rtk grep`, `rtk git`, etc. rather than rely
 
 ## Slash commands
 
-### /memorise (.claude/commands/memorise.md)
+### /memorise (~/.claude/commands/memorise.md — global, not per-project)
 
 Triggers a structured summary: decisions, changes, blockers, next steps. The summary is captured by claude-mem via the PostToolUse and Stop hooks. It also proposes per-workspace Learnings and facts of record (`DECISIONS.md` ledger), each validated by the user before writing. The "Memorised." confirmation signals to the user that they can `/clear`.
 
-### /gotcha (.claude/commands/gotcha.md)
+### /gotcha (~/.claude/commands/gotcha.md — global, not per-project)
 
 After a Claude mistake, appends a ONE-LINE rule to the Gotchas section of CLAUDE.md. NEVER/ALWAYS format. No narrative, no dates. The rule is loaded automatically at every subsequent session.
 

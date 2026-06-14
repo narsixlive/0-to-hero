@@ -313,9 +313,7 @@ my-project/                  ← the user's repo/folder
 ├── ROADMAP.md               ← roadmap (if plan mode was used)
 ├── DECISIONS.md             ← facts-of-record ledger (injected) + ADR archive (on-demand)
 ├── .claude/
-│   └── commands/
-│       ├── memorise.md      ← session recap + workspace thread update
-│       └── gotcha.md        ← one-line rule appender to CLAUDE.md Gotchas
+│   └── settings.json        ← registers the global SessionStart hook (/memorise + /gotcha live globally — never copied here)
 ├── planning/                ← workspace 1
 │   ├── CONTEXT.md           ← brief + Current state + Thread (updated by /memorise)
 │   ├── LEARNINGS.md         ← workspace rules (Durcir: Active / Archived / Drift log)
@@ -531,8 +529,9 @@ Q4 errors (if any) are injected directly into the Gotchas section of the root
 CLAUDE.md, format: `NEVER/ALWAYS [action] ([why])`. No separate GOTCHA.md file.
 
 ### Transversal files
-- `.claude/commands/memorise.md` — copy from `core/templates/commands/memorise.md`. Triggers session summary to claude-mem + per-workspace CONTEXT.md thread update + Durcir Learnings in LEARNINGS.md (bump/graduate/archive) + facts of record + a stack-freshness check.
-- `.claude/commands/gotcha.md` — one-line cross-workspace rule appender to the Gotchas section of the root CLAUDE.md (format: `NEVER/ALWAYS [action] ([why])`).
+- **`/memorise` and `/gotcha` are GLOBAL commands — never copied into the project.** They contain only generic logic (no project-specific data), so they live once at `~/.claude/commands/` and resolve in every project automatically. Install/refresh them idempotently from the repo, exactly like the global hook below: if `~/.claude/commands/memorise.md` / `~/.claude/commands/gotcha.md` are missing or not byte-identical to `core/templates/commands/`, copy them over; otherwise leave them untouched. Do **not** write `.claude/commands/*.md` inside the project — a per-project copy freezes the command at bootstrap time and silently drifts from the template (that is exactly how a project ends up never proposing the stack-freshness upgrade after the template gained it).
+  - `/memorise` → session summary to claude-mem + per-workspace CONTEXT.md thread update + Durcir Learnings in LEARNINGS.md (bump/graduate/archive) + facts of record + a stack-freshness check.
+  - `/gotcha` → one-line cross-workspace rule appender to the Gotchas section of the root CLAUDE.md (format: `NEVER/ALWAYS [action] ([why])`).
 - `.claude/settings.json` — opt-in the project into the Learning layer by registering the `SessionStart` hook:
   ```json
   {
