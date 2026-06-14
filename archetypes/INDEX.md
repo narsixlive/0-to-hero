@@ -8,7 +8,7 @@ custom structure through the bootstrap.
 
 | Archetype | Profile | Workspaces |
 |-----------|---------|------------|
-| [developer/](developer/) | Solo developer (TypeScript / React / Node.js) | planning, src, docs |
+| [developer/](developer/) | Solo developer (TypeScript / React / Node.js) | planning, src, documentation |
 | [creative/](creative/) | Freelance musician | creation, production |
 
 ## How to use an archetype

@@ -7,7 +7,7 @@ Web app in TypeScript / React / Node.js. Solo dev.
 ## Structure
 - /planning → Specs, architecture, technical decisions
 - /src → Code, tests, review
-- /docs → Technical documentation and guides
+- /documentation → Technical documentation and guides
 - /.skills → Available skills (loaded on-demand via AGENT.md)
 
 ## Routing
@@ -15,7 +15,7 @@ Web app in TypeScript / React / Node.js. Solo dev.
 |--------|-----------|---------------|
 | New feature, refactor, architecture | /planning | LEARNINGS.md + CONTEXT.md → AGENT.md |
 | Code, test, review | /src | LEARNINGS.md + CONTEXT.md → AGENT.md |
-| Write or update documentation | /docs | LEARNINGS.md + CONTEXT.md → AGENT.md |
+| Write or update documentation | /documentation | LEARNINGS.md + CONTEXT.md → AGENT.md |
 
 ## Reading order (always the same)
 1. LEARNINGS.md (`## Active Learnings` = the binding rules) + CONTEXT.md (brief + state = what I'm working on)

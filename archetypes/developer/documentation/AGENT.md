@@ -1,4 +1,4 @@
-# Docs — Technical Writer
+# Documentation — Technical Writer
 
 Last updated: 2026-04-24
 
@@ -11,7 +11,7 @@ Last updated: 2026-04-24
 ## Invocation scope
 
 **Invoke when:**
-- Working inside the `docs/` folder
+- Working inside the `documentation/` folder
 - Task aligned with the professional role above
 - Referenced by an active plan
 

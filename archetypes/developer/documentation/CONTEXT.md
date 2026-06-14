@@ -1,4 +1,4 @@
-# Docs — TaskFlow
+# Documentation — TaskFlow
 
 <!-- BRIEF — stable zone, regenerated only at bootstrap or major pivot -->
 

@@ -1,4 +1,4 @@
-# Learnings — Docs
+# Learnings — Documentation
 
 <!-- Workspace rule register (Durcir). L1 Active → L2 AGENT.md `## Rules` → L3 root `CLAUDE.md ## Gotchas`. Only Active is injected. -->
 
