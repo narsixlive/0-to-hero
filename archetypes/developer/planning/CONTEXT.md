@@ -20,10 +20,7 @@ and technical choices. Everything that needs to be decided before coding.
 
 ---
 
-## Learnings
-<!-- Durable workspace rules. Append-only via /memorise (auto-proposed, user validates). Format: `- ALWAYS/NEVER [action] ([why])` -->
-- ALWAYS end specs with an "Accepted when: [list]" section (prevents ambiguous sign-off)
-- NEVER decide architecture in /src — all structural decisions go through /planning first (keeps decisions discoverable)
+<!-- Workspace rules live in LEARNINGS.md (Durcir lifecycle). CONTEXT.md stays purely situational. -->
 
 ## Current state
 - User auth: specified ✅, in development

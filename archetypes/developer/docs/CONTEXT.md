@@ -19,11 +19,7 @@ Audience: developers who want to use or contribute to the project.
 
 ---
 
-## Learnings
-<!-- Durable workspace rules. Append-only via /memorise (auto-proposed, user validates). -->
-<!-- Format: `- ALWAYS/NEVER [action] ([why])` — same as /gotcha. -->
-<!-- Applied by the agent at task start via Pre-work checklist (see AGENT.md). -->
-<!-- If this section grows past ~20 entries, /memorise will suggest consolidation. -->
+<!-- Workspace rules live in LEARNINGS.md (Durcir lifecycle). CONTEXT.md stays purely situational. -->
 
 ## Current state
 - README: ✅ up to date

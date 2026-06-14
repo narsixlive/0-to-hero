@@ -21,10 +21,7 @@ exploring artistic directions for client briefs.
 
 ---
 
-## Learnings
-<!-- Durable workspace rules. Append-only via /memorise (auto-proposed, user validates). Format: `- ALWAYS/NEVER [action] ([why])` -->
-- ALWAYS get the brief validated in writing before composing for a client (past rework: composed off an unconfirmed brief)
-- NEVER edit the master Ableton file directly — always work on a versioned copy (prevents unrecoverable overwrites)
+<!-- Workspace rules live in LEARNINGS.md (Durcir lifecycle). CONTEXT.md stays purely situational. -->
 
 ## Current state
 - "Neon Drift" (client: Ubisoft sync): structure composed, waiting for brief feedback

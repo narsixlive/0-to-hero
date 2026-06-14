@@ -13,12 +13,12 @@ Web app in TypeScript / React / Node.js. Solo dev.
 ## Routing
 | Intent | Workspace | Read in order |
 |--------|-----------|---------------|
-| New feature, refactor, architecture | /planning | CONTEXT.md (inc. Learnings) → AGENT.md |
-| Code, test, review | /src | CONTEXT.md (inc. Learnings) → AGENT.md |
-| Write or update documentation | /docs | CONTEXT.md (inc. Learnings) → AGENT.md |
+| New feature, refactor, architecture | /planning | LEARNINGS.md + CONTEXT.md → AGENT.md |
+| Code, test, review | /src | LEARNINGS.md + CONTEXT.md → AGENT.md |
+| Write or update documentation | /docs | LEARNINGS.md + CONTEXT.md → AGENT.md |
 
 ## Reading order (always the same)
-1. CONTEXT.md (brief + `## Learnings` = what I'm working on + the binding rules)
+1. LEARNINGS.md (`## Active Learnings` = the binding rules) + CONTEXT.md (brief + state = what I'm working on)
 2. AGENT.md (who I am, what to load)
 3. Root CLAUDE.md Gotchas section (cross-workspace rules)
 4. Skills only if AGENT.md requests them

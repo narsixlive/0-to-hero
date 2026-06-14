@@ -3,7 +3,7 @@
 Last updated: 2026-04-24
 
 ## Pre-work checklist (MANDATORY before any task)
-1. Read this workspace's `CONTEXT.md` — especially `## Learnings` section
+1. Read this workspace's `LEARNINGS.md` `## Active Learnings` + this AGENT.md `## Rules` + `CONTEXT.md` `## Current state`
 2. Apply every ALWAYS/NEVER rule as a binding constraint for the task
 3. At end of work, propose new Learnings via `/memorise` if a reusable pattern emerged
 4. If no `CONTEXT.md` exists, proceed normally and flag it to the user
@@ -40,7 +40,7 @@ meets technical standards and client expectations.
 
 ## Process
 1. Verify the composition is validated in /creation
-2. Run through the mix checklist (see `CONTEXT.md` `## Learnings`)
+2. Run through the mix checklist (see `LEARNINGS.md`)
 3. Export files according to the naming convention
 4. Run through the delivery checklist
 5. Send files with a summary email
@@ -50,6 +50,6 @@ meets technical standards and client expectations.
 - Does not sign contracts alone
 
 ## Rules
-- Cross-workspace rules live in the root CLAUDE.md `## Gotchas` — consult at startup
-- Workspace-specific rules live in this `CONTEXT.md` `## Learnings` — applied via Pre-work checklist
-- Propose cross-workspace additions via `/gotcha` ; `/memorise` auto-proposes workspace Learnings
+- Cross-workspace doctrine (L3) lives in the root CLAUDE.md `## Gotchas` — consult at startup
+- Workspace rules: L1 in `LEARNINGS.md` `## Active Learnings`, graduating to this file's `## Rules` (L2) then Gotchas (L3) — applied via Pre-work checklist
+- Propose cross-workspace additions via `/gotcha` (L3) ; `/memorise` auto-proposes and graduates workspace Learnings

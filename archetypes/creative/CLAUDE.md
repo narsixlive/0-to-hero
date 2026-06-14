@@ -12,11 +12,11 @@ Music composition and production for sync, video games, and direct clients.
 ## Routing
 | Intent | Workspace | Read in order |
 |--------|-----------|---------------|
-| Compose, write, iterate on a track | /creation | CONTEXT.md (inc. Learnings) → AGENT.md |
-| Mix, master, deliver to client | /production | CONTEXT.md (inc. Learnings) → AGENT.md |
+| Compose, write, iterate on a track | /creation | LEARNINGS.md + CONTEXT.md → AGENT.md |
+| Mix, master, deliver to client | /production | LEARNINGS.md + CONTEXT.md → AGENT.md |
 
 ## Reading order (always the same)
-1. CONTEXT.md (brief + `## Learnings` = what I'm working on + the binding rules)
+1. LEARNINGS.md (`## Active Learnings` = the binding rules) + CONTEXT.md (brief + state = what I'm working on)
 2. AGENT.md (who I am, what to load)
 3. Root CLAUDE.md Gotchas section (cross-workspace rules)
 4. Skills only if AGENT.md requests them
@@ -27,4 +27,4 @@ Music composition and production for sync, video games, and direct clients.
 
 ## Global rules
 - Every track goes through /creation before /production
-- Never deliver without the delivery checklist (in production CONTEXT.md `## Learnings`)
+- Never deliver without the delivery checklist (in production `LEARNINGS.md`)
