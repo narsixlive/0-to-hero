@@ -9,10 +9,11 @@
 An open-source system based on a 3-layer architecture + a transversal learning layer:
 
 - **CLAUDE.md** — The map: routing to workspaces, short and scannable, hosts the cross-workspace Gotchas section
-- **CONTEXT.md** — The room: the work brief + workspace-specific `## Learnings` (durable rules grown over time)
-- **AGENT.md** — The specialist: role, skills, process, Pre-work checklist that binds the Learnings at task start
+- **CONTEXT.md** — The room: the work brief + current state (situational context)
+- **AGENT.md** — The specialist: role, skills, process, Pre-work checklist that binds the rules at task start
+- **LEARNINGS.md** *(learning layer)* — workspace rules that *harden* through 3 levels (Durcir): Active (auto-injected) → `AGENT.md` Rules → Gotchas
 
-A `SessionStart` hook auto-injects workspace Learnings into every new session. Each workspace is isolated. Claude knows exactly who it is when it enters a room.
+A `SessionStart` hook auto-injects each workspace's Active Learnings into every new session. Each workspace is isolated. Claude knows exactly who it is when it enters a room.
 
 ---
 
@@ -34,7 +35,7 @@ Works on a **new project** (empty folder) or an **existing one** — the bootstr
 
 **Step 4** — Claude generates your complete custom structure:
 - A `CLAUDE.md` at the root
-- One or more workspaces, each with `CONTEXT.md` (brief + Learnings) and `AGENT.md`
+- One or more workspaces, each with `CONTEXT.md` (brief + state), `LEARNINGS.md` (rules), and `AGENT.md`
 - A `.claude/settings.json` wiring the `SessionStart` hook to auto-inject Learnings
 - Skill recommendations from the catalog
 

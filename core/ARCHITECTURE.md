@@ -9,17 +9,16 @@ GPS of the project. Read first, always. Loaded at every session for free.
 - Short and scannable (if you scroll, it's too long)
 - Does NOT describe the work, does NOT describe the agents
 
-### Layer 2: CONTEXT.md — The room
-Workspace brief + Learnings + living thread. What you'd give a new colleague.
-- Brief zone (stable): work, project, audience, constraints
-- Learnings zone (durable, append-only): workspace-specific `ALWAYS/NEVER` rules, grown by `/memorise` over time, auto-injected at session start via the Learning layer hook
-- Current state + Thread (volatile, updated by `/memorise`, captures session context)
-- The essentials fit on one screen
-- 80% work description / 20% behavior max
+### Layer 2: CONTEXT.md + LEARNINGS.md — The room
+What you'd give a new colleague — split by lifetime into two files.
+- **CONTEXT.md** (situational): Brief zone (stable: work, project, audience, constraints) + Current state + Thread (volatile, updated by `/memorise`)
+- **LEARNINGS.md** (the workspace rule register, Durcir lifecycle): `## Active Learnings` (`ALWAYS/NEVER [action] ([why]) ×N`, auto-injected) + `## Archived Learnings` + `## Drift log`. Rules harden through 3 levels (L1 here → L2 `AGENT.md ## Rules` → L3 root Gotchas)
+- The essentials fit on one screen; 80% work description / 20% behavior max
 
 ### Layer 3: AGENT.md — The specialist
 Brain of the workspace. Transforms Claude into a specialist.
-- Pre-work checklist (header): forces reading `CONTEXT.md` `## Learnings` and applying every rule before any task
+- Pre-work checklist (header): forces reading `LEARNINGS.md` `## Active Learnings` + this file's `## Rules` and applying every rule before any task
+- `## Rules` is the L2 (Contract) rung of the Durcir ladder — stable workspace rules graduate here from `LEARNINGS.md`
 - Role, capabilities, skills, process, limits
 - Invocation scope: when to call this agent, when NOT to
 - Dense and actionable (no prose, only instructions)
@@ -122,25 +121,35 @@ via hooks, stores in SQLite + Chroma vector DB. Query with `mem-search "…"`.
 No `.memory/` folder. No MEMORY.md index to maintain. No agent writes at session end.
 Hooks handle capture automatically — nothing required from the user or the agent.
 
-## Transversal: Learning layer
+## Transversal: Learning layer (Durcir)
 
-Self-improving agents, folder-based, opt-in per project.
+Self-improving agents, folder-based, opt-in per project. Workspace rules **harden** through three levels instead of piling up in one list.
 
 Three moving parts:
-1. **`## Learnings` section** in each workspace's `CONTEXT.md` — durable rules in `ALWAYS/NEVER [action] ([why])` format. Starts empty, grown over time.
-2. **`/memorise` auto-propose** — at session end, scans the session for reusable workspace-specific patterns and asks the user `y/n` per candidate before appending.
-3. **`SessionStart` hook** (`~/.claude/hooks/inject-learnings.sh`) — at every new session, scans the project's `CONTEXT.md` files, extracts `## Learnings` sections, and injects them as `additionalContext` so agents have rules in hand before the first prompt.
+1. **`LEARNINGS.md` per workspace** — `## Active Learnings` (in-flight `ALWAYS/NEVER [action] ([why]) ×N` rules, injected) + `## Archived Learnings` (demoted / non-recurrent, kept, not injected) + `## Drift log` (rules ignored despite being capitalized). Kept separate from `CONTEXT.md` so the situational context stays pure.
+2. **`/memorise` (Durcir lifecycle)** — at session end it proposes Learnings, **bumps `×N` on recurrence instead of skipping a duplicate** (the duplicate is the signal), proposes **graduation** at the thresholds, archives stale ones, logs drift. The user validates each write.
+3. **`SessionStart` hook** (`~/.claude/hooks/inject-learnings.sh`) — scans `LEARNINGS.md` (and legacy `CONTEXT.md`) files, injects each `## Active Learnings` section + the `DECISIONS.md ## Ledger` as `additionalContext`.
+
+The ladder:
+- **L1 — Active Learnings** (`LEARNINGS.md`): in-flight, injected, counted (`×N`).
+- **L2 — Role doctrine** (`AGENT.md ## Rules`): a rule graduates here at ×3 / when it stabilises / when it blocks work. Workspace-scoped.
+- **L3 — Cross-workspace doctrine** (root `CLAUDE.md ## Gotchas`, via `/gotcha`): cross-workspace or high-criticality rules; a critical rule may jump straight to L3.
+
+Graduating copies the rule verbatim (with its `why`) to the higher level and **removes it from Active — the list drains upward instead of growing**. Demotion is possible (never just to lighten a file). The `## Drift log` measures how long a rule takes to harden; a rule that drifts < 7 days repeatedly is in the wrong layer → graduate it straight to L3.
 
 Why this shape:
-- **Separation of scope**: cross-workspace rules go to CLAUDE.md Gotchas (via `/gotcha`). Workspace-specific rules go to workspace `CONTEXT.md` (via `/memorise`). Same format, two destinations, one rule picks the right slot.
+- **Recurrence over recency**: a rule earns its place by recurring (`×N`), not by being newest. Bump-not-skip turns the old dedup check into the graduation engine.
+- **Purity by flow**: `CONTEXT.md` stays clean because winners leave Active (graduate) and losers leave too (archive) — separation by lifetime, not by stuffing everything in one file.
 - **Two-stage gating**: the LLM proposes, the user validates. Prevents prompt pollution and drift.
-- **Deterministic injection**: the hook guarantees agents see the rules, even when `SessionStart` fires on resume/clear/compact. Pre-work checklist in `AGENT.md` is the belt-and-suspenders backup (covers subagents the hook cannot reach).
+- **Deterministic injection**: the hook guarantees agents see the Active rules; the Pre-work checklist in `AGENT.md` is the belt-and-suspenders backup (covers subagents the hook cannot reach).
 
-Installation: opt-in per project via `.claude/settings.json` pointing to the globally-installed hook script. The `/bootstrap-upgrade` command handles migration of existing projects.
+Lineage: Jake Van Clief's "durcir tes règles capitalisées" / edit-source principle applied to a folder-based system, aligned with Anthropic's "keep the hot context lean, push detail to scoped files" and Karpathy's RAM/disk context model (Active = RAM injected, Archived/Drift = disk).
+
+Installation: opt-in per project via `.claude/settings.json` pointing to the globally-installed hook. `/bootstrap-upgrade` migrates existing projects (splits `CONTEXT.md` rules into `LEARNINGS.md`, stamps the `<!-- learning-stack: durcir-v1 -->` marker). `/memorise` reads that marker and offers the upgrade when a project is behind.
 
 Limits:
-- Proposed Learnings can be noisy (~60-70% accept rate expected). The two-stage gating filters them.
-- `## Learnings` can grow indefinitely; `/memorise` suggests consolidation at 20+ entries per workspace.
+- Proposed Learnings can be noisy; the two-stage gating filters them.
+- Recurrence detection depends on matching a candidate against existing Active/Archived rules (read at `/memorise` time) — a re-phrased rule can under-count; the human disambiguates at the gate, `mem-search` is the backstop.
 - Patterns that apply only "sometimes" don't fit the ALWAYS/NEVER format — don't force them.
 
 ## Transversal: Token Efficiency stack
@@ -176,7 +185,7 @@ Project roadmap, generated by plan mode.
 ## Standard reading flow
 
 ```
-CLAUDE.md (routing + gotchas) → CONTEXT.md (brief + Learnings + state) → AGENT.md → [skills on-demand] → [mem-search if needed] → [DECISIONS.md if context missing]
+CLAUDE.md (routing + gotchas) → LEARNINGS.md (Active) + CONTEXT.md (brief + state) → AGENT.md (Rules) → [skills on-demand] → [mem-search if needed] → [DECISIONS.md if context missing]
 ```
 
 With the Learning layer opt-in, workspace Learnings **and the `DECISIONS.md` ledger** are auto-injected at session start via the `SessionStart` hook — so they're in the agent's context before the first prompt, ahead of the normal reading flow. The Pre-work checklist in `AGENT.md` ensures the same rules are re-read by subagents the hook cannot reach.

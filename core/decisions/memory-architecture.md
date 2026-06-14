@@ -63,6 +63,18 @@ A separate file requires a Read tool call at every session start → wasted toke
 
 Every token of CLAUDE.md is loaded at every message, every session, every compact. It is the most expensive space in tokens. It must contain only routing and rules, never context or preferences.
 
+## Durcir — workspace rule lifecycle
+
+Workspace rules live in `<workspace>/LEARNINGS.md` (not `CONTEXT.md`) and harden through three levels rather than accumulating in one list:
+
+- **L1 — `LEARNINGS.md ## Active Learnings`**: in-flight rules, `ALWAYS/NEVER [action] ([why]) ×N`, injected at SessionStart. `/memorise` bumps `×N` on recurrence (it does not skip a duplicate — the duplicate is the signal).
+- **L2 — `AGENT.md ## Rules`**: a rule graduates here at ×3 / when stable / when it blocks work. Role-scoped doctrine.
+- **L3 — `CLAUDE.md ## Gotchas`**: cross-workspace or high-criticality rules (via `/gotcha`, or graduated up).
+
+Graduation copies the rule verbatim a level up and removes it from Active, so the injected list **drains upward instead of growing**. `## Archived Learnings` holds demoted / non-recurrent rules (kept, not injected); `## Drift log` records rules ignored despite being capitalized (a rule drifting < 7 days repeatedly is in the wrong layer → straight to L3).
+
+A `<!-- learning-stack: durcir-v1 -->` marker in CLAUDE.md lets `/memorise` detect a stale project and offer `/bootstrap-upgrade`. The injection hook reads both `LEARNINGS.md` and legacy `CONTEXT.md`, so un-migrated projects keep working until migrated. Full detail: `core/ARCHITECTURE.md` → "Learning layer (Durcir)".
+
 ## The /clear problem
 
 ### Observation
