@@ -569,6 +569,28 @@ in a single block for the user to validate at once.
    - Why this skill is relevant for THIS specific profile
    - Recommended mode (always or on-demand) and why
 
+**Discovery fallback** — when a workspace need has no good match in the curated
+catalog (or the catalog entry looks stale), do NOT invent a repo or point at an
+outdated one. Delegate to the open skills ecosystem:
+
+- `npx skills find "<need>"` — non-interactive when a query is given; prints a
+  ranked list (installs + source) and exits. Favor 1K+ installs and official
+  sources (Anthropic/Vercel/OpenAI). Each result is an `owner/repo@skill` ref.
+- Surface the top 1-2 candidates as on-demand suggestions, same as catalog skills.
+
+The curated catalog stays the source of truth for *profile-fit* (a leaderboard
+ranks by popularity, not by fit for THIS profile). `find-skills` only fills gaps.
+
+**Install** — skills share our `SKILL.md` format, so install in place rather than
+hand-copying files. The CLI auto-detects Claude Code and runs non-interactively,
+but by default installs *universally* into `.agents/skills/`. To land in
+`.claude/skills/` specifically, target Claude Code explicitly:
+
+- `npx skills add <owner/repo> -s <skill> -a claude-code -y` → copies into
+  `.claude/skills/<skill>/` (project scope). `add` clones the repo, so it is a
+  real install, not a dry lookup — only run it on a validated candidate.
+- Validated skills from the catalog install the same way.
+
 ### Token Efficiency Stack
 
 Tools that reduce token consumption — installed at bootstrap, before workspace generation.
