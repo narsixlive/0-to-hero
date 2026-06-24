@@ -13,6 +13,26 @@ The user starts with solid, ready-to-shape skills/agents, not from scratch.
 **Phase 1**: existing skills + agents adapted to the profile
 **Phase 2**: the agent creates custom skills if a pattern repeats 3+ times
 
+### Discovery fallback (when this catalog has no match)
+
+This catalog is curated for *profile-fit* and updated by hand — so it can go stale
+and won't cover every niche need. When a workspace need has no good match here,
+delegate to the open skills ecosystem instead of inventing or pointing at a dead repo:
+
+```bash
+# search live registry — non-interactive with a query, ranked by installs + source
+npx skills find "<need>"
+
+# install a validated candidate into .claude/skills/ (same SKILL.md format as ours)
+# -a claude-code is required: the default installs universally into .agents/skills/
+npx skills add <owner/repo> -s <skill> -a claude-code -y
+```
+
+Division of labor: **this catalog owns profile-fit** (which skill suits THIS profile);
+**`npx skills` owns freshness + reach** (what exists right now, across the ecosystem).
+A leaderboard ranks by popularity, not fit — so the catalog stays the source of truth
+for recommendations, and discovery only fills the gaps.
+
 ---
 
 ## Recommendations by profile (cross-cutting view)
