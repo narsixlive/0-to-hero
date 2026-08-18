@@ -26,7 +26,25 @@ For each touched workspace, scan the session for **reusable patterns specific to
 - Generalizes beyond the single file or task that triggered it
 - Will likely apply to future sessions in the same workspace
 
-For each candidate, **first check for recurrence** — read the workspace's `LEARNINGS.md` `## Active Learnings` AND `## Archived Learnings` (and `mem-search` the pattern if unsure):
+**Redundancy gate — kill the candidate BEFORE proposing it** if either applies:
+
+- **The code now enforces it.** The session's own fix made the mistake structurally impossible (guard in the shared seam, DB constraint, lock, type, CI test). A rule the code enforces is a fact, not doctrine to re-inject — do NOT propose it as Active. If future work must still honor the constraint (e.g. a scaling assumption behind the fix), offer ONE line directly to `## Archived Learnings` (constraint of record, never injected) or to the `DECISIONS.md` ledger instead.
+- **It is already written at another layer.** Check the workspace `AGENT.md` `## Rules` (L2), the root `CLAUDE.md` (`## Gotchas` L3 + global rules), and `DECISIONS.md`. Already there → skip silently; a `×N` bump only exists within `LEARNINGS.md`. Close-but-not-identical → propose amending the existing rule in place, never a near-duplicate L1 copy.
+
+**Fix-at-source gate — convert the rule into structure before storing it.** For each candidate that survives the redundancy gate, check whether a surgical fix would make the rule structurally unnecessary. Walk the enforcement ladder, stop at the first rung that applies:
+
+1. **Code guard at the shared seam** — assert, validation, DB constraint, lock, type
+2. **Hook or CI check** — PreToolUse block, PostToolUse formatter/checker, existing test
+3. **Template / config edit** — when the rule polices generated or configured files
+4. **AGENT.md process line** — when the rule is really a step in the role's process
+
+If a rung applies AND the fix is surgical — **one file, ~10 lines max, verifiable with one command** — propose it instead of the rule: `[workspace] Fix at source instead of rule? (y/n): <one-line edit description>`. On `y` → apply the edit, show the diff, run the verification, and do NOT write the Learning (optionally offer ONE constraint-of-record line to `## Archived Learnings` or the `DECISIONS.md` ledger, as in the redundancy gate). On `n` → the candidate continues below.
+
+If a real fix exists but is too big for session end → park it as the FIRST item of **Next steps** in the session summary AND the workspace `## Current state`, and do NOT write the Learning — the parked fix is the memory. Never write both the rule and the parked fix.
+
+Only candidates with no structural fix (genuinely behavioral rules) proceed to the recurrence check.
+
+For each surviving candidate, **check for recurrence** — read the workspace's `LEARNINGS.md` `## Active Learnings` AND `## Archived Learnings` (and `mem-search` the pattern if unsure):
 
 **A) Already present (recurrence) — do NOT skip. The duplicate IS the signal.**
 - Bump its `×N` counter by 1. If it was in `## Archived Learnings`, move it back into `## Active Learnings`.
