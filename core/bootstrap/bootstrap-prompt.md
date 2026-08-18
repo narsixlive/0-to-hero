@@ -608,7 +608,6 @@ Transparent to the user: no manual action required after installation.
 
 | Tool | What it does | Installation |
 |------|-------------|-------------|
-| **graphify** | Code knowledge graph. Run once per repo (`graphify .`). Read before any architecture question. | `pip install graphifyy && graphify install && graphify claude install` |
 | **jCodeMunch** | Symbol-level code retrieval via AST. Replaces full-file reads (95% token reduction). | `pip install jcodemunch-mcp && jcodemunch-mcp init` |
 | **context7** | Current library/framework docs. Replaces web search for API/SDK/CLI questions. | Add via Claude Code MCP settings |
 
@@ -617,7 +616,7 @@ Transparent to the user: no manual action required after installation.
 | Profile | Stack |
 |---------|-------|
 | All | RTK + ccusage + claude-mem |
-| Technical | + graphify + jCodeMunch + context7 |
+| Technical | + jCodeMunch + context7 |
 
 ### CLAUDE.md navigation block (technical profile only)
 
@@ -626,17 +625,14 @@ After workspace generation, append this block verbatim to the project CLAUDE.md:
 ```
 ## Shell
 
-All commands via `rtk`: `rtk grep`, `rtk ls`, `rtk find`, `rtk git …`. No direct calls.
+`rtk` wraps shell commands: `rtk git`, `rtk ls`, `rtk find`, `rtk grep` in Bash. Harness tools (Grep/Glob/Read) are not shell commands — use them directly.
 
-## Navigation (strict order, 1 to 5)
+## Navigation (route by target, no strict order)
 
-1. **"How is X related to Y?"** → `graphify-out/GRAPH_REPORT.md`, then `graphify query "…"`
-2. **"Show me the code for X"** → `jcodemunch search_symbols` → `get_symbol`
-3. **"Find this text"** → `rtk grep "…" .`
-4. **"What did we do before?"** → `mem-search "…"`
-5. **Read a full file** → last resort, prefer `get_file_outline`
-
-No Read > 150 lines without jCodeMunch. No architecture without GRAPH_REPORT.md.
+- **Code symbols** → `jcodemunch search_symbols` → `get_symbol`. Full-file Read only if the outline is not enough.
+- **Markdown / docs / config** → Read directly, no restriction.
+- **"Find this text"** → Grep tool (shell fallback: `rtk grep`)
+- **"What did we do before?"** → `mem-search "…"`
 
 ## Modifications
 
@@ -645,8 +641,7 @@ Do not fix adjacent issues without asking. No unsolicited suggestions.
 
 ## Startup
 
-Check silently: GRAPH_REPORT.md, claude-mem, jCodeMunch.
-If no graph → `get_repo_outline` + suggest `graphify .`.
+Check silently: claude-mem, jCodeMunch.
 ```
 
 ### Memory & Navigation Tools
@@ -658,13 +653,11 @@ complementary to Token Reducers.
 |------|-------------|-------------|
 | **claude-mem** | Persistent cross-session memory (SQLite + Chroma, local). Powers `/memorise` and `mem-search`. Mandatory base of the memory architecture. | `npx claude-mem@latest install` |
 | **jCodeMunch** | Code navigation by symbol (`search_symbols`, `get_file_outline`, `get_symbol_source`) instead of full-file reads. | MCP server install |
-| **graphify** | Project knowledge graph (architecture map, god nodes, cross-file relations). | See catalog |
 | **Context7** | Up-to-date documentation for external libraries (MCP server). | MCP server install |
 
 **Recommendation by profile:**
 - **claude-mem** → always, all profiles (base of the memory routing)
 - **jCodeMunch** → recommended for any code-heavy project
-- **graphify** → recommended for multi-project or large codebases
 - **Context7** → recommended when external libs/APIs are used
 
 ### Validation
@@ -686,7 +679,7 @@ to install the tools that aren't already present.
 5. Flag incompatibilities (e.g.: ContextZip hooks on Windows)
 
 ### What we install
-- **Token efficiency stack** — RTK, ccusage, claude-mem for all profiles; graphify, jCodeMunch, context7 for technical profiles
+- **Token efficiency stack** — RTK, ccusage, claude-mem for all profiles; jCodeMunch, context7 for technical profiles
 - **MCP servers** validated at the Tooling step (e.g.: linkedin-mcp-server)
 - **Skills** that require installation (e.g.: npx for some skills)
 

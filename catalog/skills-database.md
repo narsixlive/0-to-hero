@@ -312,7 +312,6 @@ Installed at bootstrap, not per workspace. Transparent to the user.
 
 | Tool | Source | Savings | What it does |
 |------|--------|---------|-------------|
-| `graphify` | safishamsi/graphify | high | Code knowledge graph — read before any architecture question |
 | `jCodeMunch` | jgravelle/jcodemunch-mcp | 95% on reads | Symbol-level code retrieval via AST — replaces full-file reads |
 | `context7` | MCP server | high | Current library/framework docs — replaces web search for API/SDK questions |
 
