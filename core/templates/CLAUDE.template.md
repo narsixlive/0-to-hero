@@ -9,18 +9,15 @@
 
 ## Shell
 
-Everything goes through `rtk`: `rtk grep`, `rtk ls`, `rtk find`, `rtk git …`. Never call directly.
+`rtk` wraps shell commands: `rtk git`, `rtk ls`, `rtk find`, `rtk grep` in Bash. Harness tools (Grep/Glob/Read) are not shell commands — use them directly.
 
-## Navigation (strict order, follow 1 to 6)
+## Navigation (route by target, no strict order)
 
-1. **"How is X linked to Y?"** → `graphify-out/GRAPH_REPORT.md`, then `graphify query "…" --budget 1500`
-2. **"Show me the code for X"** → `jcodemunch search_symbols` → `get_file_outline` → `get_symbol_source`
-3. **"Which API should I use?"** → Context7 MCP (use `/org/project` format if the lib is known)
-4. **"Find this text"** → `rtk grep "…" .`
-5. **"What did we do before?"** → `mem-search "…"`
-6. **Read a whole file** → last resort, prefer `get_file_outline`
-
-No Read > 150 lines without jCodeMunch. No architecture answers without GRAPH_REPORT.md.
+- **Code symbols** (source files) → `jcodemunch search_symbols` → `get_file_outline` → `get_symbol_source`. Full-file Read only if the outline is not enough.
+- **Markdown / docs / config** → Read directly, no restriction.
+- **"Which API should I use?"** → Context7 MCP (use `/org/project` format if the lib is known)
+- **"Find this text"** → Grep tool (shell fallback: `rtk grep`)
+- **"What did we do before?"** → `mem-search "…"`
 
 ## Modifications
 

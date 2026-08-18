@@ -165,19 +165,17 @@ Installed at bootstrap, not per workspace. Transparent to the user.
 
 | Tool | Profile | What it does |
 |------|---------|-------------|
-| RTK | All | CLI proxy, 60-90% output compression (`rtk git`, `rtk grep`, `rtk ls`, …) |
+| RTK | All | CLI proxy, 60-90% output compression (`rtk git`, `rtk grep`, `rtk ls`, …) — wraps shell commands only; harness tools (Grep/Glob/Read) are used directly |
 | ccusage | All | Session token monitoring from local JSONL files |
 | claude-mem | All | Zero-touch persistent memory via hooks |
-| graphify | Technical | Code knowledge graph — read before any architecture question |
-| jCodeMunch | Technical | Symbol-level code retrieval via AST — replaces full-file reads |
+| jCodeMunch | Technical | Symbol-level code retrieval via AST — replaces full-file reads of code |
 | context7 | Technical | Current library/framework docs — replaces web search |
 
-Navigation order enforced in project CLAUDE.md (technical profiles):
-1. Architecture question → `graphify-out/GRAPH_REPORT.md` → `graphify query`
-2. Code symbol → `jcodemunch search_symbols` → `get_symbol`
-3. Text search → `rtk grep`
-4. Past context → `mem-search`
-5. Full file read → last resort, prefer `get_file_outline`
+Navigation routed by target in project CLAUDE.md (technical profiles) — conditional, no strict order:
+- Code symbol → `jcodemunch search_symbols` → `get_symbol` (full-file Read only if the outline is not enough)
+- Markdown / docs / config → direct Read, no restriction
+- Text search → Grep tool (shell fallback: `rtk grep`)
+- Past context → `mem-search`
 
 ## Transversal: .skills/
 Available skills — never loaded globally, always via AGENT.md.
