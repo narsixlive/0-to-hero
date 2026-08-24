@@ -28,7 +28,7 @@ For each touched workspace, scan the session for **reusable patterns specific to
 
 **Redundancy gate — kill the candidate BEFORE proposing it** if either applies:
 
-- **The code now enforces it.** The session's own fix made the mistake structurally impossible (guard in the shared seam, DB constraint, lock, type, CI test). A rule the code enforces is a fact, not doctrine to re-inject — do NOT propose it as Active. If future work must still honor the constraint (e.g. a scaling assumption behind the fix), offer ONE line directly to `## Archived Learnings` (constraint of record, never injected) or to the `DECISIONS.md` ledger instead.
+- **The code now enforces it.** The mistake is structurally impossible in the code as it stands — whether the fix landed this session or in a past one (guard in the shared seam, DB constraint, lock, type, CI test). For any candidate born from a bug that got fixed, read the current code at the seam before proposing: if the guard is already there, the candidate is dead. A rule the code enforces is a fact, not doctrine to re-inject — do NOT propose it as Active. If future work must still honor the constraint (e.g. a scaling assumption behind the fix), offer ONE line directly to `## Archived Learnings` (constraint of record, never injected) or to the `DECISIONS.md` ledger instead.
 - **It is already written at another layer.** Check the workspace `AGENT.md` `## Rules` (L2), the root `CLAUDE.md` (`## Gotchas` L3 + global rules), and `DECISIONS.md`. Already there → skip silently; a `×N` bump only exists within `LEARNINGS.md`. Close-but-not-identical → propose amending the existing rule in place, never a near-duplicate L1 copy.
 
 **Fix-at-source gate — convert the rule into structure before storing it.** For each candidate that survives the redundancy gate, check whether a surgical fix would make the rule structurally unnecessary. Walk the enforcement ladder, stop at the first rung that applies:
@@ -47,7 +47,10 @@ Only candidates with no structural fix (genuinely behavioral rules) proceed to t
 For each surviving candidate, **check for recurrence** — read the workspace's `LEARNINGS.md` `## Active Learnings` AND `## Archived Learnings` (and `mem-search` the pattern if unsure):
 
 **A) Already present (recurrence) — do NOT skip. The duplicate IS the signal.**
-- Bump its `×N` counter by 1. If it was in `## Archived Learnings`, move it back into `## Active Learnings`.
+- First re-run BOTH gates on the existing rule as written (older rules predate the gates):
+  - **Code now enforces it** (a fix landed since it was captured — read the seam to confirm) → do NOT bump; propose archiving instead: `[workspace] Code now enforces "<rule>" — move to Archived? (y/n)`. This is how pre-gate rules drain out.
+  - **A surgical fix-at-source exists** → a rule that keeps recurring is the best proof a structural fix pays. Propose the fix (same format as the gate); on `y` apply it and move the rule to `## Archived Learnings` as constraint of record instead of bumping.
+- Otherwise bump its `×N` counter by 1. If it was in `## Archived Learnings`, move it back into `## Active Learnings`.
 - If the recurrence happened because the rule was *not followed* this session (you had to re-learn or re-apply it the hard way), add a line to `## Drift log`: `- [rule] | captured <date if known, else ?> | drift <today> | delay <Nd or ?> | L1→? | <short note>`.
 - If you are not confident it is the same rule, ask: `[workspace] Same as existing "<rule>" (×N)? bump / new (b/n)`.
 
