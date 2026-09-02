@@ -140,6 +140,10 @@ After a Claude mistake, appends a ONE-LINE rule to the Gotchas section of CLAUDE
 
 Migrates an existing project to the latest architecture. Installed as a **thin stub** that resolves the repo (`$REPO`) and reads `core/bootstrap/bootstrap-upgrade.md` live — not a copy of the procedure.
 
+### /start-work (removed 2026-09-02)
+
+Was the session-entry ritual: load the target workspace's rules, recite them, wait for the task. Never used in practice — the SessionStart `inject-learnings.sh` hook took over its one real job (loading Active Learnings), and the command had silently gone stale (it still read the pre-Durcir `CONTEXT.md ## Active Learnings` section). Deleted from `~/.claude/commands/`; entry-side rule loading rides the AGENT.md Pre-work checklist instead. Lesson: a manual ritual a hook can perform is dead weight.
+
 ### Global commands: copy vs delegate (the anti-drift rule)
 
 A frozen per-machine copy of a command silently drifts from the template as the architecture evolves — the recurring failure mode (a project stops proposing upgrades; an installed `/bootstrap-upgrade` runs an old architecture). Two shapes, chosen by **runtime dependency on the repo**:

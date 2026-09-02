@@ -26,6 +26,14 @@ For each touched workspace, scan the session for **reusable patterns specific to
 - Generalizes beyond the single file or task that triggered it
 - Will likely apply to future sessions in the same workspace
 
+**Default outcome = a fix, not a rule.** A stored Learning is the LAST resort — the fallback for genuinely behavioral patterns no structure can enforce. Treat every candidate as a fix proposal until proven otherwise.
+
+**Mandatory gate verdict — one line per candidate, printed BEFORE any y/n question.** Run both gates below and print their result; a gate with no printed verdict counts as not run:
+
+`[workspace] "<candidate>" | in-code: yes <file:line> / no (checked <seam>) | fix-rung: 1-4 <one-line fix> / none | → fix / archive / rule / skip`
+
+The `in-code` answer comes from READING the seam, never from memory — cite the file:line that enforces it, or name the seam you checked and found bare. This applies to every candidate, including rules born from a bug fixed THIS session (the most common false Learning: the session fixed the code AND stored the rule — the fix already IS the memory).
+
 **Redundancy gate — kill the candidate BEFORE proposing it** if either applies:
 
 - **The code now enforces it.** The mistake is structurally impossible in the code as it stands — whether the fix landed this session or in a past one (guard in the shared seam, DB constraint, lock, type, CI test). For any candidate born from a bug that got fixed, read the current code at the seam before proposing: if the guard is already there, the candidate is dead. A rule the code enforces is a fact, not doctrine to re-inject — do NOT propose it as Active. If future work must still honor the constraint (e.g. a scaling assumption behind the fix), offer ONE line directly to `## Archived Learnings` (constraint of record, never injected) or to the `DECISIONS.md` ledger instead.
@@ -61,9 +69,11 @@ For each surviving candidate, **check for recurrence** — read the workspace's 
 - **×3 reached, OR stable (applied cleanly across ~3 sessions), OR it blocked work** → propose graduating to this workspace's `AGENT.md` `## Rules` (L2 — role doctrine): `[workspace] Graduate to AGENT.md Rules (L2)? (y/n): <rule>`
 - **Cross-workspace in nature, OR high-criticality (security / personal data / money / legal)** → propose graduating via `/gotcha` to the root `CLAUDE.md` `## Gotchas` (L3 — cross-workspace doctrine). A high-criticality rule may jump straight to L3 on first sight.
 
-On `y` for a graduation → copy the rule **verbatim, with its `(why)`**, into the target section, then **remove it from `## Active Learnings`**. On `n` → leave it in Active. Drift diagnostic: if a rule's `## Drift log` lines show it drifts in **< 7 days repeatedly**, it is in the wrong layer — recommend graduating it straight to L3.
+On `y` for a graduation → into `AGENT.md` `## Rules` (L2), copy the rule **verbatim, with its `(why)`**. Into `## Gotchas` (L3), first re-run the gate verdict line on the rule (a rule that earned graduation has proven it recurs — prime fix-at-source material), then write it **compressed to ONE line**, strict format `NEVER/ALWAYS [action] ([short why])` — no narrative, no dates; overflowing rationale goes to the `DECISIONS.md` ADR archive, never into the Gotcha. In both cases, **remove it from `## Active Learnings`**. On `n` → leave it in Active. Drift diagnostic: if a rule's `## Drift log` lines show it drifts in **< 7 days repeatedly**, it is in the wrong layer — recommend graduating it straight to L3.
 
-**Decay (keep Active lean).** If `## Active Learnings` holds more than ~5 rules after the above, propose moving the least-recently-relevant non-graduating ones to `## Archived Learnings` (kept, NOT injected — never deleted): `[workspace] Archive stale learning? (y/n): <rule>`.
+**Cap (hard, keep Active lean).** `## Active Learnings` must end this step at **5 rules or fewer** per workspace. While over the cap, propose — oldest / least-recently-relevant first — archiving to `## Archived Learnings` (kept, NOT injected — never deleted) or merging near-siblings into one rule: `[workspace] Archive stale learning? (y/n): <rule>`. Each proposal still asks y/n, but proposing until the cap is reached (or the user has declined every remaining rule) is not optional.
+
+**Stale ×1 sweep (drain the graveyard).** Once per touched workspace, take the OLDEST rule still at ×1 in `## Active Learnings` and re-run both gates on it, same verdict line as above (older rules predate the gates; a ×1 that never recurs is usually a constraint of record, not doctrine — its home is `## Archived Learnings` or the fix itself). One rule per workspace per /memorise — the list drains even when nothing recurs.
 
 Never propose a Learning not grounded in what actually happened this session (no generic best-practice noise). Never invent `×N` counts or drift entries.
 
@@ -106,5 +116,9 @@ Do NOT migrate automatically — only offer. If the marker is present and curren
 `⚠️ Repo layout drift (undeclared workspace and/or meta-docs at root). Run /bootstrap-upgrade to adopt the layout convention (docs/ for meta-docs + workspace law). Want me to run it now?`
 
 Only offer — never move files or rename folders automatically.
+
+**L3 health (Gotchas bloat).** Count the rules under the root `CLAUDE.md` `## Gotchas`. If there are more than ~12, or any rule spans multiple lines, print exactly one line and do nothing else automatic:
+
+`⚠️ Gotchas bloat: <N> rules, <M> multi-line. Worth a consolidation pass? (merge siblings, one line each, demote workspace-scoped ones to their AGENT.md ## Rules)`
 
 When done, confirm with: **Memorised.** — then list the workspaces updated, learnings added/bumped, any graduations (→ L2 / L3), any facts of record added, and whether a stack upgrade was suggested (e.g., `scrapers: +1 learning, app: ×3→L2 graduation, +1 fact of record`).
