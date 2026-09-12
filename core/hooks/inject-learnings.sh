@@ -64,12 +64,23 @@ done < <(find "${cwd}" -maxdepth 3 \( -name "LEARNINGS.md" -o -name "CONTEXT.md"
 # Collect facts-of-record Ledger from the project root DECISIONS.md.
 # Same contract as Learnings: only "- " lines inside the "## Ledger" section,
 # skipping HTML comments. These are durable project facts, injected every session.
+# Injection is capped to the LEDGER_CAP most recent entries (default 30): the file is the
+# full record and never trimmed, but reading 100+ dated milestones at every session start
+# cost ~17k tokens on mypb-saas (2026-09-12) for facts a session almost never needs. Older
+# entries stay reachable by Grep / mem-search; a fact every session must know belongs in
+# CLAUDE.md ## Gotchas, which is injected whole. Override per shell: LEDGER_CAP=0 = no cap.
 ledger=""
 if [[ -f "${cwd}/DECISIONS.md" ]]; then
-    ledger="$(awk '
+    ledger="$(awk -v cap="${LEDGER_CAP:-30}" '
         /^## Ledger/ {in_section=1; next}
         /^## / && in_section {in_section=0}
-        in_section && /^-[[:space:]]/ {print}
+        in_section && /^-[[:space:]]/ {n++; lines[n]=$0}
+        END {
+            # Ledger is newest-first: keep the first `cap` entries.
+            last = (cap > 0 && n > cap) ? cap : n
+            for (i = 1; i <= last; i++) print lines[i]
+            if (last < n) print "- (" n - last " older entries not injected - full ledger in DECISIONS.md ## Ledger; grep it before asserting a fact of record)"
+        }
     ' "${cwd}/DECISIONS.md")"
 fi
 

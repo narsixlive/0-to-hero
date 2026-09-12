@@ -12,6 +12,7 @@ Two zones, two purposes. Do not mix them.
 <!-- Format: `- YYYY-MM-DD — [fact]` — one line, factual, no rationale. -->
 
 - 2026-06-11 — Windows hook flash = CC regression ≥ ~2.1.128 (sandbox child spawned without CREATE_NO_WINDOW). Fixed locally with TWO registry keys (both required): `HKCU\Console\WindowPosition = 0x75307530` (off-screen at 30000,30000) AND `HKCU\Console\%%Startup\DelegationConsole/DelegationTerminal = {B23D10C0-E52E-411E-9D5B-C09FDF709C7D}` (force conhost; "Let Windows decide" on Win11 22H2+ delegates to Windows Terminal which ignores WindowPosition). Cosmetic patch: flash still fires, just invisible. Version-independent.
+- 2026-09-09 — Model Gateway (eigenwise-toolshed, user scope) routes all Claude Code traffic through the local shim 127.0.0.1:18764 (`ANTHROPIC_BASE_URL` in `~/.claude/settings.json`). Codex/Grok via ChatGPT subscription OAuth, Claude passthrough at 1M. Side effect: `/remote-control` unavailable while wired; rollback = `model-gateway.js env --remove`.
 
 ---
 
@@ -183,3 +184,39 @@ sub-folder names. Renaming + gloss eliminates the ambiguity.
 
 **How to apply:** any reference to the rule (templates, archetypes, agent docs)
 must use `<descriptor>` and refer to the language/target/role/common dimensions.
+
+## 2026-09-12 — claude-mem "condense oversized field" step disabled locally (all projects)
+
+claude-mem ≥ 13.15 sends every tool input/output field larger than 16k chars
+whole to the observer model (Sonnet, on the Claude subscription, fresh SDK
+session, no cache) to be "condensed" before the observation is written. On
+mypb-saas that single step cost 2.96M input tokens in two days (137 calls,
+up to 319k tokens each) and emptied the 5-hour window twice — 70% of it
+Codex `view_image` screenshots, the rest test/build output and file writes.
+Upstream: thedotmack/claude-mem#3839 and #3848, folded into #3606 (open,
+still reproducing at 13.24.23). No setting turns it off.
+
+**What was done (machine-wide, not per project):**
+- `~/.claude-mem/settings.json`: `view_image,mcp__playwright__browser_snapshot`
+  appended to `CLAUDE_MEM_SKIP_TOOLS` (screenshots carry no memory value).
+- `~/.claude/plugins/known_marketplaces.json`: `thedotmack.autoUpdate=false`
+  so an update cannot silently replace the patched bundle.
+- `~/.claude/plugins/cache/thedotmack/claude-mem/13.24.23/scripts/worker-service.cjs`:
+  the condense function returns its input immediately (`/* ponytail: condense
+  step disabled … */`), original kept as `worker-service.cjs.orig`. The
+  pipeline's own head/tail truncation (`<elided chars=…>` at 16k) then applies
+  — verified empirically with a 47 KB output: zero condense calls, observer
+  reported 16,996 chars elided.
+
+**Why:** this is the exact code path the plugin already takes when condensing
+times out, so it is a tested degradation, not new behaviour. Losing the middle
+of a >16k payload costs far less than losing the subscription window during an
+orchestrated wave.
+
+**How to apply:** after any claude-mem update, re-derive the target string (the
+minified symbol changes per build), re-apply, `node --check` the bundle, and
+verify with `grep -c "ponytail: condense step disabled" …/worker-service.cjs`
+= 1 plus no "Condense the tool payload" prompts in
+`~/.claude/projects/*claude-mem-observer-sessions/*.jsonl`. Remove the patch
+when #3606 lands. Optional next lever if the observer still weighs on the
+window: `CLAUDE_MEM_MODEL` → Haiku 4.5.
