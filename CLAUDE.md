@@ -3,19 +3,20 @@
 Open-source tool to structure your Claude workflow into efficient workspaces with specialized agents.
 
 ## Structure
-- /core → Architecture + bootstrap prompt
+- /core → Architecture, bootstrap prompts, templates, the SessionStart hook (core/hooks/), ADR archive (core/decisions/)
 - /archetypes → Complete examples (developer, creative)
 - /catalog → Curated base of skills and tools
-- /docs → Development plans and specs for this repo
+- /docs → Development plans and specs — local only, gitignored
 - /tools → Reserved for future use
 
 ## Routing
 | Intent | Resources |
 |--------|-----------|
 | Modify architecture or bootstrap | core/ARCHITECTURE.md → core/bootstrap/bootstrap-prompt.md |
+| Why was X decided this way | core/decisions/adr-archive.md |
 | Work on an archetype | archetypes/INDEX.md → archetypes/[name]/ |
 | Update the catalog | catalog/skills-database.md |
-| Plan / execute a step | docs/plans/ |
+| Plan / execute a step | docs/plans/ (local only) |
 
 ## Reading order
 1. This CLAUDE.md
@@ -24,7 +25,8 @@ Open-source tool to structure your Claude workflow into efficient workspaces wit
 
 ## Global rules
 - Archetypes are illustrations, not templates to copy
-- `0-to-hero-spec.md` is a historical build doc (deprecated) — for current formats use core/ARCHITECTURE.md + core/templates/
+- `0-to-hero-spec.md` (local only, gitignored) is a historical build doc (deprecated) — for current formats use core/ARCHITECTURE.md + core/templates/
+- `DECISIONS.md` is gitignored on purpose: its ledger holds machine-local facts. Project decisions worth publishing go to core/decisions/adr-archive.md
 - Language: conversations in French, all written content (files, commits, code, comments) in English
 
 ## Shell
@@ -69,13 +71,7 @@ Never put session context in native memory. Never put preferences in claude-mem.
 ## Learning mode
 <!-- learning-stack: durcir-v1 -->
 
-This project has the learning layer enabled (Durcir stack — rules harden through 3 levels).
-- **L1 — in-flight workspace rules** → `<workspace>/LEARNINGS.md` → `## Active Learnings` (fed by `/memorise`, auto-injected)
-- **L2 — role doctrine** → `<workspace>/AGENT.md` → `## Rules` (graduated from L1 at ×3 / stable / blocking)
-- **L3 — cross-workspace doctrine** → Gotchas section below (fed by `/gotcha`, or graduated up)
-- Demotions, archival and the drift log live in `LEARNINGS.md` (`## Archived Learnings`, `## Drift log`) — kept, not injected
-- Agents apply all rule layers at task start via the Pre-work checklist in their `AGENT.md`
-- A `SessionStart` hook auto-injects `## Active Learnings` at every new session
+This repo defines the Durcir stack (see core/ARCHITECTURE.md) but does not run it on itself: no workspaces, so L1/L2 do not exist here. The `SessionStart` hook in `.claude/settings.json` is kept as the reference wiring and exits silently. Rules for this repo go straight to `## Gotchas` below (L3).
 
 ## Gotchas
 

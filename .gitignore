@@ -4,3 +4,6 @@
 
 # Mémoire des archetypes
 **/.memory/
+
+# Personal ledger + local-machine ADRs — never published
+/DECISIONS.md
