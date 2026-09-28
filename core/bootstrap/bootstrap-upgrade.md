@@ -106,7 +106,7 @@ Run these audits. Use `rtk` prefixes on shell commands.
 8. **Learning layer installed** — check the opt-in state of the project:
    - Every workspace has a `LEARNINGS.md` with a `## Active Learnings` section (empty is fine — the marker must exist). On a pre-Durcir project the learnings still live in `CONTEXT.md` (`## Active Learnings` or legacy `## Learnings`) — that counts, but flag it for the split per check 10. Do NOT flag a migrated project (rules in LEARNINGS.md, none in CONTEXT.md) as missing the layer.
    - `DECISIONS.md` has a `## Ledger (facts of record)` section (the hook injects it alongside Learnings — without it, half the injection is dead; cross-ref check #5)
-   - `.claude/settings.json` contains a `SessionStart` hook entry pointing to `bash ~/.claude/hooks/inject-learnings.sh`
+   - `.claude/settings.json` contains a `SessionStart` hook entry pointing to `bash ~/.claude/hooks/inject-learnings.sh`, **in the nested form** (`"SessionStart": [{ "hooks": [{ "type": "command", ... }] }]`). A flat entry (`{ "type": "command", ... }` directly in the array) is rejected by Claude Code and has never run → flag as **`inert hook`**, fixed by migration step 2.
    - `~/.claude/hooks/inject-learnings.sh` exists globally and is executable
    - **Hook freshness (CRITICAL — not just existence)** — a stale global hook is worse than a missing one: it exists, the audit looks green, but it silently injects only half. Verify the installed `~/.claude/hooks/inject-learnings.sh` is **byte-identical** to the repo source `core/hooks/inject-learnings.sh`. Cheap proxy if a full diff is overkill: grep the installed hook for `Ledger`, `Active`, and `LEARNINGS` — all three must be present (Ledger extraction + Active/Archived awareness + LEARNINGS.md scanning are the latest-architecture markers). If it exists but lacks any → flag as **`stale global infra`**, not aligned. The fix is migration step 1 (re-copy), which must run before DECISIONS.md/Learnings migrations are meaningful.
    - CLAUDE.md has a `## Learning mode` section
@@ -153,12 +153,12 @@ If the user approves migrating the Learning layer, execute in order. **Note on t
    {
      "hooks": {
        "SessionStart": [
-         { "type": "command", "command": "bash ~/.claude/hooks/inject-learnings.sh" }
+         { "hooks": [ { "type": "command", "command": "bash ~/.claude/hooks/inject-learnings.sh" } ] }
        ]
      }
    }
    ```
-   Preserve any existing hooks. If a SessionStart hook with the same command already exists, skip (idempotent).
+   Preserve any existing hooks. If a SessionStart hook with the same command already exists, skip (idempotent). If it exists in the **flat** form (`{ "type": "command", ... }` directly inside the `SessionStart` array, no `hooks` wrapper), it has never run: rewrite it into the nested form above and tell the user their Learning layer was inert until now.
 
 3. **Create `<workspace>/LEARNINGS.md` and move the rules out of `CONTEXT.md` (Durcir split)** — the current stack keeps workspace rules in a dedicated `LEARNINGS.md` (three sections: `## Active Learnings` / `## Archived Learnings` / `## Drift log`) and keeps `CONTEXT.md` purely situational (brief + Current state + Thread). For each workspace:
 

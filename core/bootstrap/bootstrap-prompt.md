@@ -546,12 +546,12 @@ CLAUDE.md, format: `NEVER/ALWAYS [action] ([why])`. No separate GOTCHA.md file.
   {
     "hooks": {
       "SessionStart": [
-        { "type": "command", "command": "bash ~/.claude/hooks/inject-learnings.sh" }
+        { "hooks": [ { "type": "command", "command": "bash ~/.claude/hooks/inject-learnings.sh" } ] }
       ]
     }
   }
   ```
-  The hook script itself lives globally at `~/.claude/hooks/inject-learnings.sh` (install once from `core/hooks/inject-learnings.sh` in the 0-to-Hero repo). At every new session, it scans the project's `LEARNINGS.md` files (and legacy `CONTEXT.md` for un-migrated projects), extracts each `## Active Learnings` section, and also extracts the `## Ledger` section from the root `DECISIONS.md`, injecting both as `additionalContext` — so agents have workspace rules and durable project facts in hand before the first user prompt.
+  The nesting matters: Claude Code expects matcher groups (`[{ "hooks": [...] }]`), and a flat `[{ "type": "command", ... }]` entry is rejected silently — the hook never runs and nothing gets injected. The hook script itself lives globally at `~/.claude/hooks/inject-learnings.sh` (install once from `core/hooks/inject-learnings.sh` in the 0-to-Hero repo). At every new session, it scans the project's `LEARNINGS.md` files (and legacy `CONTEXT.md` for un-migrated projects), extracts each `## Active Learnings` section, and also extracts the `## Ledger` section from the root `DECISIONS.md`, injecting both as `additionalContext` — so agents have workspace rules and durable project facts in hand before the first user prompt.
 - `DECISIONS.md` — scaffolded from `core/templates/DECISIONS.template.md`. Two zones: a `## Ledger (facts of record)` at the top — durable project facts (domain, app name, accounts, commitments), terse dated one-liners, **injected at every SessionStart** and fed by `/memorise` (auto-proposed, user validates) — and a `## ADR archive` below for narrative rationale ("why did we choose X?"), NOT injected, consulted on demand. Do NOT leave the file empty: it starts with both section headers and their format comments, so the ledger exists and gets used from session one. Rationale: an empty, on-demand, never-injected file is invisible and stays unused — the injected ledger is what keeps important facts from being lost.
 - `.skills/INDEX.md` — empty table, ready to receive.
 
