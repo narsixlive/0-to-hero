@@ -3,26 +3,25 @@
 Reference document. Do not load automatically into context.
 Consultable on demand via jCodeMunch or targeted reading.
 
-## The 5 tools and their roles
+## The 4 tools and their roles
 
 | Tool | Role | Layer | Activation |
 |---|---|---|---|
 | RTK | Compresses bash outputs (60-90% token savings) | Transparent | Global PreToolUse hook on Bash — automatic |
 | jCodeMunch | Code navigation by symbol instead of full-file reads | On demand | MCP server + PreToolUse hook on Read |
-| graphify | Project knowledge graph (architecture, god nodes, connections) | On demand | PreToolUse hook on Glob/Grep |
 | Context7 | Up-to-date documentation for external libraries | On demand | MCP server, triggered by lib mention |
 | claude-mem | Persistent memory across sessions (observations + summaries) | Automatic | PostToolUse + Stop + SessionStart hooks |
+
+graphify (project knowledge graph) was part of the original stack and dropped on 2026-10-24: the graph went stale within days on active repos and was never queried in practice. jCodeMunch covers code navigation, claude-mem covers history.
 
 ### Why there are no duplicates
 
 RTK compresses bash **outputs**. jCodeMunch **avoids** reading files. These are two complementary strategies, not redundant ones.
-graphify gives the project **map** (relations, architecture). jCodeMunch gives the precise **code** of a symbol. Two different zoom levels.
 
 ### No hook conflicts
 
 - RTK intercepts **Bash** (PreToolUse)
 - jCodeMunch intercepts **Read/file** (PreToolUse)
-- graphify intercepts **Glob/Grep** (PreToolUse)
 - claude-mem uses **PostToolUse** + **Stop** + **SessionStart/End**
 
 No collision — each tool listens to different events.
@@ -114,13 +113,12 @@ Never load everything at once. Context loads in layers, from lightest to most ex
 
 ### Navigation order
 
-Codified in CLAUDE.md as a strict numbered list:
-1. graphify GRAPH_REPORT.md → for architecture questions
-2. jCodeMunch search_symbols → for code
-3. Context7 → for library docs
-4. rtk grep → for text search
-5. mem-search → for session history
-6. Full-file read → last resort
+Routed by target in CLAUDE.md, no strict order (canonical list in `core/ARCHITECTURE.md`, "Token Efficiency Stack"):
+- Code symbol → jCodeMunch `search_symbols` (full-file Read only if the outline is not enough)
+- Markdown / docs / config → direct Read
+- Library docs → Context7
+- Text search → Grep tool (shell fallback: `rtk grep`)
+- Past context → `mem-search`
 
 ### RTK: always prefix with rtk
 

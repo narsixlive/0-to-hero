@@ -31,7 +31,7 @@ Open-source tool to structure your Claude workflow into efficient workspaces wit
 
 ## Shell
 
-`rtk` wraps shell commands: `rtk git`, `rtk ls`, `rtk find`, `rtk grep` in Bash. Harness tools (Grep/Glob/Read) are not shell commands — use them directly.
+`rtk` wraps shell commands: `rtk git`, `rtk ls`, `rtk find`, `rtk grep` in Bash. Harness tools (Grep/Glob/Read) are not shell commands — use them directly. A Bash `grep` is rewritten to ripgrep, so a BRE pattern with `\|` and a literal `(` fails (`unclosed group`): search with the Grep tool.
 
 ## Navigation (route by target, no strict order)
 
@@ -76,3 +76,4 @@ This repo defines the Durcir stack (see core/ARCHITECTURE.md) but does not run i
 ## Gotchas
 
 <!-- /gotcha appends rules here -->
+- NEVER patch source containing backslashes or `\n` via a heredoc, `node -e` or Python `str.replace` (escaping layers collapse, a no-match is silent) — use the Edit tool
