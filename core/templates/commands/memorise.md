@@ -14,6 +14,10 @@ Then identify the dominant workspace(s) touched this session, based on the files
 3. **Append to `## Thread`** — new entry at the top using format: `### YYYY-MM-DD — [one-line session title]` followed by the summary bullets.
 4. **Prune `## Thread`** — keep only the 5 most recent entries; drop older ones. claude-mem keeps the long history (retrievable via `mem-search`).
 
+**Shared repo mode (opt-in).** Only if the project root `CLAUDE.md` contains the marker `<!-- shared-repo -->` (otherwise ignore this paragraph entirely):
+- Rule 3: the entry title carries the author — `### YYYY-MM-DD — <author> — [title]`, `<author>` = first token of `git config user.name`, lowercased.
+- Rule 4: do not drop the pruned entries — move them verbatim to the top of `docs/THREAD-ARCHIVE.md` under a `## <workspace>` heading (create the file if missing). claude-mem is per-machine; the archive is the only long history the other person has.
+
 `CONTEXT.md` is purely situational now (brief + state + thread). Workspace rules live in `LEARNINGS.md` — handled in the next step. If no workspace was touched, skip the CONTEXT.md updates.
 
 ## Workspace Learnings — Durcir lifecycle (after state update)

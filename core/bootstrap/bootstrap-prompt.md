@@ -501,6 +501,7 @@ Add project-specific sections **above** the base:
 - Naming conventions if relevant
 - 2-3 project-specific rules max
 - The base `## Repo layout` section (from `CLAUDE.template.md`) carries the workspace law + `docs/` convention — keep it
+- **Team classification only**: append `core/templates/CLAUDE.shared-repo.snippet.md` verbatim (its `<!-- shared-repo -->` marker switches `/memorise` into shared-repo mode: author on Thread entries + `docs/THREAD-ARCHIVE.md`). Never add it for solo projects; a solo project can opt in later by pasting the snippet.
 
 Short and scannable — if you scroll, it's too long.
 
