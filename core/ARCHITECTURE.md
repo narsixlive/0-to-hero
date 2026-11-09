@@ -27,7 +27,7 @@ Brain of the workspace. Transforms Claude into a specialist.
 ## Facts of record + archives
 
 - **DECISIONS.md** (project root) — two zones. `## Ledger (facts of record)`: durable project facts (domain, app name, accounts, commitments), terse dated one-liners, **injected at every SessionStart** and fed by `/memorise`. `## ADR archive`: structural rationale (tool choices, workspace split, naming) — NOT injected, consulted on demand. The injected ledger exists because an empty, on-demand-only file is invisible and stays unused — that's how important facts get lost.
-- **claude-mem** — persistent session memory, captured automatically via hooks.
+- **Memory scribe** — background writer that fills the Ledger, `## Current state` and `## Candidates` from the transcript while the session runs (see Transversal: Memory scribe). **claude-mem** stays as the read-only archive of past sessions (`mem-search`).
 
 ## Repo layout — workspaces vs support
 
@@ -118,15 +118,29 @@ scripts/              ← any domain-named workspace — DO NOT TOUCH
 Never propose to reorganize or restructure the workspace folder itself when adding code.
 The only permitted action is adding the `code_*/` sub-folder.
 
-## Transversal: claude-mem
+## Transversal: Memory scribe
 
-Persistent memory — fully automatic, zero user action.
+Continuous memory capture — a background scribe writes the memory files while the session runs,
+so nothing depends on a ritual at the worst moment (owner leaving, context full).
 
-Installed via `npx claude-mem install`. Captures tool-usage observations across sessions
-via hooks, stores in SQLite + Chroma vector DB. Query with `mem-search "…"`.
+```
+turn ends ──Stop / SessionEnd hook──▶ scribe-trigger.js ──queue + spawn──▶ scribe-worker.js
+                                       (async, fail-open)                   │ transcript delta from a durable cursor,
+                                                                            │ deterministic trim, no call without signal
+                                                                            ▼ one lean `claude -p` call per project (≤ 5 min batch)
+DECISIONS.md ## Ledger ◀── scribe-writer.js ◀── proposal, every evidence id verified against the delta
+<ws>/CONTEXT.md ## Current state        (bounded, atomic writes; never AGENT.md / CLAUDE.md / ## Thread)
+<ws>/LEARNINGS.md ## Candidates         (NOT injected — reaches ## Active Learnings only through /memorise A0 or the owner's quoted correction)
+```
 
-No `.memory/` folder. No MEMORY.md index to maintain. No agent writes at session end.
-Hooks handle capture automatically — nothing required from the user or the agent.
+- **Writes evidence or nothing.** A fact or state line without a `toolu_…` id (or an owner quote) found in the delta is rejected. Candidates are deduped fuzzily against Active / Archived / Candidates.
+- **Bounded cost.** Per-session and machine-wide daily token caps hold the delta instead of dropping it; a cap hit prints at the next Stop and, if configured, posts to Discord. One run ≈ 25-30k tokens (≈ $0.15-0.20 list).
+- **Durable, never loses a line.** Cursors advance only over what was sent *and* applied; oversized deltas are cut at a line and re-queued; `/clear` or a crash leaves the queue intact for the next run. `journal.jsonl` records every run.
+- **Visible.** `✍` segment in the terminal statusline (`✍✓` safe to `/clear`, `✍ N` lines pending, `✍⏳` running), the Stop hook's one-line report in any host, optional sidebar badge per project. Files, install, env and state: `core/hooks/scribe/README.md`.
+
+Scope: Durcir projects only (root `CLAUDE.md` + `DECISIONS.md` or a `<ws>/AGENT.md`); optionally restricted to folders listed in `SCRIBE_ROOTS`.
+
+**claude-mem** stays installed as the read-only archive of what happened before (`mem-search "…"` over 42k observations) and for `save_memory` notes; its observation and summary capture is disabled (`CLAUDE_MEM_DISABLE_OBSERVATION` / `CLAUDE_MEM_DISABLE_SUMMARY`), which removed one Sonnet call per tool use. Rollback criterion and figures: ADR 2026-11-09.
 
 ## Transversal: Learning layer (Durcir)
 
@@ -167,7 +181,8 @@ Installed at bootstrap, not per workspace. Transparent to the user.
 |------|---------|-------------|
 | RTK | All | CLI proxy, 60-90% output compression (`rtk git`, `rtk grep`, `rtk ls`, …) — wraps shell commands only; harness tools (Grep/Glob/Read) are used directly |
 | ccusage | All | Session token monitoring from local JSONL files |
-| claude-mem | All | Zero-touch persistent memory via hooks |
+| Memory scribe | All | Background memory writer, one lean model call per project per 5 min at most (`core/hooks/scribe/`) |
+| claude-mem | All | Read-only archive of past sessions (`mem-search`); capture disabled since 2026-11-09 |
 | jCodeMunch | Technical | Symbol-level code retrieval via AST — replaces full-file reads of code |
 | context7 | Technical | Current library/framework docs — replaces web search |
 

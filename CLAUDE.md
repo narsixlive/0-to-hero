@@ -3,7 +3,7 @@
 Open-source tool to structure your Claude workflow into efficient workspaces with specialized agents.
 
 ## Structure
-- /core → Architecture, bootstrap prompts, templates, the SessionStart hook (core/hooks/), ADR archive (core/decisions/)
+- /core → Architecture, bootstrap prompts, templates, hooks (core/hooks/: SessionStart injector, memory scribe, statusline), ADR archive (core/decisions/)
 - /archetypes → Complete examples (developer, creative)
 - /catalog → Curated base of skills and tools
 - /docs → Development plans and specs — local only, gitignored

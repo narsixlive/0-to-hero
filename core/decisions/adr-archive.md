@@ -87,3 +87,80 @@ Workspace rules moved out of `CONTEXT.md` into a dedicated `LEARNINGS.md` per wo
 **Lineage:** Jake Van Clief's "durcir tes règles capitalisées" (edit-source principle, 3-level promotion, drift log) applied to the folder-based system; aligned with Anthropic context-engineering ("keep the hot context lean, scoped files loaded as needed") and Karpathy's RAM/disk context model.
 
 References: `core/ARCHITECTURE.md` (Learning layer — Durcir), `core/decisions/memory-architecture.md`.
+
+---
+
+## 2026-11-08 — Streaming memory v2: continuous scribe replaces the end-of-session ritual
+
+Memory capture moves from one manual distillation at session end (`/memorise` with y/n gates,
+plus an auto-handover fork at 60 % context) to a continuous background **scribe**: a `Stop`
+command hook queues each turn, a background worker trims the transcript delta deterministically,
+asks Sonnet (`claude -p`, Read/Grep only, lean settings, prompt via stdin) for one JSON proposal,
+and a bounded writer applies it. Auto-written: `CONTEXT.md ## Current state` (evidence required)
+and `DECISIONS.md ## Ledger` one-liners (≤ 200 chars, evidence required, same-key facts marked
+superseded). Inferred rules go to `LEARNINGS.md ## Candidates` (not injected) and reach
+`## Active Learnings` only through the owner's explicit correction quoted from the transcript or an
+in-session y/n. `/memorise` stays as an optional audit; `/handover` only for worktree forks.
+
+**Why:** what the stack lost, it lost because distillation happened once, at the worst moment
+(owner leaving, context full). Each memorable item has a signal in the turn where it is born.
+
+**Independent review (Astra, 2026-11-08) folded in:** inferred rules are never auto-doctrine (the
+gates run by the same model that generalised the incident are not a second look); no Jev
+classifier before the scribe in the pilot (three interpreters of the same work before any
+measurement); "zero loss on brutal exit" dropped from the goals — durable cursor + catch-up at the
+next start instead; Stop hook (public API) rather than early-access function hooks; claude-mem
+stays the "what happened" journal, off the scribe's critical path.
+
+**Measured constraints that shaped it:** Claude Code caps each hook `additionalContext` string at
+10,000 chars (over → file + 2k preview, never read) — the learnings hook had silently exceeded it
+for weeks, so payloads are now bounded before emission; claude-mem capture had been dead since
+2026-10-25 (npm global shadowing the plugin launcher) — the markdown files carried the stack alone;
+a one-turn scribe run costs ~100k tokens → batch 1 run / 5 min / project, hard cap 1M tokens/day.
+
+**Alternatives considered:** migrate to `claude-mem-lite` (2k-token budget, no Chroma) — rejected
+for now: one maintainer, Windows not CI-covered; borrow its pattern (deterministic pre-filter →
+batched cheap extraction → dedup → project file) instead. Native Auto Memory — overlaps the
+Learnings layer, kept disabled.
+
+**Status:** pilot v0 installed on the owner's machine for every 0-to-Hero project under one
+folder; framework integration (templates, bootstrap, `.claude/rules` projection, health line)
+follows the pilot. Spec: `docs/plans/2026-11-08-streaming-memory-v2.md` (local).
+
+## 2026-11-09 — claude-mem capture frozen, scribe v0.3 becomes the memory writer
+
+claude-mem's observation and summary capture is disabled (`CLAUDE_MEM_DISABLE_OBSERVATION`,
+`CLAUDE_MEM_DISABLE_SUMMARY` in the global `settings.json`); its database stays as a read-only
+archive (`mem-search`, `save_memory`). The scribe, hardened to v0.3, is published in
+`core/hooks/scribe/` and wired on `Stop` + `SessionEnd` for every Durcir project; `/memorise`
+consumes its `## Candidates` first (clause A0) instead of writing a second Active line.
+
+**Why now (measured on the owner's machine, 2026-11-09):** claude-mem had become a hidden drain —
+one Sonnet turn per tool use (~72 condense calls/day once repaired), each re-reading ~100k tokens of
+context — while its capture had silently been dead for three weeks and nobody noticed: the markdown
+files carried the stack alone. The database had grown from 34 MB (May) to 547 MB (42,606 observations,
+8,865 summaries), backed up with `.backup` + `integrity_check` before the freeze. The scribe's own
+first day: 6 runs on this repo, 25-30k tokens each (≈ $0.15-0.20 list), 481k tokens machine-wide
+under a 2M daily cap, 17 ledger facts written with evidence, 0 Active rules written on its own.
+
+**Independent review (Astra, 2026-11-09) folded in:** seven scribe defects fixed before the freeze
+(legacy usage rows counted against the session budget, deltas dropped at the cap instead of held,
+silent daily-budget hit, future-dated facts accepted, no fuzzy dedup of candidates, main() not
+guarded for `require`, lock/queue durability); cost estimates corrected; the freeze ordered as
+backup → disable capture → extend transcript retention to 365 days → verify next day.
+
+**Decisions bundled here:** Jev compaction stays out of the publishable stack (owner's call);
+SQLite FTS over transcripts is deferred, not cancelled — `rg` + the existing claude-mem MCP serve
+every real search today, FTS comes back when one measurably fails; `PreCompact` is not hooked —
+`Stop` + `SessionEnd` cover every path because the worker reads from its cursor, whatever happens
+to the context window.
+
+**Rollback criterion:** re-enable claude-mem capture if, over the next 14 days, a fact or rule
+that the session needed was found in neither the memory files nor `mem-search` of the frozen
+archive, AND the journal shows the scribe had the evidence in its delta and did not write it.
+A cost regression (daily cap hit on normal use) is tuned, not rolled back. Verification step one:
+`type=observation` count in claude-mem's log for 2026-11-10 must be 0.
+
+**Visibility added the same day:** `✍` statusline segment, Stop-hook report line, and a per-project
+badge + "run now" button in the owner's VS Code sidebar — all read the scribe's cursor and lock files,
+none calls a model. The pane-mod variant was built, loaded, and deleted: the sidebar already existed.
