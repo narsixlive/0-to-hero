@@ -39,7 +39,7 @@ Open-source tool to structure your Claude workflow into efficient workspaces wit
 - **Markdown / docs / config** → Read directly, no restriction.
 - **"Which API should I use?"** → Context7 MCP (use `/org/project` format if the lib is known)
 - **"Find this text"** → Grep tool (shell fallback: `rtk grep`)
-- **"What did we do before?"** → `mem-search "…"`
+- **"What did we do before?"** → `DECISIONS.md ## Ledger` (injected) → then `mem-search "…"` for older history
 
 ## Before acting
 - State assumptions explicitly. If uncertain, ask — don't guess.
@@ -53,7 +53,7 @@ Surgical. Summarize first, confirm if > 3 files. Diff if > 20 lines. Do not fix 
 
 ## Startup
 
-claude-mem injects the compressed context automatically. Use it to resume without redoing work.
+The SessionStart hook injects `DECISIONS.md ## Ledger` and each workspace's `## Active Learnings`, kept current by the background memory scribe. Use them to resume without redoing work. claude-mem is the read-only archive of past sessions.
 If more detail is needed → `mem-search "…"` → then `get_observations` on the relevant IDs only. Never load everything at once.
 
 ## Memory
