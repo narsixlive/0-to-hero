@@ -64,14 +64,17 @@ done < <(find "${cwd}" -maxdepth 3 \( -name "LEARNINGS.md" -o -name "CONTEXT.md"
 # Collect facts-of-record Ledger from the project root DECISIONS.md.
 # Same contract as Learnings: only "- " lines inside the "## Ledger" section,
 # skipping HTML comments. These are durable project facts, injected every session.
-# Injection is capped to the LEDGER_CAP most recent entries (default 30): the file is the
+# Injection is capped to the LEDGER_CAP most recent entries (default 10): the file is the
 # full record and never trimmed, but reading 100+ dated milestones at every session start
 # cost ~17k tokens on mypb-saas (2026-09-12) for facts a session almost never needs. Older
 # entries stay reachable by Grep / mem-search; a fact every session must know belongs in
 # CLAUDE.md ## Gotchas, which is injected whole. Override per shell: LEDGER_CAP=0 = no cap.
+# 30 → 10 on 2026-11-08: with ~500-char entries, 30 of them pushed the payload to 16.9k chars,
+# over Claude Code's 10,000-char additionalContext cap — the whole payload was then written to
+# a file and only a 2k preview reached the session (Learnings silently lost for weeks).
 ledger=""
 if [[ -f "${cwd}/DECISIONS.md" ]]; then
-    ledger="$(awk -v cap="${LEDGER_CAP:-30}" '
+    ledger="$(awk -v cap="${LEDGER_CAP:-10}" '
         /^## Ledger/ {in_section=1; next}
         /^## / && in_section {in_section=0}
         in_section && /^-[[:space:]]/ {n++; lines[n]=$0}
@@ -105,13 +108,29 @@ if [[ -z "${output}" && -z "${ledger}" && -z "${layout}" ]]; then
     exit 0
 fi
 
-# Build the additionalContext payload (Facts of Record first, then Learnings).
+# Build the additionalContext payload: Learnings first (the rules), then the Ledger (history).
+# Claude Code caps each additionalContext string at 10,000 chars and, over that, replaces it
+# with a file path + 2k preview that Claude is never asked to read. So the payload is bounded
+# BEFORE emission: the ledger (newest-first, least critical tail) is trimmed entry by entry
+# until the whole payload fits, and the trim is stated in the payload itself.
+MAX_CHARS=9000   # leaves room for the trim note under the 10,000 cap
 context=""
-if [[ -n "${ledger}" ]]; then
-    context+=$'# Facts of Record\n\nDurable project facts (domain, app name, accounts, commitments). Treat each line as current ground truth.\n'"${ledger}"$'\n'
-fi
 if [[ -n "${output}" ]]; then
-    context+=$'# Workspace Learnings\n\nDurable rules scoped per workspace. Apply every ALWAYS/NEVER as a binding constraint when working in that workspace.\n'"${output}"
+    context+=$'# Workspace Learnings\n\nDurable rules scoped per workspace. Apply every ALWAYS/NEVER as a binding constraint when working in that workspace.\n'"${output}"$'\n'
+fi
+if [[ -n "${ledger}" ]]; then
+    header=$'# Facts of Record\n\nDurable project facts (domain, app name, accounts, commitments). Treat each line as current ground truth.\n'
+    trimmed=0
+    while [[ $(( ${#context} + ${#header} + ${#ledger} )) -gt ${MAX_CHARS} && -n "${ledger}" ]]; do
+        # Drop the last ledger entry (oldest of the injected window). Entries are "- " lines; a
+        # continuation line is dropped with the entry it belongs to.
+        ledger="$(printf '%s\n' "${ledger}" | awk '/^- /{n++} {l[NR]=$0; e[NR]=n} END{for(i=1;i<=NR;i++) if(e[i]<n) print l[i]}')"
+        trimmed=$((trimmed + 1))
+    done
+    if [[ ${trimmed} -gt 0 ]]; then
+        ledger+=$'\n- ('"${trimmed}"$' older entries of the injected window trimmed to fit the 10k-char hook cap - full ledger in DECISIONS.md ## Ledger; grep it before asserting a fact of record)'
+    fi
+    [[ -n "${ledger}" ]] && context+="${header}${ledger}"$'\n'
 fi
 if [[ -n "${layout}" ]]; then
     context+=$'\n# Repo Layout Check\n\nWorkspace folders (have AGENT.md) not declared in CLAUDE.md. Surface to the user so Routing/Structure stays honest:\n'"${layout}"$'\n'

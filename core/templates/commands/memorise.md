@@ -55,7 +55,9 @@ If a real fix exists but is too big for session end → park it as the FIRST ite
 
 Only candidates with no structural fix (genuinely behavioral rules) proceed to the recurrence check.
 
-For each surviving candidate, **check for recurrence** — read the workspace's `LEARNINGS.md` `## Active Learnings` AND `## Archived Learnings` (and `mem-search` the pattern if unsure):
+For each surviving candidate, **check for recurrence** — read the workspace's `LEARNINGS.md` `## Active Learnings`, `## Archived Learnings` AND `## Candidates` (scribe proposals, same rule in other words counts) (and `mem-search` the pattern if unsure):
+
+**A0) Already in `## Candidates` (the scribe saw it first).** Never write a second Active line: move the scribe's line into `## Active Learnings`, keep its `[toolu_…]` provenance, set `×N` = its `seen ×N` + 1, and add the owner quote if this session has one. Then, for the touched workspaces, list every remaining `## Candidates` line and ask once per line: `[workspace] Scribe candidate "<rule>" seen ×N — y (→ Active ×N) / n (delete) / fix (rewrite then Active)`. Both gates above apply to a promoted candidate like to any rule.
 
 **A) Already present (recurrence) — do NOT skip. The duplicate IS the signal.**
 - First re-run BOTH gates on the existing rule as written (older rules predate the gates):
