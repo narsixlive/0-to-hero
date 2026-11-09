@@ -97,6 +97,8 @@ A good fact-of-record candidate:
 - Is project-level — not workspace-scoped (those are Learnings), not NEVER/ALWAYS (those go via `/gotcha`)
 - Would be expensive or risky to rediscover if forgotten
 
+**Read the top of `## Ledger (facts of record)` first (the 10 newest entries).** The background scribe writes facts there during the session, with other words than yours: a fact already present in any wording is NOT a candidate — skip it silently, never propose a reworded duplicate.
+
 For each candidate (0 to 3 per session max):
 
 1. State it as a dated one-liner: `YYYY-MM-DD — [fact]`

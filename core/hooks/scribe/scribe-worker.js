@@ -138,13 +138,20 @@ function deltaFor(transcript, cursorFile, max = MAX_DELTA_CHARS) {
   if (lines[lines.length - 1] === '') lines.pop();
   if (from >= lines.length) return null;
   const parts = []; let size = 0; let i = from; let partial = false;
+  // A /memorise turn is the owner writing the memory files by hand: nothing to extract, and reading
+  // it would re-propose what it just wrote. Muted until the next real USER line.
+  // ponytail: the mute does not survive a cursor cut inside the turn; one extra lean call at worst.
+  let muted = false;
   for (; i < lines.length; i++) {
     let j;
     try { j = JSON.parse(lines[i]); } catch {
       if (i === lines.length - 1) break;   // last line still being written: leave it for the next run
       continue;                             // corrupt line in the middle: skip
     }
+    if (j.type === 'user' && /<command-name>\/memorise/.test(lines[i])) { muted = true; continue; }
     const r = render(j); if (!r) continue;
+    if (muted && r.startsWith('USER: ')) muted = false;
+    if (muted) continue;
     if (size && size + r.length + 1 > max) { partial = true; break; }
     parts.push(r); size += r.length + 1;
   }

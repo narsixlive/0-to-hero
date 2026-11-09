@@ -15,10 +15,20 @@ const os = require('os');
 const MAX_FACT = 200;
 const today = () => new Date().toISOString().slice(0, 10);
 
+// Read-modify-write race with the session (an Edit by /memorise between our read and our rename
+// would be lost): remember the mtime at read, refuse the write if the file moved, apply() retries once.
+const readAt = new Map();
+function readText(file) {
+  readAt.set(file, fs.statSync(file).mtimeMs);
+  return fs.readFileSync(file, 'utf8');
+}
+class RaceError extends Error { constructor(file) { super(`${path.basename(file)} changed under us`); this.race = true; } }
 function atomicWrite(file, text) {
+  if (readAt.has(file) && fs.existsSync(file) && fs.statSync(file).mtimeMs !== readAt.get(file)) throw new RaceError(file);
   const tmp = file + '.scribe-tmp';
   fs.writeFileSync(tmp, text, 'utf8');
   fs.renameSync(tmp, file);
+  readAt.delete(file);
 }
 
 // Replace the body of `## <heading>` (up to the next "## " or EOF). Returns null if the heading is absent.
@@ -51,7 +61,7 @@ function applyState(root, s) {
   if (!safeWorkspace(s.workspace) || !Array.isArray(s.lines) || !s.lines.length || !Array.isArray(s.evidence) || !s.evidence.length) return null;
   const file = path.join(root, s.workspace, 'CONTEXT.md');
   if (!fs.existsSync(file)) return null;
-  const text = fs.readFileSync(file, 'utf8');
+  const text = readText(file);
   const lines = s.lines.slice(0, 5).map(l => String(l).replace(/\n/g, ' ').trim()).filter(Boolean);
   const body = `\nUpdated: ${today()} (scribe). ${lines.join('\n')}${s.next ? `\nNext: ${String(s.next).replace(/\n/g, ' ').trim()}` : ''}\n`;
   const out = replaceSection(text, 'Current state', body);
@@ -66,7 +76,7 @@ function applyFact(root, f) {
   if (text1.length > MAX_FACT) return `fact rejected (${text1.length} chars > ${MAX_FACT})`;
   const file = path.join(root, 'DECISIONS.md');
   if (!fs.existsSync(file)) return null;
-  const text = fs.readFileSync(file, 'utf8');
+  const text = readText(file);
   const body = sectionBody(text, 'Ledger');
   if (body === null) return null;
   const line = `- ${f.date} — ${text1}`;
@@ -88,7 +98,7 @@ function applyFact(root, f) {
 
 function ensureLearnings(file, ws) {
   if (fs.existsSync(file)) {
-    let t = fs.readFileSync(file, 'utf8');
+    let t = readText(file);
     if (!/^## Candidates/m.test(t)) {
       t = t.replace(/\s*$/, '') + '\n\n## Candidates\n<!-- scribe proposals, NOT injected — validated in session (y / n / fix) or by /memorise -->\n';
       atomicWrite(file, t);
@@ -106,7 +116,7 @@ function applyCandidate(root, c) {
   if (!fs.existsSync(dir)) return null;
   const file = path.join(dir, 'LEARNINGS.md');
   let text = ensureLearnings(file, c.workspace);
-  text = fs.readFileSync(file, 'utf8');
+  text = readText(file);
   const rule = String(c.rule).replace(/\n/g, ' ').trim();
   // Already a rule anywhere in the file (Active / Archived / Candidates)? → bump only if the incident is new.
   const all = text.split('\n');
@@ -133,11 +143,13 @@ function applyCandidate(root, c) {
   return `${c.workspace} +1 candidate`;
 }
 
+// Each applyX re-reads its file, so a race is retried once from the fresh content.
+const once = fn => { try { return fn(); } catch (e) { if (!e.race) throw e; return fn(); } };
 function apply(root, proposal) {
   const done = [];
-  for (const s of proposal.state || []) { try { const r = applyState(root, s); if (r) done.push(r); } catch (e) { done.push(`state error: ${e.message}`); } }
-  for (const f of proposal.facts || []) { try { const r = applyFact(root, f); if (r) done.push(r); } catch (e) { done.push(`fact error: ${e.message}`); } }
-  for (const c of proposal.candidates || []) { try { const r = applyCandidate(root, c); if (r) done.push(r); } catch (e) { done.push(`candidate error: ${e.message}`); } }
+  for (const s of proposal.state || []) { try { const r = once(() => applyState(root, s)); if (r) done.push(r); } catch (e) { done.push(`state error: ${e.message}`); } }
+  for (const f of proposal.facts || []) { try { const r = once(() => applyFact(root, f)); if (r) done.push(r); } catch (e) { done.push(`fact error: ${e.message}`); } }
+  for (const c of proposal.candidates || []) { try { const r = once(() => applyCandidate(root, c)); if (r) done.push(r); } catch (e) { done.push(`candidate error: ${e.message}`); } }
   return done;
 }
 
