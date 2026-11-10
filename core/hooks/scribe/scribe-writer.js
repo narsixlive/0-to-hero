@@ -123,7 +123,9 @@ function applyFactKV(root, f) {
   if (!f.key || !f.value || !f.evidence || !/^\d{4}-\d{2}-\d{2}$/.test(f.date || '')) return null;
   const key = String(f.key).replace(/[*\n:]/g, '').trim(), value = String(f.value).replace(/\n/g, ' ').trim();
   if (!key || key.length > 60) return null;
-  if (value.length > MAX_FACT) return `fact error: ${value.length} chars > ${MAX_FACT}`;
+  // Too long for a direct write: never store a cut value in Facts — queue it (clipped) for the owner instead.
+  // An error here would make the worker re-run the whole delta, and the model is as verbose the next time.
+  if (value.length > MAX_FACT) return applyProposal(root, 'fact', f);
   const file = path.join(root, 'DECISIONS.md');
   if (!fs.existsSync(file)) return null;
   const text = readText(file);
@@ -149,11 +151,12 @@ function applyFactKV(root, f) {
 // Deduped on content; a repeat with new evidence bumps `seen ×N`. Creates ## Facts and ## Proposals above ## Ledger if needed.
 function applyProposal(root, kind, f) {
   const date = /^\d{4}-\d{2}-\d{2}$/.test(f.date || '') ? f.date : today();
+  // Over-long text is clipped, not refused: a proposal is reviewed by the owner anyway and its evidence id
+  // leads back to the full context. Refusing it made the worker re-run the delta 3× and then drop it.
   const content = kind === 'fact'
-    ? (f.key && f.value ? `**${String(f.key).replace(/[*\n:]/g, '').trim()}**: ${String(f.value).replace(/\n/g, ' ').trim()} (${date})` : null)
-    : (f.text ? `${date} — ${String(f.text).replace(/\n/g, ' ').trim()}` : null);
+    ? (f.key && f.value ? `**${String(f.key).replace(/[*\n:]/g, '').trim()}**: ${clip(String(f.value).replace(/\n/g, ' ').trim(), MAX_FACT)} (${date})` : null)
+    : (f.text ? `${date} — ${clip(String(f.text).replace(/\n/g, ' ').trim(), MAX_FACT)}` : null);
   if (!content || !f.evidence) return null;
-  if (content.length > MAX_FACT + 40) return `proposal error: ${content.length} chars`;
   const file = path.join(root, 'DECISIONS.md');
   if (!fs.existsSync(file)) return null;
   let text = readText(file);
@@ -263,10 +266,11 @@ if (require.main === module && process.argv.includes('--selftest')) {
       { date: '2026-02-02', key: 'Price', value: '15', evidence: 'toolu_2' },                      // strict equality: 1.5 ≠ 15 → written
       { date: '2026-02-02', key: 'Domain', value: 'example.org', evidence: 'toolu_2' },            // new key → proposal, not written
       { date: '2026-02-02', key: 'Prod host', value: 'ddd', evidence: 'owner said: on passe sur ddd', why: 'cheaper' },   // owner words → proposal
-      { date: '2026-02-02', key: 'Long', value: 'x'.repeat(201), evidence: 'toolu_3' },            // too long → error (counted by the worker)
+      { date: '2026-02-02', key: 'Prod host', value: 'x'.repeat(201), evidence: 'toolu_3' },       // too long for a direct write → clipped proposal, Facts untouched
       { date: '2026-02-02', text: 'legacy unkeyed fact', evidence: 'toolu_3' }],                   // legacy shape → log proposal
     log: [{ date: '2026-02-03', text: 'launch decided for March', evidence: 'toolu_2', why: 'owner wants Q1' },
-          { date: '2026-02-03', text: 'launch decided for March', evidence: 'toolu_7' }],          // same content, new evidence → seen ×2
+          { date: '2026-02-03', text: 'launch decided for March', evidence: 'toolu_7' },           // same content, new evidence → seen ×2
+          { date: '2026-02-03', text: 'y'.repeat(346), evidence: 'toolu_8' }],                     // over-long → clipped, never an error
     candidates: [
       { workspace: '../web', rule: 'NEVER escape (traversal)', incident: 'toolu_9' },            // unsafe workspace → ignored
       { workspace: '_private', rule: 'NEVER leak (private)', incident: 'toolu_9' },              // private → ignored
@@ -291,10 +295,12 @@ if (require.main === module && process.argv.includes('--selftest')) {
   assert(dec.indexOf('## Facts') < dec.indexOf('## Proposals') && dec.indexOf('## Proposals') < dec.indexOf('## Ledger'), 'Proposals section created between Facts and Ledger');
   assert(props.includes('- [fact] **Domain**: example.org (2026-02-02) [toolu_2]') && props.includes('- [fact] **Prod host**: ddd (2026-02-02) [owner said: on passe sur ddd] why: cheaper') && props.includes('- [log] 2026-02-02 — legacy unkeyed fact [toolu_3]'), 'new key / owner evidence / legacy shape → proposals: ' + props);
   assert(props.includes('- [log] 2026-02-03 — launch decided for March [toolu_2, toolu_7] why: owner wants Q1 · seen ×2') && (props.match(/launch decided/g) || []).length === 1, 'same proposal with new evidence bumps ×N');
-  assert(done.some(d => d.startsWith('fact error: 201 chars')) && !facts.includes('Long'), 'too long → error, not written');
+  assert(!done.some(d => / error: /.test(d)), 'no error → the worker never re-runs a delta for a long text: ' + done);
+  assert(props.includes(`- [fact] **Prod host**: ${'x'.repeat(199)}… (2026-02-02) [toolu_3]`) && !facts.includes('xxx'), 'too long for Facts → clipped proposal, Facts untouched');
+  assert(props.includes(`- [log] 2026-02-03 — ${'y'.repeat(199)}… [toolu_8]`), 'over-long log → clipped proposal');
   assert(!ledger.includes('launch decided') && !ledger.includes('legacy'), 'the scribe never writes log lines to the ledger itself');
   const pend = countPending(root, ['web']);
-  assert(pend.proposals === 4 && pend.oldest === '2026-02-02', 'countPending: ' + JSON.stringify(pend));
+  assert(pend.proposals === 6 && pend.oldest === '2026-02-02', 'countPending: ' + JSON.stringify(pend));
   assert(/## Candidates[\s\S]*- NEVER do X \(why\) seen ×2 \(\d{4}-\d{2}-\d{2}\) \[toolu_4\] seam: a\.ts:1 \[toolu_5\]/.test(lrn), 'candidate + bump once');
   assert(/## Active Learnings[\s\S]*- ALWAYS do Y \(because\) ×1 \(owner [\d-]+: « non, toujours Y »\)/.test(lrn), 'owner correction → Active');
   assert(!lrn.includes('maybe do Z'), 'bad format ignored');
