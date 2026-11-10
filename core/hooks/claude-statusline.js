@@ -74,18 +74,15 @@ process.stdin.on('end', () => {
           autoMemKilled = gs?.env?.CLAUDE_CODE_DISABLE_AUTO_MEMORY === '1';
         }
 
-        // Find nearest CONTEXT.md (cwd, then parent up to 2 levels)
+        // Nearest rule file (cwd, then parent up to 2 levels): LEARNINGS.md (Durcir), legacy CONTEXT.md.
         let learningsCount = 0;
-        const candidates = [
-          path.join(dir, 'CONTEXT.md'),
-          path.join(dir, '..', 'CONTEXT.md'),
-          path.join(dir, '..', '..', 'CONTEXT.md'),
-        ];
+        const candidates = [];
+        for (const up of ['', '..', path.join('..', '..')]) candidates.push(path.join(dir, up, 'LEARNINGS.md'), path.join(dir, up, 'CONTEXT.md'));
         for (const p of candidates) {
           if (fs.existsSync(p)) {
             const txt = fs.readFileSync(p, 'utf8');
-            const active = txt.match(/^## Active Learnings[\s\S]*?(?=^## |\Z)/m);
-            const fallback = txt.match(/^## Learnings[\s\S]*?(?=^## |\Z)/m);
+            const active = txt.match(/^## Active Learnings[\s\S]*?(?=^## |(?![\s\S]))/m);
+            const fallback = txt.match(/^## Learnings[\s\S]*?(?=^## |(?![\s\S]))/m);
             const section = active || fallback;
             if (section) learningsCount = (section[0].match(/^- /gm) || []).length;
             break;

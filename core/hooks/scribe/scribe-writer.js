@@ -63,12 +63,13 @@ function similar(a, b) {
 function applyState(root, s) {
   if (!safeWorkspace(s.workspace) || !Array.isArray(s.lines) || !s.lines.length || !Array.isArray(s.evidence) || !s.evidence.length) return null;
   const file = path.join(root, s.workspace, 'CONTEXT.md');
-  if (!fs.existsSync(file)) return null;
+  // A missing destination is a LOSS, never "nothing to do": an error string blocks the cursor and reaches the alert.
+  if (!fs.existsSync(file)) return `state error: ${s.workspace}/CONTEXT.md missing`;
   const text = readText(file);
   const lines = s.lines.slice(0, 5).map(l => String(l).replace(/\n/g, ' ').trim()).filter(Boolean);
   const body = `\nUpdated: ${today()} (scribe). ${lines.join('\n')}${s.next ? `\nNext: ${String(s.next).replace(/\n/g, ' ').trim()}` : ''}\n`;
   const out = replaceSection(text, 'Current state', body);
-  if (!out) return null;
+  if (!out) return `state error: no ## Current state in ${s.workspace}/CONTEXT.md`;
   atomicWrite(file, out);
   return `${s.workspace} state updated`;
 }
@@ -84,19 +85,6 @@ function prependLedger(text, line) {
   parts.splice(i, 0, line);
   return replaceSection(text, 'Ledger', parts.join('\n'));
 }
-// Dated ledger line written by /memorise-validated content only (the scribe itself proposes, see applyProposal).
-function applyFact(root, f) {
-  if (!f.text || !f.evidence || !/^\d{4}-\d{2}-\d{2}$/.test(f.date || '')) return null;
-  const text1 = String(f.text).replace(/\n/g, ' ').trim();
-  if (text1.length > MAX_FACT) return `fact error: ${text1.length} chars > ${MAX_FACT}`;
-  const file = path.join(root, 'DECISIONS.md');
-  if (!fs.existsSync(file)) return null;
-  const out = prependLedger(readText(file), `- ${f.date} — ${text1}`);
-  if (out === null) return null;
-  atomicWrite(file, out);
-  return 'ledger +1';
-}
-
 // ## Facts (current): one line per key, upserted in place. Bounded by the number of keys, so the hook injects it
 // whole; the dated ## Ledger keeps the trace of each change. Format: `- **Key**: value (since YYYY-MM-DD)`.
 const normKey = s => String(s || '').toLowerCase().replace(/[^a-z0-9]+/g, ' ').trim();
@@ -127,7 +115,7 @@ function applyFactKV(root, f) {
   // An error here would make the worker re-run the whole delta, and the model is as verbose the next time.
   if (value.length > MAX_FACT) return applyProposal(root, 'fact', f);
   const file = path.join(root, 'DECISIONS.md');
-  if (!fs.existsSync(file)) return null;
+  if (!fs.existsSync(file)) return 'fact error: DECISIONS.md missing';
   const text = readText(file);
   const facts = sectionBody(text, 'Facts');
   const lines = facts === null ? [] : facts.split('\n');
@@ -156,13 +144,13 @@ function applyProposal(root, kind, f) {
   const content = kind === 'fact'
     ? (f.key && f.value ? `**${String(f.key).replace(/[*\n:]/g, '').trim()}**: ${clip(String(f.value).replace(/\n/g, ' ').trim(), MAX_FACT)} (${date})` : null)
     : (f.text ? `${date} — ${clip(String(f.text).replace(/\n/g, ' ').trim(), MAX_FACT)}` : null);
-  if (!content || !f.evidence) return null;
+  if (!content || !f.evidence) return null;                      // verify-filter outcome, not a loss
   const file = path.join(root, 'DECISIONS.md');
-  if (!fs.existsSync(file)) return null;
+  if (!fs.existsSync(file)) return 'proposal error: DECISIONS.md missing';
   let text = readText(file);
   text = ensureSection(text, 'Facts', FACTS_HEADER, /^## Ledger/m);
   text = text && ensureSection(text, 'Proposals', PROPOSALS_HEADER, /^## Ledger/m);
-  if (!text) return null;
+  if (!text) return 'proposal error: no ## Ledger in DECISIONS.md to anchor ## Proposals';
   const ev = clip(String(f.evidence).replace(/[\[\]\n]/g, ' ').trim(), 80);
   const why = f.why ? ` why: ${clip(String(f.why).replace(/\n/g, ' ').trim(), 160)}` : '';
   const lines = sectionBody(text, 'Proposals').split('\n');
@@ -192,46 +180,62 @@ function countPending(root, wss = []) {
   return { proposals: proposals.length, candidates: candidates.length, oldest: dates[0] || null };
 }
 
+// Same layout as core/templates/LEARNINGS.template.md: Active → Candidates → Archived → Drift log.
+const CANDIDATES_HEADER = '## Candidates\n<!-- scribe proposals, NOT injected — promoted to Active by /memorise (clause A0) or by the owner\'s correction in session -->\n';
 function ensureLearnings(file, ws) {
   if (fs.existsSync(file)) {
     let t = readText(file);
     if (!/^## Candidates/m.test(t)) {
-      t = t.replace(/\s*$/, '') + '\n\n## Candidates\n<!-- scribe proposals, NOT injected — validated in session (y / n / fix) or by /memorise -->\n';
+      t = /^## Archived Learnings/m.test(t)
+        ? t.replace(/^## Archived Learnings/m, CANDIDATES_HEADER + '\n## Archived Learnings')
+        : t.replace(/\s*$/, '') + '\n\n' + CANDIDATES_HEADER;
       atomicWrite(file, t);
     }
     return t;
   }
-  const t = `# ${ws === '.' ? path.basename(path.dirname(file)) : `${ws}/`} — Learnings\n\n## Active Learnings\n<!-- ALWAYS/NEVER [action] ([why]) ×N — injected at SessionStart -->\n\n## Archived Learnings\n<!-- demoted / non-recurrent rules — kept, not injected -->\n\n## Drift log\n<!-- rules ignored despite being capitalized — audit trail -->\n\n## Candidates\n<!-- scribe proposals, NOT injected — validated in session (y / n / fix) or by /memorise -->\n`;
+  const t = `# ${ws === '.' ? path.basename(path.dirname(file)) : `${ws}/`} — Learnings\n\n## Active Learnings\n<!-- ALWAYS/NEVER [action] ([why]) ×N — injected at SessionStart -->\n\n${CANDIDATES_HEADER}\n## Archived Learnings\n<!-- demoted / non-recurrent rules — kept, not injected -->\n\n## Drift log\n<!-- rules ignored despite being capitalized — audit trail -->\n`;
   atomicWrite(file, t);
   return t;
+}
+// Line index range [start, end) of a `## heading` section, or null.
+function sectionRange(lines, heading) {
+  const start = lines.findIndex(l => l.startsWith(`## ${heading}`));
+  if (start < 0) return null;
+  let end = start + 1; while (end < lines.length && !lines[end].startsWith('## ')) end++;
+  return [start, end];
 }
 
 function applyCandidate(root, c) {
   if (!safeWorkspace(c.workspace) || !c.rule || !/^(ALWAYS|NEVER)\b/.test(String(c.rule).trim()) || !c.incident) return null;
   const dir = path.join(root, c.workspace);
-  if (!fs.existsSync(dir)) return null;
+  if (!fs.existsSync(dir)) return `candidate error: workspace ${c.workspace}/ missing`;
   const file = path.join(dir, 'LEARNINGS.md');
   let text = ensureLearnings(file, c.workspace);
   text = readText(file);
   const rule = String(c.rule).replace(/\n/g, ' ').trim();
-  // Already a rule anywhere in the file (Active / Archived / Candidates)? → bump only if the incident is new.
+  const owner = c.owner_correction && String(c.owner_correction).trim().length >= 8 ? String(c.owner_correction).replace(/\n/g, ' ').trim() : null;
+  // Already a rule in Active / Archived / Candidates? (Drift log lines are an audit trail, never a rule to bump.)
   const all = text.split('\n');
-  const idx = all.findIndex(l => l.startsWith('- ') && (norm(l).includes(norm(rule).slice(0, 60)) || similar(l.slice(2), rule)));
-  if (idx >= 0) {
+  const drift = sectionRange(all, 'Drift log'), cand = sectionRange(all, 'Candidates');
+  const inRange = (i, r) => r && i >= r[0] && i < r[1];
+  const idx = all.findIndex((l, i) => l.startsWith('- ') && !inRange(i, drift) && (norm(l).includes(norm(rule).slice(0, 60)) || similar(l.slice(2), rule)));
+  if (idx >= 0 && !(owner && inRange(idx, cand))) {
     if (all[idx].includes(c.incident)) return null;              // same incident restated
     all[idx] = all[idx].replace(/×(\d+)/, (_, n) => `×${Number(n) + 1}`) + ` [${c.incident}]`;
     atomicWrite(file, all.join('\n'));
     return `${c.workspace} ×N bumped`;
   }
-  const owner = c.owner_correction && String(c.owner_correction).trim().length >= 8 ? String(c.owner_correction).replace(/\n/g, ' ').trim() : null;
   const seam = c.seam ? ` seam: ${c.seam}` : '';
   if (owner) {
     // The owner's own imperative is the validation → Active ×1, quote kept as provenance.
+    // A rule already queued in ## Candidates moves up: its evidence ids come along, the candidate line goes.
+    let carried = '';
+    if (idx >= 0) { carried = (all[idx].match(/\[toolu_[^\]]*\]/g) || []).join(' '); all.splice(idx, 1); text = all.join('\n'); }
     const body = sectionBody(text, 'Active Learnings');
-    if (body === null) return null;
-    const out = replaceSection(text, 'Active Learnings', body.replace(/\s*$/, '') + `\n- ${rule} ×1 (owner ${today()}: « ${owner} ») [${c.incident}]`);
+    if (body === null) return `candidate error: no ## Active Learnings in ${c.workspace}/LEARNINGS.md`;
+    const out = replaceSection(text, 'Active Learnings', body.replace(/\s*$/, '') + `\n- ${rule} ×1 (owner ${today()}: « ${owner} ») [${c.incident}]${carried ? ' ' + carried : ''}`);
     atomicWrite(file, out);
-    return `${c.workspace} +1 ACTIVE (owner correction)`;
+    return `${c.workspace} +1 ACTIVE (owner correction${carried ? ', promoted from candidates' : ''})`;
   }
   const body = sectionBody(text, 'Candidates');
   const out = replaceSection(text, 'Candidates', body.replace(/\s*$/, '') + `\n- ${rule} seen ×1 (${today()}) [${c.incident}]${seam}`);
@@ -306,6 +310,15 @@ if (require.main === module && process.argv.includes('--selftest')) {
   assert(!lrn.includes('maybe do Z'), 'bad format ignored');
   assert(!lrn.includes('traversal') && !fs.existsSync(path.join(root, '_private')) && !fs.existsSync(path.join(path.dirname(root), 'web')), 'unsafe workspaces refused');
   assert(/- ALWAYS do X \(why\) seen ×1/.test(lrn) && /- NEVER do X \(why\) seen ×2/.test(lrn), 'opposite polarity is a separate rule');
+  assert(lrn.indexOf('## Candidates') < lrn.indexOf('## Archived Learnings'), 'Candidates sits before Archived (template layout)');
+  // Owner correction on a rule the scribe already queued → promoted, evidence carried, candidate line gone; losses are errors.
+  const done2 = apply(root, { candidates: [
+    { workspace: 'web', rule: 'NEVER do X (why)', incident: 'toolu_10', owner_correction: 'non, jamais X, je te l’ai dit' },
+    { workspace: 'ghost', rule: 'NEVER do G (why)', incident: 'toolu_11' },
+  ], state: [{ workspace: 'ghost', lines: ['A'], evidence: ['toolu_1'] }] });
+  const lrn2 = fs.readFileSync(path.join(root, 'web', 'LEARNINGS.md'), 'utf8');
+  assert(/## Active Learnings[\s\S]*- NEVER do X \(why\) ×1 \(owner [\d-]+: « non, jamais X[^»]*»\) \[toolu_10\] \[toolu_4\] \[toolu_5\]/.test(lrn2) && !/## Candidates[\s\S]*NEVER do X/.test(lrn2), 'owner correction promotes an existing candidate: ' + lrn2);
+  assert(done2.some(d => d === 'candidate error: workspace ghost/ missing') && done2.some(d => d === 'state error: ghost/CONTEXT.md missing'), 'missing destination is an error, not a silent drop: ' + done2);
   const rounds = apply(root, p);
   assert(rounds.filter(d => d.includes('candidate') || d.includes('bumped') || d.includes('ledger') || d.includes('proposal') || d.startsWith('fact updated')).length === 0, 'idempotent on re-apply: ' + JSON.stringify(rounds));
   const dec2 = fs.readFileSync(path.join(root, 'DECISIONS.md'), 'utf8');

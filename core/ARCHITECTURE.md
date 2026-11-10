@@ -11,8 +11,8 @@ GPS of the project. Read first, always. Loaded at every session for free.
 
 ### Layer 2: CONTEXT.md + LEARNINGS.md — The room
 What you'd give a new colleague — split by lifetime into two files.
-- **CONTEXT.md** (situational): Brief zone (stable: work, project, audience, constraints) + Current state + Thread (volatile, updated by `/memorise`)
-- **LEARNINGS.md** (the workspace rule register, Durcir lifecycle): `## Active Learnings` (`ALWAYS/NEVER [action] ([why]) ×N`, auto-injected) + `## Archived Learnings` + `## Drift log`. Rules harden through 3 levels (L1 here → L2 `AGENT.md ## Rules` → L3 root Gotchas)
+- **CONTEXT.md** (situational): Brief zone (stable: work, project, audience, constraints) + Current state (written by the scribe during the session, by `/memorise` at its end) + Thread (appended by `/memorise`)
+- **LEARNINGS.md** (the workspace rule register, Durcir lifecycle): `## Active Learnings` (`ALWAYS/NEVER [action] ([why]) ×N`, auto-injected) + `## Candidates` (scribe inbox, not injected) + `## Archived Learnings` + `## Drift log`. Rules harden through 3 levels (L1 here → L2 `AGENT.md ## Rules` → L3 root Gotchas)
 - The essentials fit on one screen; 80% work description / 20% behavior max
 
 ### Layer 3: AGENT.md — The specialist
@@ -27,7 +27,7 @@ Brain of the workspace. Transforms Claude into a specialist.
 ## Facts of record + archives
 
 - **DECISIONS.md** (project root) — three zones since durcir-v2. `## Facts (current)`: the project as it stands (domain, app name, prod host, accounts, pricing, commitments), **one line per key** `- **Key**: value (since date)`, upserted when the value changes, so the section is bounded by the number of keys and **injected whole at every SessionStart**. `## Ledger (facts of record)`: the dated log of decisions and irreversible events, newest first, append-only; only the 5 newest are injected, the rest is the searchable trace. `## ADR archive`: structural rationale (tool choices, workspace split, naming) — NOT injected, consulted on demand. Why the split: states and events age differently — a recency window is right for events and wrong for states (a host chosen in June must still be in context in December, whatever happened since). Every injected surface must be bounded by construction, not by a window; before v2 the Ledger was the only unbounded one. The injected sections exist because an empty, on-demand-only file is invisible and stays unused — that's how important facts get lost.
-- **Memory scribe** — background writer that fills the Ledger, `## Current state` and `## Candidates` from the transcript while the session runs (see Transversal: Memory scribe). **claude-mem** stays as the read-only archive of past sessions (`mem-search`).
+- **Memory scribe** — background sorter that updates existing `## Facts` keys (change traced in the Ledger) and `## Current state` from the transcript while the session runs, and queues everything else in `## Proposals` / `## Candidates` for `/memorise` (see Transversal: Memory scribe). **claude-mem** stays as the read-only archive of past sessions (`mem-search`).
 
 ## Optional: Workspace map — a parent `CLAUDE.md` above several projects
 
@@ -151,7 +151,7 @@ The scribe is a sorter, not a writer of record: it writes directly only what is 
 
 - **Writes evidence or nothing.** A fact or state line without a `toolu_…` id (or an owner quote) found in the delta is rejected. Candidates are deduped fuzzily against Active / Archived / Candidates.
 - **Bounded cost.** Per-session and machine-wide daily token caps hold the delta instead of dropping it; a cap hit prints at the next Stop and, if configured, posts to Discord. One run ≈ 25-30k tokens (≈ $0.15-0.20 list).
-- **Durable, never loses a line.** Cursors advance only over what was sent *and* applied; oversized deltas are cut at a line and re-queued; `/clear` or a crash leaves the queue intact for the next run. `journal.jsonl` records every run.
+- **Durable, never loses a line silently.** A missing destination (no `CONTEXT.md`, no `## Ledger`, unknown workspace) is an apply error, never a quiet skip; a delta that errors 3 times is dropped and the alert names it (`MAX_APPLY_FAILURES`). Cursors advance only over what was sent *and* applied; oversized deltas are cut at a line and re-queued; `/clear` or a crash leaves the queue intact for the next run. `journal.jsonl` records every run.
 - **Visible.** `✍` segment in the terminal statusline (`✍✓` safe to `/clear`, `✍ N` lines pending, `✍⏳` running), the Stop hook's one-line report in any host, optional sidebar badge per project. Files, install, env and state: `core/hooks/scribe/README.md`.
 
 **Project root — one rule for every hook.** The project root is the nearest folder at or above the session's start folder (`CLAUDE_PROJECT_DIR`, fixed by Claude Code for the whole session) that holds both `CLAUDE.md` and `DECISIONS.md`. The injector, the scribe and the statusline all use it, so a Bash `cd` into `<ws>/code_python/` or into a sibling project never moves memory, and a sub-folder with its own CLAUDE.md (instructions for a code folder) still belongs to its project. A parent folder with only a `CLAUDE.md` (a workspace map) is never a project. `DECISIONS.md` is the opt-in marker: no `DECISIONS.md`, no memory. Optionally restricted to folders listed in `SCRIBE_ROOTS`.
@@ -165,9 +165,9 @@ The scribe is a sorter, not a writer of record: it writes directly only what is 
 Self-improving agents, folder-based, opt-in per project. Workspace rules **harden** through three levels instead of piling up in one list.
 
 Three moving parts:
-1. **`LEARNINGS.md` per workspace** — `## Active Learnings` (in-flight `ALWAYS/NEVER [action] ([why]) ×N` rules, injected) + `## Archived Learnings` (demoted / non-recurrent, kept, not injected) + `## Drift log` (rules ignored despite being capitalized). Kept separate from `CONTEXT.md` so the situational context stays pure.
+1. **`LEARNINGS.md` per workspace** — `## Active Learnings` (in-flight `ALWAYS/NEVER [action] ([why]) ×N` rules, injected) + `## Candidates` (scribe proposals, promoted by `/memorise` A0 or an owner correction) + `## Archived Learnings` (demoted / non-recurrent, kept, not injected) + `## Drift log` (rules ignored despite being capitalized). Kept separate from `CONTEXT.md` so the situational context stays pure.
 2. **`/memorise` (Durcir lifecycle)** — at session end it proposes Learnings, **bumps `×N` on recurrence instead of skipping a duplicate** (the duplicate is the signal), proposes **graduation** at the thresholds, archives stale ones, logs drift. The user validates each write.
-3. **`SessionStart` hook** (`~/.claude/hooks/inject-learnings.sh`) — scans `LEARNINGS.md` (and legacy `CONTEXT.md`) files, injects each `## Active Learnings` section + the `DECISIONS.md ## Ledger` as `additionalContext`.
+3. **`SessionStart` hook** (`~/.claude/hooks/inject-learnings.sh`) — scans `LEARNINGS.md` (and legacy `CONTEXT.md`) files, injects each `## Active Learnings` section + `DECISIONS.md ## Facts (current)` whole + the 5 newest `## Ledger` lines (+ the `✉ N` inbox line when the scribe backlog needs `/memorise`) as `additionalContext`, capped at 9.8k chars.
 
 The ladder:
 - **L1 — Active Learnings** (`LEARNINGS.md`): in-flight, injected, counted (`×N`).
@@ -188,7 +188,7 @@ Installation: opt-in per project via `.claude/settings.json` pointing to the glo
 
 Limits:
 - Proposed Learnings can be noisy; the two-stage gating filters them.
-- Recurrence detection depends on matching a candidate against existing Active/Archived rules (read at `/memorise` time) — a re-phrased rule can under-count; the human disambiguates at the gate, `mem-search` is the backstop.
+- Recurrence detection depends on matching a candidate against existing Active/Archived rules (read at `/memorise` time) — a re-phrased rule can under-count; the scribe's fuzzy dedup (polarity + 60 % shared words) and the human at the gate disambiguate.
 - Patterns that apply only "sometimes" don't fit the ALWAYS/NEVER format — don't force them.
 
 ## Transversal: Token Efficiency stack
@@ -209,7 +209,7 @@ Navigation routed by target in project CLAUDE.md (technical profiles) — condit
 - Code symbol → `jcodemunch search_symbols` → `get_symbol` (full-file Read only if the outline is not enough)
 - Markdown / docs / config → direct Read, no restriction
 - Text search → Grep tool (shell fallback: `rtk grep`)
-- Past context → `mem-search`
+- Past context → injected `DECISIONS.md` Facts + Ledger → `mem-search` for history older than the scribe
 
 ## Transversal: .skills/
 Available skills — never loaded globally, always via AGENT.md.
@@ -224,10 +224,10 @@ Project roadmap, generated by plan mode.
 ## Standard reading flow
 
 ```
-CLAUDE.md (routing + gotchas) → LEARNINGS.md (Active) + CONTEXT.md (brief + state) → AGENT.md (Rules) → [skills on-demand] → [mem-search if needed] → [DECISIONS.md if context missing]
+CLAUDE.md (routing + gotchas) → LEARNINGS.md (Active) + CONTEXT.md (brief + state) → AGENT.md (Rules) → [skills on-demand] → [DECISIONS.md ## ADR archive if the why is missing] → [mem-search for pre-scribe history]
 ```
 
-With the Learning layer opt-in, workspace Learnings **and the `DECISIONS.md` ledger** are auto-injected at session start via the `SessionStart` hook — so they're in the agent's context before the first prompt, ahead of the normal reading flow. The Pre-work checklist in `AGENT.md` ensures the same rules are re-read by subagents the hook cannot reach.
+With the Learning layer opt-in, workspace Learnings **and `DECISIONS.md` Facts + Ledger** are auto-injected at session start via the `SessionStart` hook — so they're in the agent's context before the first prompt, ahead of the normal reading flow. The Pre-work checklist in `AGENT.md` ensures the same rules are re-read by subagents the hook cannot reach.
 
 Principle: token-efficient. Every file read must be justified.
 

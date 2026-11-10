@@ -24,7 +24,7 @@ Utilities:
 ## Machine conventions shared by several projects
 
 - Global hooks in `~/.claude/hooks/`: [list]. Do not copy them into a project.
-- Memory: `DECISIONS.md ## Ledger` + per-workspace `LEARNINGS.md`/`CONTEXT.md`, written by the scribe, consolidated by `/memorise`.
+- Memory: `DECISIONS.md ## Facts` + `## Ledger` + per-workspace `LEARNINGS.md`/`CONTEXT.md`, written by the scribe (inbox: `## Proposals` / `## Candidates`), consolidated by `/memorise`.
 - Secrets live in `[path convention]`; never read by agents.
 - Alerts: [one channel, shared by which projects].
 - Scheduled jobs: [scheduler, where the registration pattern lives].

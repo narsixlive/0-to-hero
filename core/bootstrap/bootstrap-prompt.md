@@ -2,8 +2,8 @@
 
 You're going to help me create the structure of my project using the
 0-to-Hero system (3-layer architecture: CLAUDE.md with routing + gotchas,
-Workspaces with CONTEXT.md + AGENT.md + LEARNINGS.md, skills; plus transversal claude-mem
-persistent memory and an opt-in Learning layer (Durcir stack) where workspace rules
+Workspaces with CONTEXT.md + AGENT.md + LEARNINGS.md, skills; plus a DECISIONS.md record,
+a background memory scribe and an opt-in Learning layer (Durcir stack) where workspace rules
 harden through 3 levels — L1 `LEARNINGS.md` → L2 `AGENT.md ## Rules` → L3 root Gotchas —
 fed via `/memorise` and auto-injected at session start via a hook).
 
@@ -321,19 +321,19 @@ The 0-to-Hero structure is created **at the root of the existing project**:
 ```
 my-project/                  ← the user's repo/folder
 ├── CLAUDE.md                ← routing + memory routing + Gotchas section
-├── DECISIONS.md             ← facts-of-record ledger (injected) + ADR archive (on-demand)
+├── DECISIONS.md             ← Facts (current, injected whole) + Proposals (scribe inbox) + Ledger (dated, injected) + ADR archive (on-demand)
 ├── docs/                    ← ALL meta-docs (roadmap, plan, audits, research) — never at root
 │   ├── ROADMAP.md           ← roadmap (if plan mode was used)
 │   └── PLAN.md              ← construction/reference plan (if any)
 ├── .claude/
 │   └── settings.json        ← registers the global SessionStart hook (/memorise + /gotcha live globally — never copied here)
 ├── planning/                ← workspace 1
-│   ├── CONTEXT.md           ← brief + Current state + Thread (updated by /memorise)
-│   ├── LEARNINGS.md         ← workspace rules (Durcir: Active / Archived / Drift log)
+│   ├── CONTEXT.md           ← brief + Current state (scribe + /memorise) + Thread (/memorise)
+│   ├── LEARNINGS.md         ← workspace rules (Durcir: Active / Candidates / Archived / Drift log)
 │   └── AGENT.md
 ├── src/                     ← workspace 2 (can be an existing folder)
-│   ├── CONTEXT.md           ← brief + Current state + Thread (updated by /memorise)
-│   ├── LEARNINGS.md         ← workspace rules (Durcir: Active / Archived / Drift log)
+│   ├── CONTEXT.md           ← brief + Current state (scribe + /memorise) + Thread (/memorise)
+│   ├── LEARNINGS.md         ← workspace rules (Durcir: Active / Candidates / Archived / Drift log)
 │   └── AGENT.md
 └── .skills/
     └── INDEX.md
@@ -525,12 +525,13 @@ Short and scannable — if you scroll, it's too long.
   - Known constraints
   - What makes a good deliverable
   - 80% work description / 20% behavior max
-- Living zone (maintained by `/memorise`):
-  - `## Current state` (overwritten each session, 3-5 lines)
+- Living zone (maintained by the scribe and `/memorise`):
+  - `## Current state` (overwritten by the scribe during the session and by `/memorise` at its end, 3-5 lines)
   - `## Thread` (new entry appended on top, pruned to 5 most recent)
 
 **LEARNINGS.md** (workspace rules — Durcir lifecycle, starts empty at bootstrap)
 - `## Active Learnings` — in-flight rules `- ALWAYS/NEVER [action] ([why]) ×N`, auto-injected at SessionStart, grown/bumped by `/memorise`
+- `## Candidates` — rules the scribe found, NOT injected; promoted by `/memorise` (clause A0) or by the owner's correction in session
 - `## Archived Learnings` — demoted / non-recurrent rules, kept, NOT injected
 - `## Drift log` — audit trail of rules ignored despite being capitalized, NOT injected
 - Rules graduate L1 (here) → L2 (`AGENT.md ## Rules`) → L3 (root `CLAUDE.md ## Gotchas`)
@@ -551,7 +552,7 @@ CLAUDE.md, format: `NEVER/ALWAYS [action] ([why])`. No separate GOTCHA.md file.
 
 ### Transversal files
 - **`/memorise` and `/gotcha` are GLOBAL commands — never copied into the project.** They contain only generic logic (no project-specific data), so they live once at `~/.claude/commands/` and resolve in every project automatically. Install/refresh them idempotently from the repo, exactly like the global hook below: if `~/.claude/commands/memorise.md` / `~/.claude/commands/gotcha.md` are missing or not byte-identical to `core/templates/commands/`, copy them over; otherwise leave them untouched. Do **not** write `.claude/commands/*.md` inside the project — a per-project copy freezes the command at bootstrap time and silently drifts from the template (that is exactly how a project ends up never proposing the stack-freshness upgrade after the template gained it).
-  - `/memorise` → session summary to claude-mem + per-workspace CONTEXT.md thread update + Durcir Learnings in LEARNINGS.md (bump/graduate/archive) + facts of record + workspace-map proposal (only if a parent `CLAUDE.md` exists above the project) + a stack-freshness check.
+  - `/memorise` → drains the scribe inbox (`DECISIONS.md ## Proposals`, `LEARNINGS.md ## Candidates`) + per-workspace CONTEXT.md thread update + Durcir Learnings in LEARNINGS.md (bump/graduate/archive) + facts of record + workspace-map proposal (only if a parent `CLAUDE.md` exists above the project) + a stack-freshness check.
 - **Workspace map (optional, multi-project machines).** If the project's parent folder already holds other bootstrapped projects (sibling folders with `CLAUDE.md`) and no `CLAUDE.md` exists in that parent, offer once to scaffold one from `core/templates/WORKSPACE-MAP.template.md` (see ARCHITECTURE "Workspace map"). It is machine-local: never commit it to a published repo, never copy its content into the project.
   - `/gotcha` → one-line cross-workspace rule appender to the Gotchas section of the root CLAUDE.md (format: `NEVER/ALWAYS [action] ([why])`).
 - **`/bootstrap-upgrade` is a GLOBAL command too — but installed as a thin DELEGATOR STUB, not a copy of the procedure.** Its logic already needs the repo at runtime (it reads the canonical templates), so the global `~/.claude/commands/bootstrap-upgrade.md` only resolves `$REPO` and reads `core/bootstrap/bootstrap-upgrade.md` live — there is one source of truth and it can never go stale. Install/refresh it idempotently from `core/templates/commands/bootstrap-upgrade.md` (the stub). Never install a full copy of the procedure: a frozen full copy silently runs an old architecture *and* hides every later upgrade it should propose (this is the one command whose own staleness is self-concealing).
@@ -565,9 +566,9 @@ CLAUDE.md, format: `NEVER/ALWAYS [action] ([why])`. No separate GOTCHA.md file.
     }
   }
   ```
-  The nesting matters: Claude Code expects matcher groups (`[{ "hooks": [...] }]`), and a flat `[{ "type": "command", ... }]` entry is rejected silently — the hook never runs and nothing gets injected. The hook script itself lives globally at `~/.claude/hooks/inject-learnings.sh` (install once from `core/hooks/inject-learnings.sh` in the 0-to-Hero repo). At every new session, it scans the project's `LEARNINGS.md` files (and legacy `CONTEXT.md` for un-migrated projects), extracts each `## Active Learnings` section, and also extracts the `## Ledger` section from the root `DECISIONS.md`, injecting both as `additionalContext` — so agents have workspace rules and durable project facts in hand before the first user prompt.
+  The nesting matters: Claude Code expects matcher groups (`[{ "hooks": [...] }]`), and a flat `[{ "type": "command", ... }]` entry is rejected silently — the hook never runs and nothing gets injected. The hook script itself lives globally at `~/.claude/hooks/inject-learnings.sh` (install once from `core/hooks/inject-learnings.sh` in the 0-to-Hero repo). At every new session, it scans the project's `LEARNINGS.md` files (and legacy `CONTEXT.md` for un-migrated projects), extracts each `## Active Learnings` section, plus `## Facts (current)` whole and the 5 newest `## Ledger` lines from the root `DECISIONS.md`, injecting all of it as `additionalContext` (capped at 9.8k chars) — so agents have workspace rules and durable project facts in hand before the first user prompt.
 - **Memory scribe (global, once per machine — not per project).** Check that `~/.claude/hooks/scribe/` exists and that the global `~/.claude/settings.json` registers `scribe-trigger.js` on BOTH `Stop` and `SessionEnd` (same nested form as above, `"async": true`, `"timeout": 10`). If not, install it from `core/hooks/scribe/` (README there: env variables, Windows launcher). Nothing to add to the project: the trigger watches every Durcir project by itself (root `CLAUDE.md` + `DECISIONS.md` or a `<ws>/AGENT.md`), restricted to `SCRIBE_ROOTS` when that variable is set. Tell the user the visible effects: a `scribe: …` line after some turns, the `✍` / `✉` segments in the terminal statusline (`core/hooks/claude-statusline.js`, optional), and — for users who work in VS Code without a terminal — the sidebar in `tools/claude-hub/` (badge per project, memory inbox `✉ N` → `/memorise`, "run the scribe now"), offered once, never required.
-- `DECISIONS.md` — scaffolded from `core/templates/DECISIONS.template.md`. Two zones: a `## Ledger (facts of record)` at the top — durable project facts (domain, app name, accounts, commitments), terse dated one-liners, **injected at every SessionStart** and fed by `/memorise` (auto-proposed, user validates) — and a `## ADR archive` below for narrative rationale ("why did we choose X?"), NOT injected, consulted on demand. Do NOT leave the file empty: it starts with both section headers and their format comments, so the ledger exists and gets used from session one. Rationale: an empty, on-demand, never-injected file is invisible and stays unused — the injected ledger is what keeps important facts from being lost.
+- `DECISIONS.md` — scaffolded from `core/templates/DECISIONS.template.md`. Four zones: `## Facts (current)` — the project as it stands (domain, app name, prod host, accounts, pricing, commitments), one line per key, **injected whole at every SessionStart**, upserted by the scribe and `/memorise`; `## Proposals` — the scribe's inbox, NOT injected, drained by `/memorise`; `## Ledger (facts of record)` — dated decisions and irreversible events, newest first, 5 newest injected; `## ADR archive` — narrative rationale ("why did we choose X?"), NOT injected, consulted on demand. Do NOT leave the file empty: it starts with all four headers and their format comments, so the record exists and gets used from session one. Rationale: an empty, on-demand, never-injected file is invisible and stays unused — the injected ledger is what keeps important facts from being lost.
 - `.skills/INDEX.md` — empty table, ready to receive.
 
 ## Recommendations (skills + token reducers)
@@ -617,7 +618,6 @@ Transparent to the user: no manual action required after installation.
 |------|-------------|-------------|
 | **RTK** | CLI proxy, 60-90% output compression. Prefix every command: `rtk git`, `rtk grep`, `rtk ls`. | `curl -fsSL https://rtk.sh \| sh` |
 | **ccusage** | Session token monitoring from local JSONL files. Not a reducer — a meter. | `npx ccusage@latest` |
-| **claude-mem** | Zero-touch persistent memory via hooks (SQLite + Chroma). Replaces manual `.memory/` system. | `npx claude-mem install` |
 
 #### Technical profile only
 
@@ -630,34 +630,8 @@ Transparent to the user: no manual action required after installation.
 
 | Profile | Stack |
 |---------|-------|
-| All | RTK + ccusage + claude-mem |
+| All | RTK + ccusage + memory scribe (global, see Transversal files) |
 | Technical | + jCodeMunch + context7 |
-
-### CLAUDE.md navigation block (technical profile only)
-
-After workspace generation, append this block verbatim to the project CLAUDE.md:
-
-```
-## Shell
-
-`rtk` wraps shell commands: `rtk git`, `rtk ls`, `rtk find`, `rtk grep` in Bash. Harness tools (Grep/Glob/Read) are not shell commands — use them directly.
-
-## Navigation (route by target, no strict order)
-
-- **Code symbols** → `jcodemunch search_symbols` → `get_symbol`. Full-file Read only if the outline is not enough.
-- **Markdown / docs / config** → Read directly, no restriction.
-- **"Find this text"** → Grep tool (shell fallback: `rtk grep`)
-- **"What did we do before?"** → `mem-search "…"`
-
-## Modifications
-
-Surgical. Summarize before, confirm if > 3 files. Diff if > 20 lines.
-Do not fix adjacent issues without asking. No unsolicited suggestions.
-
-## Startup
-
-Check silently: claude-mem, jCodeMunch.
-```
 
 ### Memory & Navigation Tools
 
@@ -666,12 +640,13 @@ complementary to Token Reducers.
 
 | Tool | What it does | Installation |
 |------|-------------|-------------|
-| **claude-mem** | Persistent cross-session memory (SQLite + Chroma, local). Powers `/memorise` and `mem-search`. Mandatory base of the memory architecture. | `npx claude-mem@latest install` |
+| **claude-mem** | Optional read-only archive of past sessions (`mem-search`). The memory stack does not depend on it; if installed, its capture must be off (`CLAUDE_MEM_DISABLE_OBSERVATION=1`, `CLAUDE_MEM_DISABLE_SUMMARY=1` in the global `env`) — one model turn per tool use for a capture the markdown files already carry. | optional |
 | **jCodeMunch** | Code navigation by symbol (`search_symbols`, `get_file_outline`, `get_symbol_source`) instead of full-file reads. | MCP server install |
 | **Context7** | Up-to-date documentation for external libraries (MCP server). | MCP server install |
 
 **Recommendation by profile:**
-- **claude-mem** → always, all profiles (base of the memory routing)
+- **memory scribe** → always, all profiles (base of the memory routing — global install, once per machine)
+- **claude-mem** → optional archive only; never as the memory base
 - **jCodeMunch** → recommended for any code-heavy project
 - **Context7** → recommended when external libs/APIs are used
 
@@ -694,7 +669,7 @@ to install the tools that aren't already present.
 5. Flag incompatibilities (e.g.: ContextZip hooks on Windows)
 
 ### What we install
-- **Token efficiency stack** — RTK, ccusage, claude-mem for all profiles; jCodeMunch, context7 for technical profiles
+- **Token efficiency stack** — RTK, ccusage, memory scribe for all profiles; jCodeMunch, context7 for technical profiles
 - **MCP servers** validated at the Tooling step (e.g.: linkedin-mcp-server)
 - **Skills** that require installation (e.g.: npx for some skills)
 
@@ -715,7 +690,7 @@ Iterate until the user has validated.
 - Standard reading order: LEARNINGS.md (`## Active Learnings`) + CONTEXT.md (brief + state) → AGENT.md (`## Rules`) → CLAUDE.md (Gotchas section)
 - Skills in always or on-demand mode, never globally
 - Durcir ladder for rules: L1 workspace `LEARNINGS.md` `## Active Learnings` (via `/memorise`) → L2 `AGENT.md` `## Rules` (graduated when stable/recurring) → L3 root CLAUDE.md Gotchas (via `/gotcha`, cross-workspace). All use the format `NEVER/ALWAYS [action] ([why])`.
-- Memory is routed: `/memorise` for session recap + workspace Learnings (LEARNINGS.md) + facts of record (claude-mem + DECISIONS.md ledger), `/gotcha` for cross-workspace doctrine (CLAUDE.md Gotchas), `DECISIONS.md` for durable project facts (`## Ledger`, injected) and structural rationale (`## ADR archive`, on-demand), "remember forever" for permanent preferences (Claude native memory).
+- Memory is routed: the scribe for in-session capture (Current state, existing Facts keys; everything else queued in `## Proposals` / `## Candidates`), `/memorise` for the drain + workspace Learnings (LEARNINGS.md) + facts of record (DECISIONS.md), `/gotcha` for cross-workspace doctrine (CLAUDE.md Gotchas), `DECISIONS.md` for durable project facts (`## Facts` injected whole, `## Ledger` dated) and structural rationale (`## ADR archive`, on-demand), "remember forever" for permanent preferences (Claude native memory).
 - Token-efficient: no prose, no filler
 - Generate custom content based on the answers — no generic content
 - Content must be realistic and specific to the profile, not placeholders
@@ -736,7 +711,7 @@ Each workspace splits its memory across two files, by lifetime:
 Rules harden through 3 levels: **L1** `LEARNINGS.md ## Active Learnings` → **L2** `AGENT.md ## Rules` (role doctrine, graduated when a rule hits ×3 / stabilises / blocks) → **L3** root `CLAUDE.md ## Gotchas` (cross-workspace, via `/gotcha` or graduation). Graduating copies the rule verbatim to the higher level and removes it from Active — the Active list drains upward instead of growing.
 
 The `/memorise` command:
-1. Generates the global session summary captured by claude-mem.
+1. Drains the scribe inbox (`DECISIONS.md ## Proposals`, `LEARNINGS.md ## Candidates`): `y` → Facts / Ledger / Active, `n` → archive, never deleted.
 2. Identifies the workspace(s) touched, updates each `CONTEXT.md` (Current state + Thread only — never the brief).
 3. For each touched workspace's `LEARNINGS.md`: proposes new Learnings; on a recurring rule it **bumps `×N`** instead of skipping (and logs a `## Drift log` line if the rule was ignored); proposes graduations at the thresholds; archives stale ones. User validates each write.
 4. Proposes facts of record for the `DECISIONS.md` ledger, then runs a stack-freshness check.
@@ -744,7 +719,7 @@ The `/memorise` command:
 The `SessionStart` hook (`~/.claude/hooks/inject-learnings.sh`):
 1. Runs automatically when Claude Code opens a session in this project.
 2. Scans all `LEARNINGS.md` (and legacy `CONTEXT.md`) files in the project (depth 1-3).
-3. Extracts each `## Active Learnings` section, labels them by workspace name, plus the `## Ledger` from root `DECISIONS.md`.
+3. Extracts each `## Active Learnings` section, labels them by workspace name, plus `## Facts (current)` whole and the 5 newest `## Ledger` lines from root `DECISIONS.md`.
 4. Injects them as `additionalContext` — so agents have workspace rules and durable facts in hand before the first prompt.
 
-Rationale: a workspace agent should resume "where we were" (CONTEXT.md) without being polluted by other workspaces, AND automatically apply hard-earned rules (LEARNINGS.md) without the user re-stating them — while the rule lifecycle (graduation, archival, drift) lives on its own surface so the situational context stays pure. claude-mem keeps the long history globally; the hook guarantees the Active Learnings are in the agent's context from turn 0.
+Rationale: a workspace agent should resume "where we were" (CONTEXT.md) without being polluted by other workspaces, AND automatically apply hard-earned rules (LEARNINGS.md) without the user re-stating them — while the rule lifecycle (graduation, archival, drift) lives on its own surface so the situational context stays pure. the scribe keeps the record current while the session runs; the hook guarantees the Facts, the Ledger window and the Active Learnings are in the agent's context from turn 0.

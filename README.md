@@ -6,14 +6,15 @@
 
 ## What is it?
 
-An open-source system based on a 3-layer architecture + a transversal learning layer:
+An open-source system based on a 3-layer architecture + a transversal learning layer + a background memory scribe:
 
 - **CLAUDE.md** — The map: routing to workspaces, short and scannable, hosts the cross-workspace Gotchas section
 - **CONTEXT.md** — The room: the work brief + current state (situational context)
+- **DECISIONS.md** — The record: `## Facts (current)` (the project as it stands, injected whole), `## Ledger` (dated decisions, newest injected), `## ADR archive` (the why, on demand)
 - **AGENT.md** — The specialist: role, skills, process, Pre-work checklist that binds the rules at task start
 - **LEARNINGS.md** *(learning layer)* — workspace rules that *harden* through 3 levels (Durcir): Active (auto-injected) → `AGENT.md` Rules → Gotchas
 
-A `SessionStart` hook auto-injects each workspace's Active Learnings into every new session. Each workspace is isolated. Claude knows exactly who it is when it enters a room.
+A `SessionStart` hook auto-injects the Facts, the newest Ledger lines and each workspace's Active Learnings into every new session; a `Stop`/`SessionEnd` scribe keeps them current from the transcript while you work and queues what it may not write alone for `/memorise` (an optional VS Code sidebar, `tools/claude-hub/`, shows the backlog). Each workspace is isolated. Claude knows exactly who it is when it enters a room.
 
 ---
 
@@ -35,9 +36,10 @@ Works on a **new project** (empty folder) or an **existing one** — the bootstr
 
 **Step 4** — Claude generates your complete custom structure:
 - A `CLAUDE.md` at the root
+- A `DECISIONS.md` (Facts / Proposals / Ledger / ADR archive), scaffolded empty
 - One or more workspaces, each with `CONTEXT.md` (brief + state), `LEARNINGS.md` (rules), and `AGENT.md` — a workspace is exactly a folder with an `AGENT.md`; everything else at the root is support
 - A `docs/` folder for all meta-docs (roadmap, plan, audits, research) — never scattered at the root
-- A `.claude/settings.json` wiring the `SessionStart` hook to auto-inject Learnings
+- A `.claude/settings.json` wiring the `SessionStart` hook to auto-inject Facts, Ledger and Learnings; the memory scribe is installed once per machine (`core/hooks/scribe/README.md`)
 - Skill recommendations from the catalog
 
 That's it. From the next conversation, Claude opens your project, reads the map, and knows exactly what to do.

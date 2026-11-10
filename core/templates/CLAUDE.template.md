@@ -25,16 +25,16 @@ Surgical. Summarize first, confirm if > 3 files. Diff if > 20 lines. Do not fix 
 
 ## Startup
 
-The SessionStart hook injects `DECISIONS.md ## Ledger` and each workspace's `## Active Learnings`, kept current by the background memory scribe. Use them to resume without redoing work. claude-mem is the read-only archive of past sessions.
+The SessionStart hook injects `DECISIONS.md ## Facts (current)` whole, the 5 newest `## Ledger` lines and each workspace's `## Active Learnings`, kept current by the background memory scribe. Use them to resume without redoing work. claude-mem is the read-only archive of sessions before the scribe (2026-11).
 If more detail is needed → `mem-search "…"` → then `get_observations` on the relevant IDs only. Never load everything at once.
 
 ## Memory
 
 | I say | Destination | Content |
 |---|---|---|
-| `/memorise` | claude-mem + workspace `LEARNINGS.md` (rules) + `CONTEXT.md` (state) + `DECISIONS.md` ledger | Global session summary (claude-mem) + per-workspace thread update + auto-proposed / graduated `Learnings` + auto-proposed facts of record |
+| `/memorise` | workspace `LEARNINGS.md` (rules) + `CONTEXT.md` (state) + `DECISIONS.md` (Facts, Ledger) | Drains the scribe inbox (`## Proposals`, `## Candidates`) + per-workspace thread update + auto-proposed / graduated `Learnings` + auto-proposed facts of record |
 | `/gotcha` | Gotchas section below | One-line cross-workspace rule: `NEVER/ALWAYS [action] ([why])` |
-| (via `/memorise`) | `DECISIONS.md` → `## Ledger` (injected at SessionStart) | Durable project facts: domain, app name, accounts, commitments. One dated line each. |
+| (via `/memorise`) | `DECISIONS.md` → `## Facts (current)` (a state, one line per key, injected whole) or `## Ledger` (a dated event, 5 newest injected) | Durable project facts: domain, app name, accounts, commitments, decisions. |
 | `remember forever` | Claude native memory | Permanent preferences, conventions, identity only |
 
 Never put session context in native memory. Never put preferences in claude-mem. Never leave a fact of record only in claude-mem (it gets missed) — it goes to the `DECISIONS.md` ledger.
@@ -48,11 +48,11 @@ This project has the learning layer enabled (Durcir stack v2 — rules harden th
 - **L1 — in-flight workspace rules** → `<workspace>/LEARNINGS.md` → `## Active Learnings` (fed by `/memorise`, auto-injected)
 - **L2 — role doctrine** → `<workspace>/AGENT.md` → `## Rules` (graduated from L1 at ×3 / cross-task / high-criticality)
 - **L3 — cross-workspace doctrine** → Gotchas section below (fed by `/gotcha`, or graduated from L1/L2)
-- **Durable project facts** → `DECISIONS.md` → `## Ledger` (fed by `/memorise`)
+- **Durable project facts** → `DECISIONS.md` → `## Facts (current)` (states, injected whole) and `## Ledger` (dated events, 5 newest injected) — fed by the scribe and `/memorise`
 - Demotions, archival and the drift log live in `LEARNINGS.md` (`## Archived Learnings`, `## Drift log`) — kept, not injected
 - Agents apply all rule layers at task start via the Pre-work checklist in their `AGENT.md`
-- A `SessionStart` hook auto-injects `## Active Learnings` **and the `DECISIONS.md` ledger** at every new session
-- A `Stop` + `SessionEnd` **memory scribe** (global hook) reads the transcript while the session runs. It writes directly only what is deterministic and tool-proven: `CONTEXT.md ## Current state` and the update of an existing `DECISIONS.md ## Facts` key. Everything else it finds (new facts, decisions, rules) lands in `DECISIONS.md ## Proposals` and `LEARNINGS.md ## Candidates`, not injected, for `/memorise` to validate. When 10 proposals wait, or one has waited 7 days, every surface (session line, statusline, SessionStart) says so
+- A `SessionStart` hook auto-injects `## Active Learnings` **and `DECISIONS.md` Facts + Ledger** at every new session, plus the memory-inbox line (`✉ N`) when the scribe backlog needs `/memorise`
+- A `Stop` + `SessionEnd` **memory scribe** (global hook) reads the transcript while the session runs. It writes directly only what is deterministic and tool-proven: `CONTEXT.md ## Current state`, the update of an existing `DECISIONS.md ## Facts` key, and an `## Active Learnings` rule when it quotes the owner's own correction. Everything else it finds (new facts, decisions, rules) lands in `DECISIONS.md ## Proposals` and `LEARNINGS.md ## Candidates`, not injected, for `/memorise` to validate. When 10 proposals wait, or one has waited 7 days, every surface (session line, statusline, SessionStart) says so
 
 ## Gotchas
 

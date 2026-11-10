@@ -151,7 +151,7 @@ backup → disable capture → extend transcript retention to 365 days → verif
 
 **Decisions bundled here:** third-party compaction tools stay out of the publishable stack;
 SQLite FTS over transcripts is deferred, not cancelled — `rg` + the existing claude-mem MCP serve
-every real search today, FTS comes back when one measurably fails; `PreCompact` is not hooked —
+every real search today, FTS comes back when one measurably fails; `PreCompact` is not hooked (superseded 2026-11-10: the handover layer now ships in the kit) —
 `Stop` + `SessionEnd` cover every path because the worker reads from its cursor, whatever happens
 to the context window.
 
@@ -260,3 +260,17 @@ users who never open a terminal — no Discord, by the owner's choice. Migration
 stays assisted: full read, contradictions surfaced, each promoted fact with its source line and a
 confirmed / historical / to-verify status. Measured for 7 days on 3 projects: proposals made /
 accepted / refused, share of routine noise (kill at 10 %), new keys and synonyms, payload size.
+
+## 2026-11-10 — Alignment audit: the kit's prose caught up with its code, four logic holes closed
+
+**Context.** A three-way read (docs ↔ templates ↔ bootstrap; /memorise ↔ upgrade ↔ gotcha; hook code ↔ contract) after the v2 migration of 17 projects. The code was v2; most of the prose describing it still told the claude-mem-as-primary-memory story, and the bootstrap prompt produced a project that `/bootstrap-upgrade` flagged on day one.
+
+**Decision.** One source of truth per fact, and the kit ships what its own commands depend on:
+- `/memorise` reads `~/.claude/handovers/`, so the handover layer (`PreCompact` writer, `SessionStart` reader on `clear`, `/handover`) joins the kit under `core/hooks/handover/` — this supersedes the 2026-11-09 line "`PreCompact` is not hooked".
+- The scribe writer treats a missing destination as an error (blocks the cursor, reaches the alert) instead of a silent `null`; the owner's quoted correction promotes a rule even when the scribe had already queued it; Drift log lines are never bumped; `## Candidates` sits before `## Archived Learnings` like the template.
+- The injector no longer counts `## Proposals archive` as pending (the `✉ N` badge never cleared after a `n`); `/memorise` deletes `pending.json` after a drain since the worker only rewrites it at its next run.
+- A fix too big for session end is parked in `## Thread`, never in `## Current state` (the scribe overwrites it). A refused candidate is archived, never deleted (the scribe dedups against the whole file, so it cannot come back at ×1).
+- `/gotcha` enforces the 12-line cap itself. `/bootstrap-upgrade` audits light projects (root `LEARNINGS.md` as workspace `.`), drops the grep proxies that passed a v1 hook or command, and refreshes `## Startup` / `## Navigation` / `## Memory` wording.
+- claude-mem leaves the bootstrap's install list: optional archive, never the memory base.
+
+**Not done.** The in-session "y / n / fix" on a candidate still has no owner beyond the quoted correction and `/memorise` A0; the hub applies no project-root walk-up (a session started in a sub-folder is invisible to its lag badge). Both are noted, not fixed.

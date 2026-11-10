@@ -14,7 +14,7 @@ What are we building/producing? For whom? Why?]
 - [Quality criterion 1]
 - [Quality criterion 2]
 
-<!-- END BRIEF — zone below is maintained by /memorise -->
+<!-- END BRIEF — zone below is maintained by the memory scribe (Current state) and /memorise (both sections) -->
 
 <!-- Workspace rules (ALWAYS/NEVER) live in LEARNINGS.md (Durcir lifecycle), not here.
      CONTEXT.md stays purely situational: where we are + the session thread. -->
@@ -22,9 +22,9 @@ What are we building/producing? For whom? Why?]
 ---
 
 ## Current state
-[Overwritten by /memorise. 3-5 lines: where we are, what's done, what remains.]
+[Overwritten by the scribe during the session and by /memorise at its end. 3-5 lines: where we are, what's done, what remains. Never park anything here that must survive — a parked fix goes in ## Thread.]
 Updated: [YYYY-MM-DD]
 
 ## Thread
 <!-- Appended by /memorise, pruned to the 5 most recent entries. -->
-<!-- Older entries live in claude-mem (retrievable via mem-search). -->
+<!-- Older entries are dropped: anything durable in them is already a Ledger line or a Learning. -->

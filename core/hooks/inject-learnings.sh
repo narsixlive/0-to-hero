@@ -108,7 +108,7 @@ inbox=""
 pending_n=0; pending_oldest=""
 count_section() {  # $1 file, $2 heading regex → prints "count oldest-date"
     awk -v h="$2" '
-        $0 ~ "^## " h {in_section=1; next}
+        $0 ~ "^## " h "[[:space:]]*$" {in_section=1; next}
         /^## / && in_section {in_section=0}
         in_section && /^-[[:space:]]/ { n++; if (match($0, /[0-9]{4}-[0-9]{2}-[0-9]{2}/)) { d=substr($0, RSTART, RLENGTH); if (oldest == "" || d < oldest) oldest=d } }
         END { print n+0, oldest }

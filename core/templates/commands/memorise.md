@@ -25,7 +25,7 @@ Then identify the dominant workspace(s) touched this session, based on the files
 1. **Do NOT modify the brief zone** — everything above the `<!-- END BRIEF -->` marker (Project / Constraints / Deliverable) stays untouched.
 2. **Overwrite `## Current state`** — 3-5 lines max, with today's date on the `Updated:` line.
 3. **Append to `## Thread`** — new entry at the top using format: `### YYYY-MM-DD — [one-line session title]` followed by the summary bullets.
-4. **Prune `## Thread`** — keep only the 5 most recent entries; drop older ones. claude-mem keeps the long history (retrievable via `mem-search`).
+4. **Prune `## Thread`** — keep only the 5 most recent entries; drop older ones. Anything durable in a dropped entry is already a Ledger line or a Learning; the rest is not worth keeping (claude-mem capture is frozen: it only archives sessions before the scribe).
 
 **Shared repo mode (opt-in).** Only if the project root `CLAUDE.md` contains the marker `<!-- shared-repo -->` (otherwise ignore this paragraph entirely):
 - Rule 3: the entry title carries the author — `### YYYY-MM-DD — <author> — [title]`, `<author>` = first token of `git config user.name`, lowercased.
@@ -35,7 +35,7 @@ Then identify the dominant workspace(s) touched this session, based on the files
 
 ## Workspace Learnings — Durcir lifecycle (after state update)
 
-Workspace rules live in `<workspace>/LEARNINGS.md`, NOT in `CONTEXT.md`. If a touched workspace has no `LEARNINGS.md`, create it first with three empty sections and their format comments: `## Active Learnings`, `## Archived Learnings`, `## Drift log` (see the Learning mode section of the root `CLAUDE.md` for the ladder). In a light project the workspace is the root: rules live in `./LEARNINGS.md` (the scribe writes its candidates there as workspace `.`).
+Workspace rules live in `<workspace>/LEARNINGS.md`, NOT in `CONTEXT.md`. If a touched workspace has no `LEARNINGS.md`, create it from `core/templates/LEARNINGS.template.md` (four empty sections with their format comments: `## Active Learnings`, `## Candidates`, `## Archived Learnings`, `## Drift log`) (see the Learning mode section of the root `CLAUDE.md` for the ladder). In a light project the workspace is the root: rules live in `./LEARNINGS.md` (the scribe writes its candidates there as workspace `.`).
 
 **Light → full (first workspace).** If a root `LEARNINGS.md` exists AND a folder now has an `AGENT.md`, the scribe no longer writes to the root file (it stays injected). Drain it once, rule by rule, ×N and `[provenance]` kept: workspace-scoped → that workspace's `LEARNINGS.md`, same section; cross-workspace → through the L3 gate below, or it stays in the root file. Delete the root file once it is empty.
 
@@ -66,13 +66,13 @@ The `enforced` answer comes from READING, never from memory — cite the rung an
 
 If a rung applies AND the fix is surgical — **one file, ~10 lines max, verifiable with one command** — propose it instead of the rule: `[workspace] Fix at source instead of rule? (y/n): <one-line edit description>`. On `y` → apply the edit, show the diff, run the verification, and do NOT write the Learning (optionally offer ONE constraint-of-record line to `## Archived Learnings` or the `DECISIONS.md` ledger, as in the redundancy gate). On `n` → the candidate continues below.
 
-If a real fix exists but is too big for session end → park it as the FIRST item of **Next steps** in the session summary AND the workspace `## Current state`, and do NOT write the Learning — the parked fix is the memory. Never write both the rule and the parked fix.
+If a real fix exists but is too big for session end → park it as the FIRST item of **Next steps** in the session summary AND as the first bullet of the new `## Thread` entry (never in `## Current state`: the scribe overwrites that section at every run), and do NOT write the Learning — the parked fix is the memory. Never write both the rule and the parked fix.
 
 Only candidates with no structural fix (genuinely behavioral rules) proceed to the recurrence check.
 
 For each surviving candidate, **check for recurrence** — read the workspace's `LEARNINGS.md` `## Active Learnings`, `## Archived Learnings` AND `## Candidates` (scribe proposals, same rule in other words counts) (and `mem-search` the pattern if unsure):
 
-**A0) Already in `## Candidates` (the scribe saw it first).** Never write a second Active line: move the scribe's line into `## Active Learnings`, keep its `[toolu_…]` provenance, set `×N` = its `seen ×N` + 1, and add the owner quote if this session has one. Then, for the touched workspaces, list every remaining `## Candidates` line and ask once per line: `[workspace] Scribe candidate "<rule>" seen ×N — y (→ Active ×N) / n (delete) / fix (rewrite then Active)`. Both gates above apply to a promoted candidate like to any rule.
+**A0) Already in `## Candidates` (the scribe saw it first).** Never write a second Active line: move the scribe's line into `## Active Learnings`, keep its `[toolu_…]` provenance, set `×N` = its `seen ×N` + 1, and add the owner quote if this session has one. Then, for the touched workspaces, list every remaining `## Candidates` line and ask once per line: `[workspace] Scribe candidate "<rule>" seen ×N — y (→ Active ×N) / n (→ `## Archived Learnings`, verbatim, never deleted — the scribe dedups against the whole file, so an archived candidate cannot come back at ×1) / fix (rewrite then Active)`. A candidate the scribe bumped this session is NOT bumped again by step A (one event, one count). Both gates above apply to a promoted candidate like to any rule.
 
 **A) Already present (recurrence) — do NOT skip. The duplicate IS the signal.**
 - First re-run BOTH gates on the existing rule as written (older rules predate the gates):
@@ -112,19 +112,19 @@ A good fact-of-record candidate:
 - Is project-level — not workspace-scoped (those are Learnings), not NEVER/ALWAYS (those go via `/gotcha`)
 - Would be expensive or risky to rediscover if forgotten
 
-**Read the top of `## Ledger (facts of record)` first (the 10 newest entries).** The background scribe writes facts there during the session, with other words than yours: a fact already present in any wording is NOT a candidate — skip it silently, never propose a reworded duplicate.
+**Read `## Facts (current)` whole and the top of `## Ledger (facts of record)` (the 5 newest entries, the injected window) first.** The scribe updates existing Facts keys during the session and traces each change in the Ledger, with other words than yours: a fact already present in any wording is NOT a candidate — skip it silently, never propose a reworded duplicate.
 
-**Drain `DECISIONS.md ## Proposals` first — all of it, every time.** The scribe queues there what it found but may not write alone (`- [fact] **Key**: value (date) [evidence] why: … · seen ×N`, `- [log] date — event [evidence] why: …`). No cap: a backlog left for later is a backlog lost. Present it **grouped**, strongest evidence first — (1) facts with a tool id, (2) facts on an owner statement, (3) log lines — and ask one answer per group: `y` all, `n` all, or the numbers to keep. Dedupe before showing (the `seen ×N` is the signal, not a repeat). `y` → write the line in its destination (Facts upsert by key, Ledger prepend); `n` → move the line verbatim to `## Proposals archive` (create it below `## Ledger` if absent) — **never delete**. Then remove it from `## Proposals`. The `why:` of an accepted decision goes into the ADR archive as one line under a dated H2 if the user confirms it is worth it.
+**Drain `DECISIONS.md ## Proposals` first — all of it, every time.** The scribe queues there what it found but may not write alone (`- [fact] **Key**: value (date) [evidence] why: … · seen ×N`, `- [log] date — event [evidence] why: …`). No cap: a backlog left for later is a backlog lost. Present it **grouped**, strongest evidence first — (1) facts with a tool id, (2) facts on an owner statement, (3) log lines — and ask one answer per group: `y` all, `n` all, or the numbers to keep (the others count as `n`). Dedupe before showing: two lines for the same thing are shown once, the duplicate goes to the archive with the `n` lines (the `seen ×N` is the signal, not a repeat). `y` → write the line in its destination (Facts upsert by key, Ledger prepend); `n` → move the line verbatim to `## Proposals archive` (create it below `## Ledger` if absent) — **never delete**. Then remove it from `## Proposals`. The `why:` of an accepted decision goes into the ADR archive as one line under a dated H2 if the user confirms it is worth it.
 
 Two destinations (durcir-v2), decide first which one each candidate is:
 - **A state** (true until replaced: host, domain, app name, pricing, main account, a commitment with its date, a tool chosen or dropped) → `## Facts (current)`, format `- **Key**: value (since YYYY-MM-DD)`. Read the existing keys first and **reuse one** when it is the same thing with a new value: replace that line in place, never add a second line for the same key. A change is also logged in the Ledger as `- YYYY-MM-DD — **Key** changed: old → new`.
 - **A dated decision or irreversible event** (a commitment made, a launch, a migration completed, a vendor dropped) → `## Ledger (facts of record)`, format `- YYYY-MM-DD — [event]`, prepended (newest first). Routine work (a file edited, an email sent, a test fixed, a setting toggled, a commit) is neither: it lives in `CONTEXT.md ## Current state` and nowhere else.
 
-For each candidate (0 to 3 per session max):
+For each candidate found in the session itself (0 to 3 per session max — the Proposals drain above has no cap):
 
 1. State it in its format (Facts line or Ledger line)
 2. Ask the user: `Set fact? (y/n): **Key**: value` or `Add to ledger? (y/n): YYYY-MM-DD — [event]`
-3. On `y` → write it (create `DECISIONS.md` from `DECISIONS.template.md` if missing; add an empty `## Facts (current)` section above `## Ledger` if the file predates it)
+3. On `y` → write it (create `DECISIONS.md` from `DECISIONS.template.md` if missing; add empty `## Facts (current)` and `## Proposals` sections above `## Ledger` if the file predates them)
 4. On `n` → skip, do not write
 
 **Facts hygiene (once per session, only when `## Facts (current)` has 30+ lines).** Propose merging synonym keys or dropping a key that is no longer true; the hook injects this section whole, so its size is the only thing that can make it a tax.
@@ -161,5 +161,7 @@ Only offer — never move files or rename folders automatically.
 **L3 health (Gotchas bloat).** Count the rules under the root `CLAUDE.md` `## Gotchas`. If there are more than ~12, or any rule spans multiple lines, print exactly one line and do nothing else automatic:
 
 `⚠️ Gotchas bloat: <N> rules, <M> multi-line. Worth a consolidation pass? (merge siblings, one line each, demote workspace-scoped ones to their AGENT.md ## Rules)`
+
+**Clear the inbox badge.** The scribe recomputes its `pending.json` only at its next run, so after a drain the statusline `✉ N` and the sidebar would lag. Delete `~/.claude/scribe/<slug>/pending.json` (slug = project root path, every non-alphanumeric character replaced by `-`, leading/trailing `-` trimmed, lowercased); the next worker run rewrites it.
 
 When done, confirm with: **Memorised.** — then list the workspaces updated, learnings added/bumped, any graduations (→ L2 / L3), any facts of record added, and whether a stack upgrade was suggested (e.g., `scrapers: +1 learning, app: ×3→L2 graduation, +1 fact of record`).

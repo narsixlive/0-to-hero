@@ -1,7 +1,7 @@
-# Memory scribe (v0.3)
+# Memory scribe (v0.4 — sorter)
 
 Background scribe that reads each session's transcript delta and writes the memory files
-(`<ws>/CONTEXT.md ## Current state` and the update of an existing `DECISIONS.md ## Facts (current)` key, written directly; everything else — new facts, decisions, rules — queued in `DECISIONS.md ## Proposals` and `<ws>/LEARNINGS.md ## Candidates` for `/memorise`)
+(`<ws>/CONTEXT.md ## Current state`, the update of an existing `DECISIONS.md ## Facts (current)` key and an `## Active Learnings` rule quoting the owner's own correction, written directly; everything else — new facts, decisions, rules — queued in `DECISIONS.md ## Proposals` and `<ws>/LEARNINGS.md ## Candidates` for `/memorise`)
 while the session runs. Replaces claude-mem's observation capture. Rationale and measured
 numbers: `core/decisions/adr-archive.md` (2026-11-08 and 2026-11-09).
 
@@ -44,6 +44,7 @@ On Windows use the full `node.exe` path (and a hidden-console launcher if the St
 | `SCRIBE_SESSION_TOKENS` | 300 000 | per-session cap; raise one session by writing a number into `~/.claude/scribe/<slug>/budget-<session_id>` |
 | `SCRIBE_PENDING_MAX` | 10 | proposals + candidates waiting for `/memorise` from which every surface shows `✉ N` |
 | `SCRIBE_PENDING_DAYS` | 7 | or the oldest pending item has waited this long |
+| `MAX_APPLY_FAILURES` (constant) | 3 | a delta whose apply reports an error (missing destination, race) is re-sent up to 3 times, then dropped with an alert naming the loss |
 | `SCRIBE_DISCORD_WEBHOOK` | unset | webhook URL for budget / failure alerts |
 | `SCRIBE_DISCORD_ENV` | unset | alternative: a `KEY=VALUE` file holding `DISCORD_WEBHOOK_AUDIT` or `DISCORD_WEBHOOK_SESSIONS` |
 
@@ -51,7 +52,7 @@ Project root = the nearest folder at or above `CLAUDE_PROJECT_DIR` (the session'
 
 ## State (`~/.claude/scribe/<slug>/`)
 
-`queue.jsonl` turns waiting · `cursors/<session>.json` last transcript line read · `journal.jsonl` one line per run (sessions, cursor ranges, applied, rejected) · `usage.jsonl` tokens per run · `report.txt` one-line report printed at the next Stop · `worker.lock` while a run is in progress · `pending.json` memory inbox (`proposals`, `candidates`, `oldest`, `alert`) read by the statusline and the hub.
+`queue.jsonl` turns waiting · `cursors/<session>.json` last transcript line read · `journal.jsonl` one line per run (sessions, cursor ranges, applied, rejected) · `usage.jsonl` tokens per run · `report.txt` one-line report printed at the next Stop · `worker.lock` while a run is in progress · `pending.json` memory inbox (`proposals`, `candidates`, `oldest`, `alert`) read by the statusline and the hub — rewritten at each worker run only, so `/memorise` deletes it after a drain (the SessionStart injector recounts live).
 
 ## Seeing where the scribe is
 
@@ -60,6 +61,5 @@ The question the owner asks is "can I `/clear` without losing anything?". Three 
 - `claude-statusline.js` (terminal): `✍✓` up to date · `✍ N` N transcript lines not yet read · `✍⏳` running · `✉ N` memory inbox over the threshold, run `/memorise`.
 - `tools/claude-hub/` (VS Code sidebar, for people who never open a terminal): the same badge per project, the inbox count, a "run the scribe now" button, and a click on `✉` that opens `DECISIONS.md ## Proposals`.
 - Stop hook `systemMessage` (every host, VS Code included): `scribe: ledger +1 · … · 446k tokens today` after each run.
-- A VS Code sidebar can show the same badge per project by comparing the newest transcript's line count with the cursor (the owner's Claude Hub extension does this, plus a "run the scribe now" button that feeds the trigger a `SessionEnd` payload on stdin).
 
 `/clear` never loses the transcript: the queue keeps the old session and the next run drains it.
