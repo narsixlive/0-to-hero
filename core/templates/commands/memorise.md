@@ -99,20 +99,39 @@ A good fact-of-record candidate:
 
 **Read the top of `## Ledger (facts of record)` first (the 10 newest entries).** The background scribe writes facts there during the session, with other words than yours: a fact already present in any wording is NOT a candidate — skip it silently, never propose a reworded duplicate.
 
+**Drain `DECISIONS.md ## Proposals` first — all of it, every time.** The scribe queues there what it found but may not write alone (`- [fact] **Key**: value (date) [evidence] why: … · seen ×N`, `- [log] date — event [evidence] why: …`). No cap: a backlog left for later is a backlog lost. Present it **grouped**, strongest evidence first — (1) facts with a tool id, (2) facts on an owner statement, (3) log lines — and ask one answer per group: `y` all, `n` all, or the numbers to keep. Dedupe before showing (the `seen ×N` is the signal, not a repeat). `y` → write the line in its destination (Facts upsert by key, Ledger prepend); `n` → move the line verbatim to `## Proposals archive` (create it below `## Ledger` if absent) — **never delete**. Then remove it from `## Proposals`. The `why:` of an accepted decision goes into the ADR archive as one line under a dated H2 if the user confirms it is worth it.
+
+Two destinations (durcir-v2), decide first which one each candidate is:
+- **A state** (true until replaced: host, domain, app name, pricing, main account, a commitment with its date, a tool chosen or dropped) → `## Facts (current)`, format `- **Key**: value (since YYYY-MM-DD)`. Read the existing keys first and **reuse one** when it is the same thing with a new value: replace that line in place, never add a second line for the same key. A change is also logged in the Ledger as `- YYYY-MM-DD — **Key** changed: old → new`.
+- **A dated decision or irreversible event** (a commitment made, a launch, a migration completed, a vendor dropped) → `## Ledger (facts of record)`, format `- YYYY-MM-DD — [event]`, prepended (newest first). Routine work (a file edited, an email sent, a test fixed, a setting toggled, a commit) is neither: it lives in `CONTEXT.md ## Current state` and nowhere else.
+
 For each candidate (0 to 3 per session max):
 
-1. State it as a dated one-liner: `YYYY-MM-DD — [fact]`
-2. Ask the user: `Add to DECISIONS.md ledger? (y/n): YYYY-MM-DD — [fact]`
-3. On `y` → append the line under the `## Ledger (facts of record)` section of the project root `DECISIONS.md` (create the file from `DECISIONS.template.md` if missing)
+1. State it in its format (Facts line or Ledger line)
+2. Ask the user: `Set fact? (y/n): **Key**: value` or `Add to ledger? (y/n): YYYY-MM-DD — [event]`
+3. On `y` → write it (create `DECISIONS.md` from `DECISIONS.template.md` if missing; add an empty `## Facts (current)` section above `## Ledger` if the file predates it)
 4. On `n` → skip, do not write
 
-Never invent a fact not grounded in this session. Never write narrative in the ledger — rationale belongs in the ADR archive below it, not the ledger.
+**Facts hygiene (once per session, only when `## Facts (current)` has 30+ lines).** Propose merging synonym keys or dropping a key that is no longer true; the hook injects this section whole, so its size is the only thing that can make it a tax.
+
+Never invent a fact not grounded in this session. Never write narrative in either section — rationale belongs in the ADR archive below them.
+
+## Workspace map (after facts, only if a parent `CLAUDE.md` exists above the project root)
+
+The parent `CLAUDE.md` is the cross-project map: projects, reusable bricks with paths, machine conventions. It is loaded in every session, so it stays under ~80 lines. Propose a change only when this session produced one of:
+
+- a **new reusable brick** (hook, skill, utility another project could call as-is) → one line under `## Reusable bricks`, with its path
+- a **brick moved, renamed or deleted**, or a dead endpoint/service discovered → fix or drop the existing line
+- a **new project** or a project whose role/stack changed → one table row
+- a **convention now shared by 2+ projects** (alert channel, secrets location, scheduler, global hook) → one line under `## Machine conventions`
+
+Ask: `Update workspace map? (y/n): [section] [line]`. On `y` → edit the parent file surgically. Never add session state, progress or rules there (Ledger / Learnings own those). If the file is over 80 lines after the edit, propose one line to remove.
 
 ## Stack freshness check (before confirming)
 
-Read the project root `CLAUDE.md`. If it does **not** contain the marker `<!-- learning-stack: durcir-v1 -->` (missing, or an older version like `durcir-v0` / no marker at all), the project predates the current learning stack — its rules are probably still inside `CONTEXT.md` with no graduation or drift log. Print exactly one line and do nothing else automatic:
+Read the project root `CLAUDE.md`. If it does **not** contain the marker `<!-- learning-stack: durcir-v2 -->` (missing, or an older version like `durcir-v1` / no marker at all), the project predates the current learning stack. On `durcir-v1` the rules are already split into `LEARNINGS.md` but the memory scribe is not wired for it (no `## Candidates` section, `/memorise` A0 has nothing to consume, no workspace map offer); with no marker the rules are probably still inside `CONTEXT.md`. Print exactly one line and do nothing else automatic:
 
-`⚠️ This project isn't on the current learning stack (durcir-v1). Run /bootstrap-upgrade to migrate (splits rules into LEARNINGS.md + adds graduation/drift log). Want me to run it now?`
+`⚠️ This project isn't on the current learning stack (durcir-v2). Run /bootstrap-upgrade to migrate (memory scribe + LEARNINGS.md Candidates; from v0: splits rules into LEARNINGS.md + graduation/drift log). Want me to run it now?`
 
 Do NOT migrate automatically — only offer. If the marker is present and current, say nothing.
 

@@ -1,0 +1,60 @@
+{
+  "name": "claude-hub",
+  "displayName": "Claude Hub (0 to Hero)",
+  "description": "Claude usage, recent projects, memory scribe state and memory inbox at the top of the Explorer",
+  "version": "1.0.0",
+  "publisher": "zero-to-hero",
+  "license": "MIT",
+  "engines": {
+    "vscode": "^1.90.0"
+  },
+  "main": "./extension.js",
+  "activationEvents": [
+    "onStartupFinished"
+  ],
+  "contributes": {
+    "views": {
+      "explorer": [
+        {
+          "type": "webview",
+          "id": "claudeHub.hub",
+          "name": "Claude"
+        }
+      ]
+    },
+    "commands": [
+      {
+        "command": "claudeHub.openHub",
+        "title": "Claude Hub: show"
+      },
+      {
+        "command": "claudeHub.refresh",
+        "title": "Claude Hub: refresh",
+        "icon": "$(refresh)"
+      }
+    ],
+    "menus": {
+      "view/title": [
+        {
+          "command": "claudeHub.refresh",
+          "when": "view == claudeHub.hub",
+          "group": "navigation"
+        }
+      ]
+    },
+    "configuration": {
+      "title": "Claude Hub",
+      "properties": {
+        "claudeHub.root": {
+          "type": "string",
+          "default": "",
+          "description": "Folder that holds your Claude projects. Empty = the parent folder of the opened workspace."
+        },
+        "claudeHub.usageRefreshMinutes": {
+          "type": "number",
+          "default": 5
+        }
+      }
+    }
+  }
+}

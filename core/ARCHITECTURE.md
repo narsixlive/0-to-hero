@@ -26,8 +26,19 @@ Brain of the workspace. Transforms Claude into a specialist.
 
 ## Facts of record + archives
 
-- **DECISIONS.md** (project root) — two zones. `## Ledger (facts of record)`: durable project facts (domain, app name, accounts, commitments), terse dated one-liners, **injected at every SessionStart** and fed by `/memorise`. `## ADR archive`: structural rationale (tool choices, workspace split, naming) — NOT injected, consulted on demand. The injected ledger exists because an empty, on-demand-only file is invisible and stays unused — that's how important facts get lost.
+- **DECISIONS.md** (project root) — three zones since durcir-v2. `## Facts (current)`: the project as it stands (domain, app name, prod host, accounts, pricing, commitments), **one line per key** `- **Key**: value (since date)`, upserted when the value changes, so the section is bounded by the number of keys and **injected whole at every SessionStart**. `## Ledger (facts of record)`: the dated log of decisions and irreversible events, newest first, append-only; only the 5 newest are injected, the rest is the searchable trace. `## ADR archive`: structural rationale (tool choices, workspace split, naming) — NOT injected, consulted on demand. Why the split: states and events age differently — a recency window is right for events and wrong for states (a host chosen in June must still be in context in December, whatever happened since). Every injected surface must be bounded by construction, not by a window; before v2 the Ledger was the only unbounded one. The injected sections exist because an empty, on-demand-only file is invisible and stays unused — that's how important facts get lost.
 - **Memory scribe** — background writer that fills the Ledger, `## Current state` and `## Candidates` from the transcript while the session runs (see Transversal: Memory scribe). **claude-mem** stays as the read-only archive of past sessions (`mem-search`).
+
+## Optional: Workspace map — a parent `CLAUDE.md` above several projects
+
+When several bootstrapped projects live under one folder (`~/work/*`), Claude Code loads a `CLAUDE.md` placed in that parent folder in **every** session below it, by walking up the directory tree. That file is the cross-project map — the answer to "has another project already built this?", which no per-project file can give and which grep cannot either (you only search for what you already suspect exists).
+
+- **Three sections, nothing else**: `## Projects` (one table row each: role, stack, one note, plus which projects orbit which), `## Reusable bricks` (hooks, skills, utilities another project can call as-is — path + who else could use it), `## Machine conventions` (facts shared by 2+ projects: where secrets live, the alert channel, the scheduler, the global hooks).
+- **Hard cap ~80 lines.** It is a tax on every turn of every project. A line stays only if it saves a rewrite or a search.
+- **Never holds** progress, session state or behavioral rules — the Ledger, `CONTEXT.md` and Learnings own those. A map that carries state rots within a week.
+- **Fed by `/memorise`** (step "Workspace map"): proposes a line only on four triggers — new reusable brick, brick moved/removed or endpoint dead, new project or changed role, convention now shared by 2+ projects. User validates.
+- **Machine-local by nature** (paths, bots, local services): keep it out of any published repo. Scaffold from `core/templates/WORKSPACE-MAP.template.md`.
+- Why a flat file and not a knowledge graph: see the ADR archive (2026-11-10).
 
 ## Repo layout — workspaces vs support
 
@@ -128,10 +139,13 @@ turn ends ──Stop / SessionEnd hook──▶ scribe-trigger.js ──queue + 
                                        (async, fail-open)                   │ transcript delta from a durable cursor,
                                                                             │ deterministic trim, no call without signal
                                                                             ▼ one lean `claude -p` call per project (≤ 5 min batch)
-DECISIONS.md ## Ledger ◀── scribe-writer.js ◀── proposal, every evidence id verified against the delta
-<ws>/CONTEXT.md ## Current state        (bounded, atomic writes; never AGENT.md / CLAUDE.md / ## Thread)
-<ws>/LEARNINGS.md ## Candidates         (NOT injected — reaches ## Active Learnings only through /memorise A0 or the owner's quoted correction)
+<ws>/CONTEXT.md ## Current state ◀── scribe-writer.js ◀── proposal, every evidence id verified against the delta
+DECISIONS.md ## Facts (current)         (EXISTING key, new value, tool-proven → updated in place, change traced in ## Ledger)
+DECISIONS.md ## Proposals               (new facts, decisions — NOT injected, drained by /memorise: y → Facts / Ledger, n → archive)
+<ws>/LEARNINGS.md ## Candidates         (rules — NOT injected, reaches ## Active Learnings only through /memorise A0 or the owner's quoted correction)
 ```
+
+The scribe is a sorter, not a writer of record: it writes directly only what is deterministic and tool-proven, and queues everything else for the owner. The queue is on disk, never in anyone's head, so a `/clear` or a week without `/memorise` loses nothing — it only delays. When the inbox crosses 10 items, or one item is 7 days old (`SCRIBE_PENDING_MAX` / `_DAYS`, per project), every surface says `✉ N`: the `scribe:` line after a turn, the terminal statusline, the SessionStart payload, and the VS Code sidebar (`tools/claude-hub/`, for people who never open a terminal). `/memorise` then drains the whole backlog, grouped by evidence strength, one answer per group; a `n` archives, never deletes.
 
 - **Writes evidence or nothing.** A fact or state line without a `toolu_…` id (or an owner quote) found in the delta is rejected. Candidates are deduped fuzzily against Active / Archived / Candidates.
 - **Bounded cost.** Per-session and machine-wide daily token caps hold the delta instead of dropping it; a cap hit prints at the next Stop and, if configured, posts to Discord. One run ≈ 25-30k tokens (≈ $0.15-0.20 list).
@@ -166,7 +180,7 @@ Why this shape:
 
 Lineage: Jake Van Clief's "durcir tes règles capitalisées" / edit-source principle applied to a folder-based system, aligned with Anthropic's "keep the hot context lean, push detail to scoped files" and Karpathy's RAM/disk context model (Active = RAM injected, Archived/Drift = disk).
 
-Installation: opt-in per project via `.claude/settings.json` pointing to the globally-installed hook. `/bootstrap-upgrade` migrates existing projects (splits `CONTEXT.md` rules into `LEARNINGS.md`, stamps the `<!-- learning-stack: durcir-v1 -->` marker). `/memorise` reads that marker and offers the upgrade when a project is behind.
+Installation: opt-in per project via `.claude/settings.json` pointing to the globally-installed hook. `/bootstrap-upgrade` migrates existing projects and stamps the stack marker `<!-- learning-stack: durcir-vN -->` in `CLAUDE.md ## Learning mode`. Versions: **v1** (2026-06) split `CONTEXT.md` rules into `LEARNINGS.md` with graduation and drift log; **v2** (2026-11) adds the memory scribe (`Stop` + `SessionEnd`, global), the `LEARNINGS.md ## Candidates` section it writes to, `/memorise` clause A0 and the workspace-map step, and freezes claude-mem capture. A project on an older marker is flagged by `/memorise` and migrated step by step by `/bootstrap-upgrade` (section "Durcir v2 migration"). `/memorise` reads that marker and offers the upgrade when a project is behind.
 
 Limits:
 - Proposed Learnings can be noisy; the two-stage gating filters them.
@@ -181,7 +195,8 @@ Installed at bootstrap, not per workspace. Transparent to the user.
 |------|---------|-------------|
 | RTK | All | CLI proxy, 60-90% output compression (`rtk git`, `rtk grep`, `rtk ls`, …) — wraps shell commands only; harness tools (Grep/Glob/Read) are used directly |
 | ccusage | All | Session token monitoring from local JSONL files |
-| Memory scribe | All | Background memory writer, one lean model call per project per 5 min at most (`core/hooks/scribe/`) |
+| Memory scribe | All | Background memory sorter, one lean model call per project per 5 min at most (`core/hooks/scribe/`) |
+| Claude Hub | All (VS Code) | Sidebar: usage, recent projects, scribe badge, memory inbox `✉ N`, "run the scribe now" (`tools/claude-hub/`) |
 | claude-mem | All | Read-only archive of past sessions (`mem-search`); capture disabled since 2026-11-09 |
 | jCodeMunch | Technical | Symbol-level code retrieval via AST — replaces full-file reads of code |
 | context7 | Technical | Current library/framework docs — replaces web search |

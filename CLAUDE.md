@@ -7,7 +7,7 @@ Open-source tool to structure your Claude workflow into efficient workspaces wit
 - /archetypes → Complete examples (developer, creative)
 - /catalog → Curated base of skills and tools
 - /docs → Development plans and specs — local only, gitignored
-- /tools → Reserved for future use
+- /tools → Optional companions: claude-hub (VS Code sidebar: scribe badge, memory inbox, run-now)
 
 ## Routing
 | Intent | Resources |
@@ -69,7 +69,7 @@ Never put session context in native memory. Never put preferences in claude-mem.
 **Before closing**: `/memorise` → "Memorised." → `/clear`. Never `/clear` without `/memorise`.
 
 ## Learning mode
-<!-- learning-stack: durcir-v1 -->
+<!-- learning-stack: durcir-v2 -->
 
 This repo defines the Durcir stack (see core/ARCHITECTURE.md) but does not run it on itself: no workspaces, so L1/L2 do not exist here. The `SessionStart` hook in `.claude/settings.json` is kept as the reference wiring and exits silently. Rules for this repo go straight to `## Gotchas` below (L3).
 

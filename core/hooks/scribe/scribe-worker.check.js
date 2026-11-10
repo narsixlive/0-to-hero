@@ -32,7 +32,10 @@ const { proposal, rejected } = verify({
     { date: '2026-11-09', text: 'fake id', evidence: 'toolu_NOPE' },
     { date: '2099-01-01', text: 'dated in the future', evidence: 'toolu_real1' },
     { date: '2026-11-09', text: 'RSS shuts down 2099-01-01', evidence: 'toolu_real1' },
+    { date: '2026-11-09', key: 'Prod host', value: 'hetzner', evidence: 'toolu_real1' },
+    { date: '2026-11-09', key: 'Fake', value: 'x', evidence: 'toolu_NOPE' },
   ],
+  log: [{ date: '2026-11-09', text: 'launch set for 2099-01-01', evidence: 'owner said: on déploie en prod demain matin' }],
   candidates: [
     { workspace: 'web', rule: 'NEVER run npm test without build (…)', incident: 'toolu_real2', owner_correction: 'ne lance jamais npm test sans build avant', seam: 'x.ts:1' },
     { workspace: 'web', rule: 'NEVER do X (…)', incident: 'toolu_real2', owner_correction: 'invented quote here', seam: null },
@@ -44,14 +47,15 @@ const { proposal, rejected } = verify({
 
 assert.strictEqual(proposal.state.length, 1, 'state needs a successful result id in a known workspace');
 assert.deepStrictEqual(proposal.state[0].evidence, ['toolu_real1'], 'fake ids filtered out of evidence');
-assert.deepStrictEqual(proposal.facts.map(f => f.text), ['prod deploy tomorrow', 'by id', 'RSS shuts down 2099-01-01 (future date: scheduled, not yet happened)'], 'facts need a successful id or a real quote; future-dated fact dropped, future date in text tagged');
+assert.deepStrictEqual(proposal.facts.map(f => `${f.key}=${f.value}`), ['Prod host=hetzner'], 'keyed facts need a successful id; fake id dropped');
+assert.deepStrictEqual(proposal.log.map(f => f.text), ['prod deploy tomorrow', 'by id', 'RSS shuts down 2099-01-01 (future date: scheduled, not yet happened)', 'launch set for 2099-01-01 (future date: scheduled, not yet happened)'],'facts need a successful id or a real quote; future-dated fact dropped, future date in text tagged');
 assert.strictEqual(proposal.candidates.length, 3, 'candidate with fake incident or unknown workspace dropped');
 assert.strictEqual(proposal.candidates[0].owner_correction, 'ne lance jamais npm test sans build avant', 'imperative owner words kept');
 assert.strictEqual(proposal.candidates[0].seam, null, 'seam always null (no file access)');
 assert.strictEqual(proposal.candidates[1].owner_correction, null, 'invented quote nulled, candidate kept on its real incident');
 assert.match(proposal.candidates[2].incident, /^owner \d{4}-\d{2}-\d{2}$/, 'owner quote accepted as incident (tool-free correction)');
 assert.strictEqual(proposal.candidates[2].owner_correction, null, 'a preference that is not imperative does not promote to Active');
-assert.strictEqual(rejected, 9);
+assert.strictEqual(rejected, 10);
 
 assert.ok(!hasSignal('TOOL toolu_1 Read: a.ts\nRESULT toolu_1: content\nUSER: ok'), 'read-only turn = no signal');
 assert.ok(hasSignal('TOOL toolu_1 Edit: a.ts\nRESULT toolu_1: ok'), 'write = signal');

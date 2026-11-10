@@ -1,9 +1,10 @@
-# Workflow interne — pas sur GitHub
+# Internal workflow docs — never published
 /docs/
 /0-to-hero-spec.md
 
-# Mémoire des archetypes
+# Archetype memory
 **/.memory/
 
 # Personal ledger + local-machine ADRs — never published
 /DECISIONS.md
+*.vsix

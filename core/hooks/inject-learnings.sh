@@ -66,15 +66,29 @@ done < <(find "${cwd}" -maxdepth 3 \( -name "LEARNINGS.md" -o -name "CONTEXT.md"
 # skipping HTML comments. These are durable project facts, injected every session.
 # Injection is capped to the LEDGER_CAP most recent entries (default 10): the file is the
 # full record and never trimmed, but reading 100+ dated milestones at every session start
-# cost ~17k tokens on mypb-saas (2026-09-12) for facts a session almost never needs. Older
+# cost ~17k tokens on a large project (2026-09-12) for facts a session almost never needs. Older
 # entries stay reachable by Grep / mem-search; a fact every session must know belongs in
 # CLAUDE.md ## Gotchas, which is injected whole. Override per shell: LEDGER_CAP=0 = no cap.
 # 30 → 10 on 2026-11-08: with ~500-char entries, 30 of them pushed the payload to 16.9k chars,
 # over Claude Code's 10,000-char additionalContext cap — the whole payload was then written to
 # a file and only a 2k preview reached the session (Learnings silently lost for weeks).
+# durcir-v2: `## Facts (current)` (one upserted line per key, bounded by construction) is injected whole,
+# capped at FACTS_CAP lines as a safety net; the dated `## Ledger` becomes a log and its window drops to 5.
+facts=""
 ledger=""
 if [[ -f "${cwd}/DECISIONS.md" ]]; then
-    ledger="$(awk -v cap="${LEDGER_CAP:-10}" '
+    # Keys are appended at the bottom, so the LAST cap lines are the newest: a new key is never the one left out.
+    facts="$(awk -v cap="${FACTS_CAP:-40}" '
+        /^## Facts/ {in_section=1; next}
+        /^## / && in_section {in_section=0}
+        in_section && /^-[[:space:]]/ {n++; lines[n]=$0}
+        END {
+            start = (n > cap) ? n - cap + 1 : 1
+            if (n > cap) print "- (" n - cap " older facts not injected - DECISIONS.md ## Facts is over " cap " keys: merge or drop keys with /memorise)"
+            for (i = start; i <= n; i++) print lines[i]
+        }
+    ' "${cwd}/DECISIONS.md")"
+    ledger="$(awk -v cap="${LEDGER_CAP:-5}" '
         /^## Ledger/ {in_section=1; next}
         /^## / && in_section {in_section=0}
         in_section && /^-[[:space:]]/ {n++; lines[n]=$0}
@@ -85,6 +99,31 @@ if [[ -f "${cwd}/DECISIONS.md" ]]; then
             if (last < n) print "- (" n - last " older entries not injected - full ledger in DECISIONS.md ## Ledger; grep it before asserting a fact of record)"
         }
     ' "${cwd}/DECISIONS.md")"
+fi
+
+# Memory inbox: proposals (DECISIONS.md ## Proposals) + candidates (<ws>/LEARNINGS.md ## Candidates) waiting
+# for /memorise. Surfaced as one line when the backlog crosses the threshold (count, or age of the oldest):
+# the content itself is never injected. Thresholds match the scribe worker (SCRIBE_PENDING_MAX / _DAYS).
+inbox=""
+pending_n=0; pending_oldest=""
+count_section() {  # $1 file, $2 heading regex → prints "count oldest-date"
+    awk -v h="$2" '
+        $0 ~ "^## " h {in_section=1; next}
+        /^## / && in_section {in_section=0}
+        in_section && /^-[[:space:]]/ { n++; if (match($0, /[0-9]{4}-[0-9]{2}-[0-9]{2}/)) { d=substr($0, RSTART, RLENGTH); if (oldest == "" || d < oldest) oldest=d } }
+        END { print n+0, oldest }
+    ' "$1"
+}
+if [[ -f "${cwd}/DECISIONS.md" ]]; then
+    read -r n d < <(count_section "${cwd}/DECISIONS.md" "Proposals"); pending_n=$((pending_n + n)); [[ -n "$d" && ( -z "$pending_oldest" || "$d" < "$pending_oldest" ) ]] && pending_oldest="$d"
+fi
+while IFS= read -r lf; do
+    read -r n d < <(count_section "${lf}" "Candidates"); pending_n=$((pending_n + n)); [[ -n "$d" && ( -z "$pending_oldest" || "$d" < "$pending_oldest" ) ]] && pending_oldest="$d"
+done < <(find "${cwd}" -maxdepth 3 -name "LEARNINGS.md" -type f -not -path "*/node_modules/*" -not -path "*/.git/*")
+pending_age=0
+if [[ -n "${pending_oldest}" ]]; then pending_age=$(( ( $(date +%s) - $(date -d "${pending_oldest}" +%s 2>/dev/null || echo $(date +%s)) ) / 86400 )); fi
+if [[ ${pending_n} -ge ${SCRIBE_PENDING_MAX:-10} || ( ${pending_n} -gt 0 && ${pending_age} -ge ${SCRIBE_PENDING_DAYS:-7} ) ]]; then
+    inbox="- ✉ ${pending_n} memory proposals waiting for /memorise (oldest ${pending_age}d): facts, decisions and rules the scribe found but may not write alone. Run /memorise before closing this session."
 fi
 
 # Workspace layout drift check.
@@ -104,7 +143,7 @@ if [[ -f "${cwd}/CLAUDE.md" ]]; then
 fi
 
 # If nothing collected (Learnings, Ledger, or layout drift), exit silently.
-if [[ -z "${output}" && -z "${ledger}" && -z "${layout}" ]]; then
+if [[ -z "${output}" && -z "${facts}" && -z "${ledger}" && -z "${layout}" && -z "${inbox}" ]]; then
     exit 0
 fi
 
@@ -118,8 +157,11 @@ context=""
 if [[ -n "${output}" ]]; then
     context+=$'# Workspace Learnings\n\nDurable rules scoped per workspace. Apply every ALWAYS/NEVER as a binding constraint when working in that workspace.\n'"${output}"$'\n'
 fi
+if [[ -n "${facts}" ]]; then
+    context+=$'# Facts (current)\n\nThe project as it stands: one line per key, current ground truth until the key is updated. Full history and the why in DECISIONS.md.\n'"${facts}"$'\n\n'
+fi
 if [[ -n "${ledger}" ]]; then
-    header=$'# Facts of Record\n\nDurable project facts (domain, app name, accounts, commitments). Treat each line as current ground truth.\n'
+    header=$'# Ledger (recent)\n\nNewest dated decisions and events. Older ones in DECISIONS.md ## Ledger; grep it before asserting a fact of record.\n'
     trimmed=0
     while [[ $(( ${#context} + ${#header} + ${#ledger} )) -gt ${MAX_CHARS} && -n "${ledger}" ]]; do
         # Drop the last ledger entry (oldest of the injected window). Entries are "- " lines; a
@@ -134,6 +176,15 @@ if [[ -n "${ledger}" ]]; then
 fi
 if [[ -n "${layout}" ]]; then
     context+=$'\n# Repo Layout Check\n\nWorkspace folders (have AGENT.md) not declared in CLAUDE.md. Surface to the user so Routing/Structure stays honest:\n'"${layout}"$'\n'
+fi
+if [[ -n "${inbox}" ]]; then
+    context+=$'\n# Memory inbox\n'"${inbox}"$'\n'
+fi
+
+# Final guard on the WHOLE payload (durcir-v2): Learnings + Facts alone can exceed the cap with perfectly valid data
+# (40 keys × 200 chars). Over the cap, the payload is cut and the cut is the FIRST line, never a silent partial view.
+if [[ ${#context} -gt 9800 ]]; then
+    context=$'# ⚠ Memory payload over the 10k-char hook cap ('"${#context}"$' chars): truncated below. Read LEARNINGS.md ## Active Learnings and DECISIONS.md ## Facts directly before relying on them, and trim them with /memorise.\n\n'"${context:0:9500}"
 fi
 
 # Emit JSON per Claude Code hook schema.

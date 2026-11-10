@@ -128,9 +128,12 @@ process.stdin.on('end', () => {
         const lag = Math.max(0, lines - cursor);
         let running = false;
         try { running = Date.now() - fs.statSync(path.join(st, 'worker.lock')).mtimeMs < 10 * 60 * 1000; } catch {}
-        scribe = running ? ' │ \x1b[33m✍⏳\x1b[0m'
+        // Memory inbox: proposals + candidates waiting for /memorise, written by the worker as pending.json.
+        let inbox = '';
+        try { const p = JSON.parse(fs.readFileSync(path.join(st, 'pending.json'), 'utf8')); if (p.alert) inbox = ` \x1b[33m✉${p.total}\x1b[0m`; } catch {}
+        scribe = (running ? ' │ \x1b[33m✍⏳\x1b[0m'
           : lag === 0 ? ' │ \x1b[32m✍✓\x1b[0m'
-          : ` │ \x1b[33m✍ ${lag}\x1b[0m`;
+          : ` │ \x1b[33m✍ ${lag}\x1b[0m`) + inbox;
       }
     } catch (e) { /* silent */ }
 

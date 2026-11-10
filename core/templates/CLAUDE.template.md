@@ -42,9 +42,9 @@ Never put session context in native memory. Never put preferences in claude-mem.
 **Before closing**: `/memorise` → "Memorised." → `/clear`. Never `/clear` without `/memorise`.
 
 ## Learning mode
-<!-- learning-stack: durcir-v1 -->
+<!-- learning-stack: durcir-v2 -->
 
-This project has the learning layer enabled (Durcir stack — rules harden through 3 levels).
+This project has the learning layer enabled (Durcir stack v2 — rules harden through 3 levels, a background scribe writes memory while the session runs).
 - **L1 — in-flight workspace rules** → `<workspace>/LEARNINGS.md` → `## Active Learnings` (fed by `/memorise`, auto-injected)
 - **L2 — role doctrine** → `<workspace>/AGENT.md` → `## Rules` (graduated from L1 at ×3 / cross-task / high-criticality)
 - **L3 — cross-workspace doctrine** → Gotchas section below (fed by `/gotcha`, or graduated from L1/L2)
@@ -52,6 +52,7 @@ This project has the learning layer enabled (Durcir stack — rules harden throu
 - Demotions, archival and the drift log live in `LEARNINGS.md` (`## Archived Learnings`, `## Drift log`) — kept, not injected
 - Agents apply all rule layers at task start via the Pre-work checklist in their `AGENT.md`
 - A `SessionStart` hook auto-injects `## Active Learnings` **and the `DECISIONS.md` ledger** at every new session
+- A `Stop` + `SessionEnd` **memory scribe** (global hook) reads the transcript while the session runs. It writes directly only what is deterministic and tool-proven: `CONTEXT.md ## Current state` and the update of an existing `DECISIONS.md ## Facts` key. Everything else it finds (new facts, decisions, rules) lands in `DECISIONS.md ## Proposals` and `LEARNINGS.md ## Candidates`, not injected, for `/memorise` to validate. When 10 proposals wait, or one has waited 7 days, every surface (session line, statusline, SessionStart) says so
 
 ## Gotchas
 

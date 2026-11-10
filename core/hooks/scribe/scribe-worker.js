@@ -34,6 +34,8 @@ const DAILY_BUDGET = Number(process.env.SCRIBE_DAILY_TOKENS || 2_000_000);   // 
 const SESSION_BUDGET = Number(process.env.SCRIBE_SESSION_TOKENS || 300_000); // per session_id
 const MAX_DELTA_CHARS = 40_000;   // per session per run, ≈ 10k tokens; the rest waits for the next run
 const MAX_PROMPT_DELTA = 80_000;  // all sessions of one run together
+const PENDING_MAX = Number(process.env.SCRIBE_PENDING_MAX || 10);   // proposals + candidates waiting for /memorise → alert
+const PENDING_DAYS = Number(process.env.SCRIBE_PENDING_DAYS || 7);  // or the oldest one has waited this long
 const MIN_DELTA_CHARS = 6_000;    // below: wait for more, unless flush or MAX_WAIT_MS elapsed
 const MAX_WAIT_MS = 20 * 60 * 1000;
 const MIN_USER_CHARS = 40;        // a USER line this long counts as signal
@@ -170,6 +172,13 @@ function workspaces(root) {
 function memorySnapshot(root, wss, delta) {
   const touched = wss.filter(ws => delta.includes(ws + '/') || delta.includes(ws + '\\'));
   let s = '';
+  const dec = path.join(root, 'DECISIONS.md');
+  if (fs.existsSync(dec)) {
+    const t = fs.readFileSync(dec, 'utf8');
+    const facts = writer.sectionBody(t, 'Facts'); if (facts && facts.trim()) s += `\n### DECISIONS.md ## Facts (current) — reuse these keys\n${facts.trim()}\n`;
+    const led = (writer.sectionBody(t, 'Ledger') || '').split('\n').filter(l => l.startsWith('- ')).slice(0, 10).join('\n');
+    if (led) s += `\n### DECISIONS.md ## Ledger (10 newest)\n${led}\n`;
+  }
   for (const ws of (touched.length ? touched : wss)) {
     const ctx = path.join(root, ws, 'CONTEXT.md'); const lrn = path.join(root, ws, 'LEARNINGS.md');
     if (fs.existsSync(ctx)) { const b = writer.sectionBody(fs.readFileSync(ctx, 'utf8'), 'Current state'); if (b) s += `\n### ${ws}/CONTEXT.md ## Current state\n${b.trim()}\n`; }
@@ -188,15 +197,17 @@ const PROMPT = (root, wss, snapshot, delta) => `Project cwd = ${root}. Below is 
 
 Rules:
 - Evidence or nothing. "state" only when a successful RESULT or an explicit USER statement supports it; "evidence" = the tool ids (copied verbatim from the delta) whose RESULT proves the line. State lines are facts about where the work stands now, not a narrative.
-- "facts": durable project-level facts (deploy to prod, acquisition, rename, commitment) proven by a successful RESULT or stated by the USER; ≤ 200 chars; "evidence" = tool id or "owner said: <exact quote>". Nothing else is a fact.
+- "facts": the project's CURRENT state as key → value pairs — a setting of the project, not something that happened (prod host, domain, app name, pricing, main accounts, a chosen or dropped tool, a commitment with its date). One key = one thing, qualified by workspace when it differs per workspace ("web prod host"). REUSE a key listed under "Facts (current)" below when the same thing has a new value, never a synonym key. Value ≤ 200 chars; "evidence" = tool id of the successful RESULT that shows it, or "owner said: <exact quote>" — a question or a doubt from the USER is NOT a statement. "why": one short sentence from the delta explaining the change (or null). Only an existing key proven by a tool id is written directly; everything else is queued for the owner.
+- "log": a decision made or an irreversible event (a commitment, a launch, a migration completed, a vendor dropped). Routine work — a file edited, an email sent, a test fixed, a setting toggled, a commit — is NOT log: it belongs in "state". ≤ 200 chars, same evidence and "why" rules. Always queued for the owner, never written directly. When in doubt, it is state.
 - "candidates": behavioral ALWAYS/NEVER rules suggested by an incident in THIS delta (RESULT ERROR then a fix, the USER correcting the assistant, a rule relearned the hard way). "incident" = the tool id, or "owner said: <exact quote>" when the incident is the user's words alone. "owner_correction" = the USER's exact words ONLY if the user explicitly told the assistant to always/never do something; else null. "seam" is always null. If the existing memory below already holds the rule, reuse its wording verbatim so it can be counted, do not rephrase.
 - Workspaces of this project: ${wss.join(', ')}. Route by the files touched (a path like web/... → web). Any other workspace name is dropped.
 - Never invent an id or a quote: anything not present verbatim in the delta is dropped by the writer.
-- Empty arrays are fine. If nothing is worth keeping, return {"state":[],"facts":[],"candidates":[],"skipped_reason":"<why>"}.
+- Empty arrays are fine. If nothing is worth keeping, return {"state":[],"facts":[],"log":[],"candidates":[],"skipped_reason":"<why>"}.
 
 Schema:
 {"state":[{"workspace":"","lines":["≤5 short lines"],"next":"one line","evidence":["tool ids"]}],
- "facts":[{"date":"YYYY-MM-DD","text":"","evidence":""}],
+ "facts":[{"date":"YYYY-MM-DD","key":"","value":"","evidence":"","why":null}],
+ "log":[{"date":"YYYY-MM-DD","text":"","evidence":"","why":null}],
  "candidates":[{"workspace":"","rule":"ALWAYS/NEVER … (…)","incident":"tool id or owner said: …","owner_correction":null,"seam":null}],
  "skipped_reason":null}
 
@@ -243,7 +254,7 @@ function verify(proposal, delta, wss = null) {
   const ownerQuote = s => /^owner said:/i.test(String(s || '')) && quoted(String(s).replace(/^owner said:\s*/i, '').replace(/^["«“]|["»”]$/g, ''));
   const wsOk = ws => wss === null || wss.includes(ws);
   let rejected = 0;
-  const p = { state: [], facts: [], candidates: [], skipped_reason: proposal.skipped_reason ?? null };
+  const p = { state: [], facts: [], log: [], candidates: [], skipped_reason: proposal.skipped_reason ?? null };
   for (const s of proposal.state || []) {
     const ev = (Array.isArray(s.evidence) ? s.evidence : []).filter(id => okIds.has(id));
     if (ev.length && wsOk(s.workspace)) p.state.push({ ...s, evidence: ev }); else rejected++;
@@ -252,11 +263,14 @@ function verify(proposal, delta, wss = null) {
   // (a real scheduled event, e.g. "RSS shuts down 2026-11-13", must not read as something that already happened).
   const futureDates = s => (String(s || '').match(/\b\d{4}-\d{2}-\d{2}\b|\b\d{2}\/\d{2}\/\d{4}\b/g) || [])
     .map(d => d.includes('/') ? d.split('/').reverse().join('-') : d).filter(d => d > today());
-  for (let f of proposal.facts || []) {
+  // facts = keyed current state (## Facts, upsert); log = dated events (## Ledger). A legacy fact with text and no key is a log line.
+  const TAG = ' (future date: scheduled, not yet happened)';
+  for (let f of [...(proposal.facts || []), ...(proposal.log || [])]) {
     const ev = String(f.evidence || '');
     if (futureDates(f.date).length) { rejected++; continue; }
-    if (futureDates(f.text).length) f = { ...f, text: `${f.text} (future date: scheduled, not yet happened)` };
-    if (okIds.has(ev) || ownerQuote(ev)) p.facts.push(f); else rejected++;
+    if (f.key && futureDates(f.value).length) f = { ...f, value: `${f.value}${TAG}` };
+    if (!f.key && futureDates(f.text).length) f = { ...f, text: `${f.text}${TAG}` };
+    if (okIds.has(ev) || ownerQuote(ev)) (f.key ? p.facts : p.log).push(f); else rejected++;
   }
   for (const c of proposal.candidates || []) {
     if (!wsOk(c.workspace)) { rejected++; continue; }
@@ -354,6 +368,13 @@ function main() {
     if (DRY) { console.log(JSON.stringify(ok, null, 2)); console.log(`[dry-run] tokens=${res.tokens} cost=$${res.cost.toFixed(3)} ms=${res.ms} rejected=${rejected}`); return; }
     const done = writer.apply(root, ok);
     const errors = done.filter(d => / error: /.test(d));
+    // Backlog for the alert surfaces (statusline, hub, SessionStart line): count + oldest, no model call.
+    const pending = writer.countPending(root, wss);
+    const ageDays = pending.oldest ? Math.floor((Date.now() - Date.parse(pending.oldest)) / 86400000) : 0;
+    pending.total = pending.proposals + pending.candidates; pending.ageDays = ageDays;
+    pending.alert = pending.total >= PENDING_MAX || (pending.total > 0 && ageDays >= PENDING_DAYS);
+    try { fs.writeFileSync(path.join(STATE, 'pending.json'), JSON.stringify({ ...pending, ts: Date.now() })); } catch {}
+    if (pending.alert) done.push(`${pending.total} proposals pending${ageDays ? ` (oldest ${ageDays}d)` : ''} → /memorise`);
     journal({ sessions: batch.map(({ e, d }) => ({ id: e.session_id, from: d.from, to: d.line, partial: d.partial })), tokens: res.tokens, rejected, applied: done, proposal: ok });
     if (errors.length) {
       // Writer failed on part of the proposal: do not acknowledge the delta. Retry next run, give up after MAX_APPLY_FAILURES.

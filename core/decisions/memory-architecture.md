@@ -1,4 +1,4 @@
-# Architecture decisions — NarSix Workflow Template
+# Architecture decisions — 0 to Hero
 
 Reference document. Do not load automatically into context.
 Consultable on demand via jCodeMunch or targeted reading.
@@ -72,7 +72,7 @@ Workspace rules live in `<workspace>/LEARNINGS.md` (not `CONTEXT.md`) and harden
 
 Graduation copies the rule verbatim a level up and removes it from Active, so the injected list **drains upward instead of growing**. `## Archived Learnings` holds demoted / non-recurrent rules (kept, not injected); `## Drift log` records rules ignored despite being capitalized (a rule drifting < 7 days repeatedly is in the wrong layer → straight to L3).
 
-A `<!-- learning-stack: durcir-v1 -->` marker in CLAUDE.md lets `/memorise` detect a stale project and offer `/bootstrap-upgrade`. The injection hook reads both `LEARNINGS.md` and legacy `CONTEXT.md`, so un-migrated projects keep working until migrated. Full detail: `core/ARCHITECTURE.md` → "Learning layer (Durcir)".
+A `<!-- learning-stack: durcir-vN -->` marker in CLAUDE.md (current: `durcir-v2`, which adds the memory scribe and `LEARNINGS.md ## Candidates`) lets `/memorise` detect a stale project and offer `/bootstrap-upgrade`. The injection hook reads both `LEARNINGS.md` and legacy `CONTEXT.md`, so un-migrated projects keep working until migrated. Full detail: `core/ARCHITECTURE.md` → "Learning layer (Durcir)".
 
 ## The /clear problem
 

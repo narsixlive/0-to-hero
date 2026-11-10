@@ -105,8 +105,8 @@ in-session y/n. `/memorise` stays as an optional audit; `/handover` only for wor
 **Why:** what the stack lost, it lost because distillation happened once, at the worst moment
 (owner leaving, context full). Each memorable item has a signal in the turn where it is born.
 
-**Independent review (Astra, 2026-11-08) folded in:** inferred rules are never auto-doctrine (the
-gates run by the same model that generalised the incident are not a second look); no Jev
+**Independent review (external model, 2026-11-08) folded in:** inferred rules are never auto-doctrine (the
+gates run by the same model that generalised the incident are not a second look); no extra
 classifier before the scribe in the pilot (three interpreters of the same work before any
 measurement); "zero loss on brutal exit" dropped from the goals — durable cursor + catch-up at the
 next start instead; Stop hook (public API) rather than early-access function hooks; claude-mem
@@ -143,13 +143,13 @@ files carried the stack alone. The database had grown from 34 MB (May) to 547 MB
 first day: 6 runs on this repo, 25-30k tokens each (≈ $0.15-0.20 list), 481k tokens machine-wide
 under a 2M daily cap, 17 ledger facts written with evidence, 0 Active rules written on its own.
 
-**Independent review (Astra, 2026-11-09) folded in:** seven scribe defects fixed before the freeze
+**Independent review (external model, 2026-11-09) folded in:** seven scribe defects fixed before the freeze
 (legacy usage rows counted against the session budget, deltas dropped at the cap instead of held,
 silent daily-budget hit, future-dated facts accepted, no fuzzy dedup of candidates, main() not
 guarded for `require`, lock/queue durability); cost estimates corrected; the freeze ordered as
 backup → disable capture → extend transcript retention to 365 days → verify next day.
 
-**Decisions bundled here:** Jev compaction stays out of the publishable stack (owner's call);
+**Decisions bundled here:** third-party compaction tools stay out of the publishable stack;
 SQLite FTS over transcripts is deferred, not cancelled — `rg` + the existing claude-mem MCP serve
 every real search today, FTS comes back when one measurably fails; `PreCompact` is not hooked —
 `Stop` + `SessionEnd` cover every path because the worker reads from its cursor, whatever happens
@@ -164,3 +164,99 @@ A cost regression (daily cap hit on normal use) is tuned, not rolled back. Verif
 **Visibility added the same day:** `✍` statusline segment, Stop-hook report line, and a per-project
 badge + "run now" button in the owner's VS Code sidebar — all read the scribe's cursor and lock files,
 none calls a model. The pane-mod variant was built, loaded, and deleted: the sidebar already existed.
+
+## 2026-11-10 — Workspace map: a parent `CLAUDE.md` instead of a knowledge-graph memory
+
+With claude-mem capture frozen (ADR 2026-11-09), the question came up: should a graph "brain"
+(Graphify, Graphiti, Cognee, Supermemory, mem0, Basic Memory) replace the lost semantic layer and
+keep multi-project work from losing track of what exists where? Answer: no. A flat parent
+`CLAUDE.md` above the projects, loaded by Claude Code's directory walk, is adopted instead.
+
+**Why a graph was rejected (surveyed 2026-11-10):**
+- Graphify is a *code* graph (AST + LLM pass over docs); it indexes no session history, goes stale
+  at every refactor, and reviewers report the assistant bypassing it on small/medium repos.
+- Graphiti, Cognee, Supermemory and mem0 all pay an LLM extraction pass per write — the very cost
+  the scribe freeze just removed — plus a database to run (Neo4j/FalkorDB, Python-only, or a hosted
+  account). Basic Memory is the only one with zero-LLM ingestion (markdown + SQLite index), but it
+  wants its own `- [category]` / `[[wikilink]]` syntax; on plain ledgers it adds nothing over grep.
+- The corpus is small: ~13 ledgers, ~1,200 lines total. Users of these tools report the same
+  threshold — below a few thousand entries, grep wins.
+
+**What the map actually solves:** not search but *discoverability*. A survey of the 9 most active
+projects found a dozen bricks written 2–4 times (LLM wrapper ×4, private-data guard ×3, owner alert
+×2, Reddit reader ×2, geocoder ×2 with one on a dead endpoint, a skill and a hook copied byte for
+byte). Nobody searched for them because nobody suspected they existed. A 60-line table seen at
+every session start fixes that; a graph would not.
+
+**Format chosen:** three sections (projects + orbits, reusable bricks with paths, machine
+conventions), hard cap ~80 lines, no state/progress/rules, fed by a `/memorise` step with four
+explicit triggers, scaffolded from `core/templates/WORKSPACE-MAP.template.md`. Verified: two
+headless sessions started two and one levels below the parent both had the file in context.
+
+**Reopen criterion:** same as SQLite FTS — three documented searches that `rg` + `mem-search`
+failed and that needed a *relation* rather than a keyword. Basic Memory is then the candidate,
+triggered by ledgers starting to cross-link each other.
+
+## 2026-11-10 — Learning stack bumped to `durcir-v2`: the memory change becomes a migration, not a rumour
+
+The three memory changes of 2026-11-08/10 (continuous scribe, claude-mem capture frozen, workspace
+map) were live on the owner's machine but invisible to the stack's own versioning: every project
+still carried `<!-- learning-stack: durcir-v1 -->`, so `/memorise` had nothing to flag and
+`/bootstrap-upgrade` nothing to migrate. The same mechanism that moved projects from
+`CONTEXT.md` rules to `LEARNINGS.md` in June is reused: a new marker value, a freshness check that
+names it, and a step-by-step migration section.
+
+**What `durcir-v2` means for a project:** `LEARNINGS.md` has a `## Candidates` section (the scribe's
+only write surface for rules — never injected, promoted by `/memorise` A0 or by the owner in
+session); `CLAUDE.md ## Learning mode` names the scribe and carries the v2 marker; the machine runs
+`scribe-trigger.js` on both `Stop` and `SessionEnd` with the files byte-identical to
+`core/hooks/scribe/`; claude-mem capture, if the plugin is installed, is disabled; the global
+`/memorise` carries A0, the workspace-map step and the v2 freshness line.
+
+**Why a marker bump rather than silent drift:** the audit of 2026-11-09 found claude-mem capture had
+been dead for three weeks with nobody noticing, because nothing versioned the stack it belonged
+to. A marker makes the state of each project checkable in one grep and gives `/memorise` a single
+line to print. Half-wired states are named explicitly in the upgrade checks (`Stop` without
+`SessionEnd`, scribe files present but stale, `## Candidates` absent while the journal shows runs)
+because each one is a silent capture loss, the same failure class as the dead claude-mem hooks.
+
+**Scope of the migration:** machine-global steps (scribe files, two hooks, claude-mem env) run once
+and are never committed; project steps (`## Candidates`, `## Learning mode`, marker) are committed
+per project. The workspace map is offered, not imposed, and stays out of published repos.
+
+**Addendum, same day — `DECISIONS.md` gains `## Facts (current)`.** Measured after one scribe day:
+~1 ledger line per run, ~10 per day on an active project (the owner's three busiest projects: 266,
+77 and 31 ledger lines), mostly session events ("email sent", "mod built", "commit …") and reworded duplicates,
+because the worker never saw the existing ledger. The injection window (10 newest) kept the token
+cost flat but pushed every durable state out of context within a day. Root cause: one list holding
+two time semantics — events that decay and states that hold until replaced. Fix: states live in
+`## Facts (current)`, one line per key, upserted (first spelling of the key wins, a change is traced
+in the ledger), injected whole and bounded by the key count (safety cap 40); the ledger becomes the
+dated log with a 5-line window; the worker's prompt defines "facts" as keyed state true in three
+months and "log" as decisions and irreversible events, with routine work explicitly excluded, and
+now receives the Facts section and the 10 newest ledger lines for key reuse and dedup. Existing
+ledgers are not converted: the migration adds the empty section and runs one assisted promotion
+pass. Kill criterion for the prompt change: after 7 days, if more than a third of new ledger lines
+are still routine work, the log channel is closed to the scribe (owner-only through `/memorise`).
+
+**Second addendum, same day — the scribe becomes a sorter; the memory inbox.** An independent review
+(external model, 2026-11-10) of the Facts/Ledger split found the real risk: "evidence verified" meant "a
+reference exists", not "the reference proves the claim" — a question from the owner had become a
+decision in the ledger — and a keyed Facts section labelled "current ground truth" would turn such
+errors into permanent, self-reinforcing memory. It also found a payload cap that bounded only the
+ledger, a value equality that dropped punctuation (`1.5` = `15`), no chronology check, a state/trace
+pair written in two steps, and writer rejections the worker acknowledged as success. Decision: the
+scribe writes directly only what is deterministic and tool-proven (`Current state`, the update of an
+EXISTING Facts key by tool id — strict equality, never an older date, state and trace in one write,
+rejections counted as errors); everything else it finds — new keys, owner words as evidence, dated
+decisions — is queued on disk in `DECISIONS.md ## Proposals` (and rules in `## Candidates`), never
+injected, with its evidence and a one-line "why". `/memorise` is the only door to durable memory: it
+drains the whole backlog every time (a cap would turn a delay into a loss), grouped by evidence
+strength, one answer per group; `n` archives, never deletes. The injector bounds the complete payload
+and states the cut as its first line; Facts keeps the newest 40 keys. The inbox is made visible
+everywhere, per project, at 10 items or 7 days (`SCRIBE_PENDING_MAX` / `_DAYS`): `scribe:` line,
+statusline `✉ N`, SessionStart line, and the VS Code sidebar published in `tools/claude-hub/` for
+users who never open a terminal — no Discord, by the owner's choice. Migration of existing ledgers
+stays assisted: full read, contradictions surfaced, each promoted fact with its source line and a
+confirmed / historical / to-verify status. Measured for 7 days on 3 projects: proposals made /
+accepted / refused, share of routine noise (kill at 10 %), new keys and synonyms, payload size.

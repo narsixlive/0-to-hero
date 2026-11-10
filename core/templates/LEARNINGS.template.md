@@ -14,6 +14,11 @@
      into AGENT.md `## Rules` (this workspace) or via /gotcha into root CLAUDE.md `## Gotchas`,
      then REMOVE it from here. The list drains upward; it never just grows. -->
 
+## Candidates
+<!-- Written by the background memory scribe (Stop/SessionEnd hook), NOT injected. -->
+<!-- Format: `- ALWAYS/NEVER [action] ([why]) seen ×N (YYYY-MM-DD) [evidence id]` -->
+<!-- Promoted into Active Learnings by /memorise (clause A0) or by the owner's correction in session. Never edited by hand into a rule elsewhere without removing it here. -->
+
 ## Archived Learnings
 <!-- Demoted or non-recurrent rules. Kept for reference, NOT injected. -->
 <!-- /memorise rescans this section when matching a new candidate (catches a déjà-vu rule). -->
