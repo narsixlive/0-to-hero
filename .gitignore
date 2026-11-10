@@ -5,6 +5,10 @@
 # Archetype memory
 **/.memory/
 
-# Personal ledger + local-machine ADRs — never published
+# Personal memory (ledger, local-machine ADRs, root rules written by the scribe) — never published
 /DECISIONS.md
+/LEARNINGS.md
+/CONTEXT.md
+
+# Built VS Code extension (attach to a GitHub Release instead)
 *.vsix

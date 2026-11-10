@@ -47,7 +47,8 @@ function sectionBody(text, heading) {
 const norm = s => s.toLowerCase().replace(/\s+/g, ' ').replace(/[`«»"'().,;:×x0-9]/g, '').trim();
 const normFact = s => s.toLowerCase().replace(/\s+/g, ' ').replace(/[`«»"'().,;:]/g, '').trim();
 // Destination guard: a workspace is one plain directory name, never a path, never private.
-const safeWorkspace = ws => typeof ws === 'string' && /^[A-Za-z0-9][A-Za-z0-9._-]*$/.test(ws) && !ws.startsWith('_') && ws !== '.' && ws !== '..';
+// "." = the project root itself, used only by light projects (no workspace): the worker offers "." only when none exists.
+const safeWorkspace = ws => ws === '.' || (typeof ws === 'string' && /^[A-Za-z0-9][A-Za-z0-9._-]*$/.test(ws) && !ws.startsWith('_') && ws !== '..');
 // Same rule in other words: same polarity (ALWAYS/NEVER) and ≥ 60 % of the shorter rule's content words appear in the other.
 // ponytail: lexical only — a paraphrase with disjoint vocabulary still slips through; the prompt's "reuse existing wording" is the first line of defence.
 const polarity = s => (String(s).trim().match(/^(ALWAYS|NEVER)\b/i) || [, ''])[1].toUpperCase();
@@ -182,7 +183,8 @@ function countPending(root, wss = []) {
     return b.split('\n').filter(l => l.startsWith('- '));
   };
   const proposals = count(path.join(root, 'DECISIONS.md'), 'Proposals');
-  const candidates = wss.flatMap(ws => count(path.join(root, ws, 'LEARNINGS.md'), 'Candidates'));
+  // The root file is counted even once workspaces exist: candidates left there by the light phase still wait for /memorise.
+  const candidates = [...new Set([...wss, '.'])].flatMap(ws => count(path.join(root, ws, 'LEARNINGS.md'), 'Candidates'));
   const dates = [...proposals, ...candidates].flatMap(l => l.match(/\b\d{4}-\d{2}-\d{2}\b/g) || []).sort();
   return { proposals: proposals.length, candidates: candidates.length, oldest: dates[0] || null };
 }
@@ -196,7 +198,7 @@ function ensureLearnings(file, ws) {
     }
     return t;
   }
-  const t = `# ${ws}/ — Learnings\n\n## Active Learnings\n<!-- ALWAYS/NEVER [action] ([why]) ×N — injected at SessionStart -->\n\n## Archived Learnings\n<!-- demoted / non-recurrent rules — kept, not injected -->\n\n## Drift log\n<!-- rules ignored despite being capitalized — audit trail -->\n\n## Candidates\n<!-- scribe proposals, NOT injected — validated in session (y / n / fix) or by /memorise -->\n`;
+  const t = `# ${ws === '.' ? path.basename(path.dirname(file)) : `${ws}/`} — Learnings\n\n## Active Learnings\n<!-- ALWAYS/NEVER [action] ([why]) ×N — injected at SessionStart -->\n\n## Archived Learnings\n<!-- demoted / non-recurrent rules — kept, not injected -->\n\n## Drift log\n<!-- rules ignored despite being capitalized — audit trail -->\n\n## Candidates\n<!-- scribe proposals, NOT injected — validated in session (y / n / fix) or by /memorise -->\n`;
   atomicWrite(file, t);
   return t;
 }

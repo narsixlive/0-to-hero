@@ -104,11 +104,14 @@ process.stdin.on('end', () => {
 
     // Scribe lag: transcript lines of this session not yet read by the memory scribe.
     // ✍✓ = up to date (safe to /clear) · ✍ N = N lines pending · ✍⏳ = worker running.
-    // Only shown for projects the scribe watches (a state dir exists for this cwd).
+    // Only shown for projects the scribe watches (a state dir exists for the project root).
     let scribe = '';
     try {
       const stateRoot = path.join(claudeDir, 'scribe');
-      const slug = dir.replace(/[^a-zA-Z0-9]/g, '-').replace(/^-+|-+$/g, '').toLowerCase();
+      // Same root as the scribe: the session's start folder walked up to CLAUDE.md + DECISIONS.md, not the drifting cwd.
+      let root = data.workspace?.project_dir || dir;
+      try { root = require(path.join(__dirname, 'scribe', 'scribe-trigger.js')).projectRoot(root) || root; } catch {}
+      const slug = root.replace(/[^a-zA-Z0-9]/g, '-').replace(/^-+|-+$/g, '').toLowerCase();
       const stateDir = fs.readdirSync(stateRoot).find(d => d.toLowerCase() === slug); // slugs are case-sensitive on disk, cwd case is not
       // Some hosts (VS Code extension) omit transcript_path: locate the transcript by session id.
       let transcript = data.transcript_path;

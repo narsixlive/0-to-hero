@@ -163,9 +163,11 @@ function deltaFor(transcript, cursorFile, max = MAX_DELTA_CHARS) {
   return { text, from, line: i, partial };
 }
 
+// Workspaces = direct sub-folders with an AGENT.md. None (light project) → the root itself, ".".
 function workspaces(root) {
-  return fs.readdirSync(root, { withFileTypes: true })
+  const wss = fs.readdirSync(root, { withFileTypes: true })
     .filter(d => d.isDirectory() && fs.existsSync(path.join(root, d.name, 'AGENT.md'))).map(d => d.name);
+  return wss.length ? wss : ['.'];
 }
 
 // Only the workspaces the delta touches (fallback: all) — the snapshot is paid on every run.
@@ -179,7 +181,12 @@ function memorySnapshot(root, wss, delta) {
     const led = (writer.sectionBody(t, 'Ledger') || '').split('\n').filter(l => l.startsWith('- ')).slice(0, 10).join('\n');
     if (led) s += `\n### DECISIONS.md ## Ledger (10 newest)\n${led}\n`;
   }
-  for (const ws of (touched.length ? touched : wss)) {
+  // Graduated doctrine: a rule already in Gotchas must not be re-proposed as a candidate.
+  try { const g = writer.sectionBody(fs.readFileSync(path.join(root, 'CLAUDE.md'), 'utf8'), 'Gotchas'); if (g && g.trim()) s += `\n### CLAUDE.md ## Gotchas (already doctrine)\n${g.trim()}\n`; } catch {}
+  const list = touched.length ? touched : [...wss];
+  // Root rules left by the light phase stay visible after the first workspace appears, until /memorise moves them.
+  if (!list.includes('.') && fs.existsSync(path.join(root, 'LEARNINGS.md'))) list.push('.');
+  for (const ws of list) {
     const ctx = path.join(root, ws, 'CONTEXT.md'); const lrn = path.join(root, ws, 'LEARNINGS.md');
     if (fs.existsSync(ctx)) { const b = writer.sectionBody(fs.readFileSync(ctx, 'utf8'), 'Current state'); if (b) s += `\n### ${ws}/CONTEXT.md ## Current state\n${b.trim()}\n`; }
     if (fs.existsSync(lrn)) {
@@ -200,7 +207,7 @@ Rules:
 - "facts": the project's CURRENT state as key → value pairs — a setting of the project, not something that happened (prod host, domain, app name, pricing, main accounts, a chosen or dropped tool, a commitment with its date). One key = one thing, qualified by workspace when it differs per workspace ("web prod host"). REUSE a key listed under "Facts (current)" below when the same thing has a new value, never a synonym key. Value ≤ 200 chars; "evidence" = tool id of the successful RESULT that shows it, or "owner said: <exact quote>" — a question or a doubt from the USER is NOT a statement. "why": one short sentence from the delta explaining the change (or null). Only an existing key proven by a tool id is written directly; everything else is queued for the owner.
 - "log": a decision made or an irreversible event (a commitment, a launch, a migration completed, a vendor dropped). Routine work — a file edited, an email sent, a test fixed, a setting toggled, a commit — is NOT log: it belongs in "state". ≤ 200 chars, same evidence and "why" rules. Always queued for the owner, never written directly. When in doubt, it is state.
 - "candidates": behavioral ALWAYS/NEVER rules suggested by an incident in THIS delta (RESULT ERROR then a fix, the USER correcting the assistant, a rule relearned the hard way). "incident" = the tool id, or "owner said: <exact quote>" when the incident is the user's words alone. "owner_correction" = the USER's exact words ONLY if the user explicitly told the assistant to always/never do something; else null. "seam" is always null. If the existing memory below already holds the rule, reuse its wording verbatim so it can be counted, do not rephrase.
-- Workspaces of this project: ${wss.join(', ')}. Route by the files touched (a path like web/... → web). Any other workspace name is dropped.
+- ${wss[0] === '.' ? 'This project has no workspaces: use "." as the workspace for every candidate. No state entries.' : `Workspaces of this project: ${wss.join(', ')}. Route by the files touched (a path like web/... → web).`} Any other workspace name is dropped.
 - Never invent an id or a quote: anything not present verbatim in the delta is dropped by the writer.
 - Empty arrays are fine. If nothing is worth keeping, return {"state":[],"facts":[],"log":[],"candidates":[],"skipped_reason":"<why>"}.
 

@@ -18,11 +18,13 @@ Then identify the dominant workspace(s) touched this session, based on the files
 - Rule 3: the entry title carries the author — `### YYYY-MM-DD — <author> — [title]`, `<author>` = first token of `git config user.name`, lowercased.
 - Rule 4: do not drop the pruned entries — move them verbatim to the top of `docs/THREAD-ARCHIVE.md` under a `## <workspace>` heading (create the file if missing). claude-mem is per-machine; the archive is the only long history the other person has.
 
-`CONTEXT.md` is purely situational now (brief + state + thread). Workspace rules live in `LEARNINGS.md` — handled in the next step. If no workspace was touched, skip the CONTEXT.md updates.
+`CONTEXT.md` is purely situational now (brief + state + thread). Workspace rules live in `LEARNINGS.md` — handled in the next step. If no workspace was touched, skip the CONTEXT.md updates. **Light project** (CLAUDE.md + DECISIONS.md, no folder with an `AGENT.md`): there is no `CONTEXT.md` — skip this step; the root itself is the only workspace for the next one.
 
 ## Workspace Learnings — Durcir lifecycle (after state update)
 
-Workspace rules live in `<workspace>/LEARNINGS.md`, NOT in `CONTEXT.md`. If a touched workspace has no `LEARNINGS.md`, create it first with three empty sections and their format comments: `## Active Learnings`, `## Archived Learnings`, `## Drift log` (see the Learning mode section of the root `CLAUDE.md` for the ladder).
+Workspace rules live in `<workspace>/LEARNINGS.md`, NOT in `CONTEXT.md`. If a touched workspace has no `LEARNINGS.md`, create it first with three empty sections and their format comments: `## Active Learnings`, `## Archived Learnings`, `## Drift log` (see the Learning mode section of the root `CLAUDE.md` for the ladder). In a light project the workspace is the root: rules live in `./LEARNINGS.md` (the scribe writes its candidates there as workspace `.`).
+
+**Light → full (first workspace).** If a root `LEARNINGS.md` exists AND a folder now has an `AGENT.md`, the scribe no longer writes to the root file (it stays injected). Drain it once, rule by rule, ×N and `[provenance]` kept: workspace-scoped → that workspace's `LEARNINGS.md`, same section; cross-workspace → through the L3 gate below, or it stays in the root file. Delete the root file once it is empty.
 
 For each touched workspace, scan the session for **reusable patterns specific to that workspace**. A good Learning candidate:
 
@@ -71,8 +73,8 @@ For each surviving candidate, **check for recurrence** — read the workspace's 
 
 **Graduation (the list drains upward, never just grows).** After bumping/adding, for any Active rule that now meets a threshold, propose promotion — ask per rule, never auto-apply:
 
-- **×3 reached, OR stable (applied cleanly across ~3 sessions), OR it blocked work** → propose graduating to this workspace's `AGENT.md` `## Rules` (L2 — role doctrine): `[workspace] Graduate to AGENT.md Rules (L2)? (y/n): <rule>`
-- **Cross-workspace in nature, OR high-criticality (security / personal data / money / legal)** → L3 candidate. **L3 is the last rung of the last resort.** Print the gate verdict line FIRST, before any graduation question: a rule that recurs across workspaces is the strongest proof a fix at a shared seam pays (root hook, shared lib, CI, template) — propose that fix before the Gotcha. Only `fix-rung: none` (or a declined fix) proceeds to `/gotcha` → root `CLAUDE.md` `## Gotchas` (L3 — cross-workspace doctrine). A high-criticality rule may jump to L3 on first sight, but never skips the gate.
+- **×3 reached, OR stable (applied cleanly across ~3 sessions), OR it blocked work** → propose graduating to this workspace's `AGENT.md` `## Rules` (L2 — role doctrine): `[workspace] Graduate to AGENT.md Rules (L2)? (y/n): <rule>`. Light project: there is no L2 — the rule stays in Active (or is archived by the cap) unless it meets the L3 bullet below; never create an `AGENT.md` to graduate a rule.
+- **Cross-workspace in nature, OR high-criticality (security / personal data / money / legal)** → L3 candidate. **L3 is the last rung of the last resort.** Print the gate verdict line FIRST, before any graduation question: a rule that recurs across workspaces is the strongest proof a fix at a shared seam pays (root hook, shared lib, CI, template) — propose that fix before the Gotcha. Only `fix-rung: none` (or a declined fix) proceeds to `/gotcha` → root `CLAUDE.md` `## Gotchas` (L3 — cross-workspace doctrine). A high-criticality rule may jump to L3 on first sight, but never skips the gate. **Gotchas cap (CLAUDE.md loads in every session).** Before writing a new L3 line, count `## Gotchas`: at **12 or more**, first propose freeing a slot — merge two siblings, demote a workspace-scoped one to its `AGENT.md ## Rules` (light project: back to `## Active Learnings`), or archive one the code now enforces. No slot freed → the new rule stays in Active.
 
 On `y` for a graduation → into `AGENT.md` `## Rules` (L2), copy the rule **verbatim, with its `(why)`**. Into `## Gotchas` (L3), write it **compressed to ONE line**, strict format `NEVER/ALWAYS [action] ([short why])` — no narrative, no dates; overflowing rationale goes to the `DECISIONS.md` ADR archive, never into the Gotcha. In both cases, **remove it from `## Active Learnings`**. On `n` → leave it in Active. Drift diagnostic: if a rule's `## Drift log` lines show it drifts in **< 7 days repeatedly**, it is in the wrong layer — recommend graduating it straight to L3.
 
@@ -137,7 +139,7 @@ Do NOT migrate automatically — only offer. If the marker is present and curren
 
 **Repo-layout freshness (independent of the stack marker).** Also check the layout convention — a project can be on `durcir-v1` yet predate it. Flag (one line, only when something is off; otherwise say nothing) if **either**:
 - a folder with an `AGENT.md` is **not referenced** in CLAUDE.md (undeclared workspace — the SessionStart hook surfaces this too), or
-- CLAUDE.md has **no `## Repo layout` section**, or meta-docs (`ROADMAP.md`, `PLAN*.md`, `AUDIT.md`, … any `.md` beyond `CLAUDE.md`/`DECISIONS.md`/`README.md`) sit **at the project root** instead of in `docs/`.
+- CLAUDE.md has **no `## Repo layout` section**, or meta-docs (`ROADMAP.md`, `PLAN*.md`, `AUDIT.md`, … any `.md` beyond `CLAUDE.md`/`DECISIONS.md`/`README.md`/`LEARNINGS.md` — the last one is a light project's rule file, it stays at the root) sit **at the project root** instead of in `docs/`.
 
 `⚠️ Repo layout drift (undeclared workspace and/or meta-docs at root). Run /bootstrap-upgrade to adopt the layout convention (docs/ for meta-docs + workspace law). Want me to run it now?`
 

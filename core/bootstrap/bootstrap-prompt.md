@@ -72,7 +72,8 @@ From Q1 (or the scan), silently infer the project characteristics.
 
 | Signal | Classification | Impact |
 |--------|---------------|--------|
-| Single deliverable, short deadline, no foreseeable iteration | **Ephemeral** | Lightweight mode: 1 CLAUDE.md (routing + context + rules), no workspaces, no .memory/, no .skills/ |
+| Single deliverable, short deadline, no foreseeable iteration | **Ephemeral** | Lightweight mode: 1 CLAUDE.md (routing + context + rules), no workspaces, no DECISIONS.md → no memory hooks, no .skills/ |
+| One role, one codebase, but iterated over months (a library, a small tool, a monorepo package treated as one unit) | **Light durable** | CLAUDE.md + DECISIONS.md, no workspaces: memory hooks on (Facts, Ledger, root LEARNINGS.md written by the scribe), no CONTEXT.md, no L2 |
 | "patients", "students", medical/legal/coaching context, data about real people, activities structurally involving personal data (e-commerce, billing, CRM, recruitment) | **Sensitive data** | Technical barriers: `.claudeignore` + `.gitignore` + `_private/` |
 | "there are X of us working", "our team", "the volunteers", multiple people contributing to the project | **Team** | Enriched AGENT.md (coordination, handoff between members), structured ROADMAP format |
 
@@ -92,6 +93,15 @@ my-project/
 └── (no workspaces, no .skills/)
 ```
 Do not propose plan mode for an ephemeral project.
+
+**Light durable mode:**
+```
+my-project/
+├── CLAUDE.md      ← routing + context + rules (## Gotchas = L3, capped by /memorise)
+├── DECISIONS.md   ← from DECISIONS.template.md: the opt-in marker for the memory hooks
+└── LEARNINGS.md   ← created by the scribe on its first rule candidate (L1, workspace ".")
+```
+`DECISIONS.md` next to `CLAUDE.md` is what makes a folder a memory project: the SessionStart injector and the scribe walk up from the session's start folder to the nearest such pair. No `DECISIONS.md` = no memory (ephemeral). The day a second role appears, add a workspace folder with its `AGENT.md`; `/memorise` then drains the root `LEARNINGS.md` into it.
 
 **Sensitive data — technical barriers:**
 
@@ -387,6 +397,8 @@ Rules:
   | User brings an existing project with a workspace folder containing code | Same: create `<workspace>/code_<descriptor>/`, move code there, add agent files to the workspace root |
 
   **Never propose to reorganize the workspace folder itself** — only add the `code_*/` sub-folder.
+
+  **Root manifest.** When the first `code_*/` folder holds a build manifest (`pyproject.toml`, `package.json`, `Cargo.toml`), propose a root-level workspace manifest that lists it (uv workspace, `pnpm-workspace.yaml`, Cargo `[workspace]`) and one CLAUDE.md line "run commands from the root" — see ARCHITECTURE.md, code folder convention. Without it every test run makes Claude `cd` into the code folder.
   The agent files stay exactly where they are.
 
 - If a CLAUDE.md already exists, apply the rule based on its state:

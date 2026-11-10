@@ -26,6 +26,17 @@ const slugify = p => {
   return existing || raw.toLowerCase();
 };
 
+// Project root = nearest folder at or above `dir` holding CLAUDE.md + DECISIONS.md (the Durcir opt-in marker).
+// Same rule as inject-learnings.sh; root.check.js asserts both agree.
+function projectRoot(dir) {
+  for (let d = path.resolve(dir); ; d = path.dirname(d)) {
+    if (fs.existsSync(path.join(d, 'CLAUDE.md')) && fs.existsSync(path.join(d, 'DECISIONS.md'))) return d;
+    if (path.dirname(d) === d) return null;
+  }
+}
+module.exports = { projectRoot };
+if (require.main !== module) return;
+
 let input = '';
 const t = setTimeout(() => process.exit(0), 3000);
 process.stdin.setEncoding('utf8');
@@ -35,14 +46,14 @@ process.stdin.on('end', () => {
   try {
     const j = JSON.parse(input);
     if (j.agent_id) process.exit(0);
-    const cwd = j.cwd || process.cwd();
-    const low = path.resolve(cwd).toLowerCase();
-    if (SCRIBE_ROOTS.length && !SCRIBE_ROOTS.some(r => low === r || low.startsWith(r + path.sep))) process.exit(0);
-    if (!fs.existsSync(path.join(cwd, 'CLAUDE.md'))) process.exit(0);
-    // Durcir layout only: a root DECISIONS.md or at least one <workspace>/AGENT.md, otherwise the writer has nowhere to write.
-    const durcir = fs.existsSync(path.join(cwd, 'DECISIONS.md')) || fs.readdirSync(cwd, { withFileTypes: true }).some(d => d.isDirectory() && !d.name.startsWith('.') && fs.existsSync(path.join(cwd, d.name, 'AGENT.md')));
-    if (!durcir) process.exit(0);
     if (!j.transcript_path || !j.session_id) process.exit(0);
+    // Anchor on CLAUDE_PROJECT_DIR (the folder the session started in, fixed by Claude Code), not the hook's cwd:
+    // a Bash `cd` drifts the cwd into sub-folders or a sibling project, and a sibling would then re-read this
+    // session from line 0. The cwd fallback only serves hosts that do not set the variable.
+    const cwd = projectRoot(process.env.CLAUDE_PROJECT_DIR || j.cwd || process.cwd());
+    if (!cwd) process.exit(0);
+    const low = cwd.toLowerCase();
+    if (SCRIBE_ROOTS.length && !SCRIBE_ROOTS.some(r => low === r || low.startsWith(r + path.sep))) process.exit(0);
 
     const slug = slugify(cwd);
     const dir = path.join(STATE_ROOT, slug);
@@ -52,7 +63,7 @@ process.stdin.on('end', () => {
     //    whatever its size, and the batch gap does not apply)
     const flush = j.hook_event_name === 'SessionEnd';
     fs.appendFileSync(path.join(dir, 'queue.jsonl'), JSON.stringify({
-      session_id: j.session_id, transcript_path: j.transcript_path, cwd, ts: Date.now(), flush,
+      session_id: j.session_id, transcript_path: j.transcript_path, cwd, from: process.env.CLAUDE_PROJECT_DIR ? 'project_dir' : 'cwd', ts: Date.now(), flush,
     }) + '\n');
 
     // 2. surface the previous run's report, once

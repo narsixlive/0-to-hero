@@ -61,6 +61,8 @@ Convention: `<workspace>/code_<descriptor>/`
 
 `<descriptor>` is a short label that distinguishes this code from other code that could live in the same workspace — typically the **language** (`code_python/`, `code_rust/`), the **target** (`code_linkedin/`, `code_indeed/` for scrapers), the **role** (`code_api/`, `code_worker/`), or `code_common/` for shared helpers. It is NOT derived from the workspace name.
 
+**Commands run from the project root.** Code in `code_*/` folders means the build tool's manifest is nested, and every `uv run` / `pytest` / `npm test` then makes Claude `cd` into it. Declare the code folders in a root-level workspace manifest instead — a virtual root `pyproject.toml` with `[tool.uv.workspace] members = ["*/code_python"]`, a `pnpm-workspace.yaml`, a Cargo `[workspace]` — and write in `CLAUDE.md` that commands run from the root (`uv run --package <name> …`, `pnpm --filter <name> …`). The memory hooks resolve the project root from where the session started, so a `cd` does not lose memory; the manifest keeps sessions simple anyway.
+
 ### Example 1 — app code in `src/`
 
 ```
@@ -152,7 +154,9 @@ The scribe is a sorter, not a writer of record: it writes directly only what is 
 - **Durable, never loses a line.** Cursors advance only over what was sent *and* applied; oversized deltas are cut at a line and re-queued; `/clear` or a crash leaves the queue intact for the next run. `journal.jsonl` records every run.
 - **Visible.** `✍` segment in the terminal statusline (`✍✓` safe to `/clear`, `✍ N` lines pending, `✍⏳` running), the Stop hook's one-line report in any host, optional sidebar badge per project. Files, install, env and state: `core/hooks/scribe/README.md`.
 
-Scope: Durcir projects only (root `CLAUDE.md` + `DECISIONS.md` or a `<ws>/AGENT.md`); optionally restricted to folders listed in `SCRIBE_ROOTS`.
+**Project root — one rule for every hook.** The project root is the nearest folder at or above the session's start folder (`CLAUDE_PROJECT_DIR`, fixed by Claude Code for the whole session) that holds both `CLAUDE.md` and `DECISIONS.md`. The injector, the scribe and the statusline all use it, so a Bash `cd` into `<ws>/code_python/` or into a sibling project never moves memory, and a sub-folder with its own CLAUDE.md (instructions for a code folder) still belongs to its project. A parent folder with only a `CLAUDE.md` (a workspace map) is never a project. `DECISIONS.md` is the opt-in marker: no `DECISIONS.md`, no memory. Optionally restricted to folders listed in `SCRIBE_ROOTS`.
+
+**Light projects** (no folder with an `AGENT.md`): the root is the only workspace, written as `.` — the scribe puts rule candidates in the root `LEARNINGS.md`, never state (there is no `CONTEXT.md`; use `/handover` for a resume point). Once a first workspace exists, `.` is refused and `/memorise` drains the root file into it.
 
 **claude-mem** stays installed as the read-only archive of what happened before (`mem-search "…"` over 42k observations) and for `save_memory` notes; its observation and summary capture is disabled (`CLAUDE_MEM_DISABLE_OBSERVATION` / `CLAUDE_MEM_DISABLE_SUMMARY`), which removed one Sonnet call per tool use. Rollback criterion and figures: ADR 2026-11-09.
 
@@ -277,7 +281,8 @@ Silent inference after Q1 (or the scan). Combines with profile.
 
 | Signal | Classification | Impact |
 |--------|---------------|--------|
-| Single deliverable, short deadline | Ephemeral | Lightweight mode (1 CLAUDE.md, no workspaces) |
+| Single deliverable, short deadline | Ephemeral | Lightweight mode (1 CLAUDE.md, no workspaces, no DECISIONS.md → no memory) |
+| One role, iterated over months | Light durable | CLAUDE.md + DECISIONS.md, no workspaces; memory on, rules in root LEARNINGS.md, no L2 |
 | Data about real people (patients, students, medical, legal), activities with personal data (e-commerce, billing, CRM) | Sensitive data | Technical barriers: `.claudeignore` + `.gitignore` + `_private/` |
 | Multiple people contributing ("there are X of us", "our team", volunteers). Exclude "my clients" = provider relationship, not team | Team | AGENT.md with coordination, structured ROADMAP |
 

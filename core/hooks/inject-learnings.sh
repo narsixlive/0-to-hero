@@ -2,8 +2,8 @@
 # inject-learnings.sh — SessionStart hook for 0-to-Hero learning layer.
 #
 # What it does:
-#   1. Detects if CWD is a 0-to-Hero project (presence of CLAUDE.md at root).
-#   2. Finds all LEARNINGS.md and CONTEXT.md files in workspace folders (depth 1-3).
+#   1. Finds the project root: nearest folder at or above CLAUDE_PROJECT_DIR holding CLAUDE.md + DECISIONS.md.
+#   2. Finds LEARNINGS.md and CONTEXT.md at the root (light project) and in workspace folders (depth 1).
 #   3. Extracts each file's `## Active Learnings` section (legacy `## Learnings` too).
 #      LEARNINGS.md is the current home (Durcir stack); CONTEXT.md is still scanned for
 #      backward compatibility with projects not yet migrated. Same extractor for both,
@@ -18,17 +18,17 @@
 
 set -euo pipefail
 
-cwd="${PWD}"
-
-# Guard 1: must have a CLAUDE.md at the project root.
-if [[ ! -f "${cwd}/CLAUDE.md" ]]; then
-    exit 0
-fi
-
-# Guard 2: must look like a 0-to-Hero project (has at least one CONTEXT.md in a subdir).
-if ! find "${cwd}" -maxdepth 3 -name "CONTEXT.md" -type f -not -path "*/node_modules/*" -not -path "*/.git/*" | grep -q .; then
-    exit 0
-fi
+# Project root = nearest folder at or above the session's start folder holding CLAUDE.md + DECISIONS.md
+# (the Durcir opt-in marker). Same rule as scribe-trigger.js projectRoot(); root.check.js asserts both agree.
+# Start folder = CLAUDE_PROJECT_DIR (set by Claude Code for hooks, fixed for the whole session: a Bash `cd`
+# into a sub-folder or a sibling project does not move it, so /compact re-injects the right project), else $PWD.
+cwd="$(cd "${CLAUDE_PROJECT_DIR:-${PWD}}" 2>/dev/null && pwd)" || exit 0
+while [[ ! ( -f "${cwd}/CLAUDE.md" && -f "${cwd}/DECISIONS.md" ) ]]; do
+    parent="$(dirname "${cwd}")"
+    [[ "${parent}" == "${cwd}" ]] && exit 0
+    cwd="${parent}"
+done
+[[ -n "${INJECT_PRINT_ROOT:-}" ]] && { echo "${cwd}"; exit 0; }   # root.check.js parity probe
 
 # Collect Learnings per workspace.
 output=""
@@ -59,7 +59,7 @@ while IFS= read -r mem_file; do
     if [[ -n "${learnings}" ]]; then
         output+=$'\n### '"${workspace_name}"$'\n'"${learnings}"$'\n'
     fi
-done < <(find "${cwd}" -maxdepth 3 \( -name "LEARNINGS.md" -o -name "CONTEXT.md" \) -type f -not -path "*/node_modules/*" -not -path "*/.git/*" | sort)
+done < <(find "${cwd}" -maxdepth 2 \( -name "LEARNINGS.md" -o -name "CONTEXT.md" \) -type f -not -path "*/node_modules/*" -not -path "*/.git/*" | sort)
 
 # Collect facts-of-record Ledger from the project root DECISIONS.md.
 # Same contract as Learnings: only "- " lines inside the "## Ledger" section,
@@ -119,7 +119,7 @@ if [[ -f "${cwd}/DECISIONS.md" ]]; then
 fi
 while IFS= read -r lf; do
     read -r n d < <(count_section "${lf}" "Candidates"); pending_n=$((pending_n + n)); [[ -n "$d" && ( -z "$pending_oldest" || "$d" < "$pending_oldest" ) ]] && pending_oldest="$d"
-done < <(find "${cwd}" -maxdepth 3 -name "LEARNINGS.md" -type f -not -path "*/node_modules/*" -not -path "*/.git/*")
+done < <(find "${cwd}" -maxdepth 2 -name "LEARNINGS.md" -type f -not -path "*/node_modules/*" -not -path "*/.git/*")
 pending_age=0
 if [[ -n "${pending_oldest}" ]]; then pending_age=$(( ( $(date +%s) - $(date -d "${pending_oldest}" +%s 2>/dev/null || echo $(date +%s)) ) / 86400 )); fi
 if [[ ${pending_n} -ge ${SCRIBE_PENDING_MAX:-10} || ( ${pending_n} -gt 0 && ${pending_age} -ge ${SCRIBE_PENDING_DAYS:-7} ) ]]; then

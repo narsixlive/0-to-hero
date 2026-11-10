@@ -11,12 +11,19 @@ numbers: `core/decisions/adr-archive.md` (2026-11-08 and 2026-11-09).
 | `scribe-worker.js` | Background worker. Trims the transcript delta from a durable cursor, one lean `claude -p` call per project, verifies every evidence id, applies through the writer, logs tokens, journals the run. |
 | `scribe-writer.js` | Bounded, deterministic writes. Only the three destinations above, atomic temp+rename, fuzzy dedup of candidates. `node scribe-writer.js --selftest`. |
 | `scribe-worker.check.js` | Offline check of verify / signal filter / cursor / lock. `node scribe-worker.check.js`. |
+| `root.check.js` | Offline check of project-root resolution (JS and the bash injector agree, a `cd` does not move it) and of the light-project `.` workspace. `node root.check.js`. |
 
 ## Install (once per machine)
 
+The injector, the statusline and the scribe share one project-root rule, so install them together, same layout (the statusline loads `scribe/scribe-trigger.js` next to itself):
+
 ```
+mkdir -p ~/.claude/hooks/scribe
 cp core/hooks/scribe/*.js ~/.claude/hooks/scribe/
+cp core/hooks/inject-learnings.sh core/hooks/claude-statusline.js ~/.claude/hooks/
 ```
+
+The repo's `.claude/settings.json` calls `~/.claude/hooks/inject-learnings.sh`: it does nothing until this step is done.
 
 `~/.claude/settings.json`, both events, same command (`async: true` so the session never waits):
 
@@ -40,7 +47,7 @@ On Windows use the full `node.exe` path (and a hidden-console launcher if the St
 | `SCRIBE_DISCORD_WEBHOOK` | unset | webhook URL for budget / failure alerts |
 | `SCRIBE_DISCORD_ENV` | unset | alternative: a `KEY=VALUE` file holding `DISCORD_WEBHOOK_AUDIT` or `DISCORD_WEBHOOK_SESSIONS` |
 
-A project is watched only if it has a root `CLAUDE.md` and either `DECISIONS.md` or one `<workspace>/AGENT.md` (the writer needs a destination).
+Project root = the nearest folder at or above `CLAUDE_PROJECT_DIR` (the session's start folder, set by Claude Code, unaffected by `cd`) holding both `CLAUDE.md` and `DECISIONS.md`; none → the turn is ignored. State, slug and writes all use that root. A project with no `<workspace>/AGENT.md` is a light project: its rule candidates go to the root `LEARNINGS.md` (workspace `.`), and no state is written.
 
 ## State (`~/.claude/scribe/<slug>/`)
 

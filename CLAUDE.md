@@ -71,7 +71,7 @@ Never put session context in native memory. Never put preferences in claude-mem.
 ## Learning mode
 <!-- learning-stack: durcir-v2 -->
 
-This repo defines the Durcir stack (see core/ARCHITECTURE.md) but does not run it on itself: no workspaces, so L1/L2 do not exist here. The `SessionStart` hook in `.claude/settings.json` is kept as the reference wiring and exits silently. Rules for this repo go straight to `## Gotchas` below (L3).
+This repo defines the Durcir stack (see core/ARCHITECTURE.md) and runs it on itself as a **light durable** project: CLAUDE.md + DECISIONS.md, no workspaces, so no L2. The `SessionStart` hook injects the Facts, the Ledger and the root `LEARNINGS.md` Active rules (L1, written by the scribe as workspace `.`); `/memorise` graduates a rule to `## Gotchas` below (L3) only through the L3 gate and the Gotchas cap. `DECISIONS.md` and `LEARNINGS.md` are gitignored: they are the owner's machine memory, not part of the kit.
 
 ## Gotchas
 
