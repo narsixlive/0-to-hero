@@ -25,9 +25,16 @@ Open-source tool to structure your Claude workflow into efficient workspaces wit
 
 ## Global rules
 - Archetypes are illustrations, not templates to copy
-- `0-to-hero-spec.md` (local only, gitignored) is a historical build doc (deprecated) — for current formats use core/ARCHITECTURE.md + core/templates/
+- `docs/0-to-hero-spec.md` (local only, gitignored) is a historical build doc (deprecated) — for current formats use core/ARCHITECTURE.md + core/templates/
 - `DECISIONS.md` is gitignored on purpose: its ledger holds machine-local facts. Project decisions worth publishing go to core/decisions/adr-archive.md
 - Language: conversations in French, all written content (files, commits, code, comments) in English
+
+## Repo layout
+
+- **A workspace = a folder containing `AGENT.md`, listed in the Routing table.** This repo has none: `core/`, `archetypes/`, `catalog/` and `tools/` are the kit itself, routed above, never workspaces.
+- **Everything else at the root is support** — config (`.claude/`), `docs/` (local plans and the historical spec, gitignored), the machine memory files (`DECISIONS.md`, `LEARNINGS.md`, gitignored).
+- **All meta-docs live in `docs/`** — plans, specs, audits. Never create them at the root. Published rationale goes to core/decisions/adr-archive.md instead.
+- **`docs/` is reserved for meta-docs — never name a workspace `docs/`.**
 
 ## Shell
 

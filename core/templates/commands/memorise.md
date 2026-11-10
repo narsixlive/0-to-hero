@@ -1,3 +1,16 @@
+## First — recover what /clear and compaction removed
+
+The conversation may have been cleared or compacted mid-session (auto-handover by the Jev compaction mod, or a manual `/handover`). Read every `*.md` directly in `~/.claude/handovers/<cwd-slug>/` (slug: the cwd with every non-alphanumeric character replaced by `-`, e.g. `D--CLAUDE-project-0-to-Hero`). Each file is un-memorised work from earlier in this session, or from a session it was resumed from: treat it as part of the session for every step below. A `What we tried` entry with a `workspace:` field is a Learning candidate for that workspace. Open a transcript a file names only when an entry is too thin to judge.
+
+**Blocks overlap — count each event once.** A file can hold several `## Manual handover` blocks (a retried auto-handover, several `/handover`), and a resumed session's handover can restate the one it resumed from. Read them oldest first, ordered by each block's header timestamp (`## Manual handover — <ISO time>`), never by file name or file order.
+- The same event written in several blocks or files is ONE occurrence: never a `×N` bump, never a `## Drift log` line. A recurrence is the thing happening again (a new event, e.g. `relearned_the_hard_way: yes` on a new incident), not the thing being written again.
+- When blocks describe the same event differently (fields, conclusion, `relearned_the_hard_way`), the newest block's version replaces the older ones: a correction, never a recurrence (handover.md marks it `Correction (<header time>):`). An entry a later block disproves is dropped.
+- The newest block is the current state: `## Current state` and **Next steps** come from it, never from an older block.
+- A block's `### Unverified` list names what it states that the transcript does not hold verbatim. Before filing an entry that leans on one, find it in the transcript or the code; not found → drop it, never file it.
+- A `## Compaction` block holds mechanical breadcrumbs (files touched, failed calls, transcript path): a pointer to what to look at, not entries.
+
+After **Memorised.**, move the files you read (and their `.consumed` markers) into `done/` in that folder, so the next /memorise does not process them again.
+
 Summarize this session concisely:
 
 - **Decisions**: what we decided and why
@@ -7,7 +20,7 @@ Summarize this session concisely:
 
 Be direct. No filler. No long explanations.
 
-Then identify the dominant workspace(s) touched this session, based on the files you edited. For each touched workspace, update its `CONTEXT.md` following these 4 rules:
+Then identify the dominant workspace(s) touched this session, based on the files you edited and on the handovers' `workspace:` fields and `Files changed`. For each touched workspace, update its `CONTEXT.md` following these 4 rules:
 
 1. **Do NOT modify the brief zone** — everything above the `<!-- END BRIEF -->` marker (Project / Constraints / Deliverable) stays untouched.
 2. **Overwrite `## Current state`** — 3-5 lines max, with today's date on the `Updated:` line.
