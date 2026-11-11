@@ -60,14 +60,15 @@ Surgical. Summarize first, confirm if > 3 files. Diff if > 20 lines. Do not fix 
 
 ## Startup
 
-The SessionStart hook injects `DECISIONS.md ## Ledger` and each workspace's `## Active Learnings`, kept current by the background memory scribe. Use them to resume without redoing work. claude-mem is the read-only archive of past sessions.
+The SessionStart hooks inject `DECISIONS.md ## Facts` + `## Ledger`, each workspace's `## Active Learnings`, and the recent history (`JOURNAL.md` blocks + `## Current state`), kept current by the background memory scribe. Use them to resume without redoing work. claude-mem is the read-only archive of sessions before 2026-11-09.
 If more detail is needed → `mem-search "…"` → then `get_observations` on the relevant IDs only. Never load everything at once.
 
 ## Memory
 
 | I say | Destination | Content |
 |---|---|---|
-| `/memorise` | claude-mem + workspace `LEARNINGS.md` (rules) + `CONTEXT.md` (state) | Session summary + per-workspace thread update + Durcir Learnings (bump / graduate / archive) + stack-freshness check |
+| `/memorise` (optional) | `DECISIONS.md` (Facts, Ledger) + root `LEARNINGS.md` (rules, with `--rules`) | Short grouped review of what the scribe queued: disputed Facts, new facts, fixes; three questions at most, skippable |
+| (scribe, automatic) | `JOURNAL.md` | Session history: did / next / dated events, one block per session, injected at SessionStart |
 | `/gotcha` | Gotchas section below | One-line cross-workspace rule: `NEVER/ALWAYS [action] ([why])` |
 | `remember forever` | Claude native memory | Permanent preferences, conventions, identity only |
 

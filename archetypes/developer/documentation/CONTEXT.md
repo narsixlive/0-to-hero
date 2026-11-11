@@ -29,5 +29,5 @@ Audience: developers who want to use or contribute to the project.
 Updated: 2026-04-01
 
 ## Thread
-<!-- Appended by /memorise, pruned to the 5 most recent entries. -->
+<!-- Legacy: no longer appended. The session history lives in the root JOURNAL.md (written by the scribe). -->
 <!-- Older entries live in claude-mem (retrievable via mem-search). -->

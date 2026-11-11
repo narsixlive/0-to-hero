@@ -32,9 +32,9 @@ If more detail is needed → `mem-search "…"` → then `get_observations` on t
 
 | I say | Destination | Content |
 |---|---|---|
-| `/memorise` | workspace `LEARNINGS.md` (rules) + `CONTEXT.md` (state) + `DECISIONS.md` (Facts, Ledger) | Drains the scribe inbox (`## Proposals`, `## Candidates`) + per-workspace thread update + auto-proposed / graduated `Learnings` + auto-proposed facts of record |
+| `/memorise` (optional) | `DECISIONS.md` (Facts, Ledger) + workspace `LEARNINGS.md` (rules, with `--rules`) | Short grouped review of what the scribe queued: disputed Facts, new facts, fixes; three questions at most, skippable |
 | `/gotcha` | Gotchas section below | One-line cross-workspace rule: `NEVER/ALWAYS [action] ([why])` |
-| (via `/memorise`) | `DECISIONS.md` → `## Facts (current)` (a state, one line per key, injected whole) or `## Ledger` (a dated event, 5 newest injected) | Durable project facts: domain, app name, accounts, commitments, decisions. |
+| (scribe, automatic) | `JOURNAL.md` + `<workspace>/CONTEXT.md ## Current state` | Session history: did / next / dated events, one block per session, injected at SessionStart |
 | `remember forever` | Claude native memory | Permanent preferences, conventions, identity only |
 
 Never put session context in native memory. Never put preferences in claude-mem. Never leave a fact of record only in claude-mem (it gets missed) — it goes to the `DECISIONS.md` ledger.

@@ -14,7 +14,7 @@ exploring artistic directions for client briefs.
 
 ## What makes a good deliverable here
 - The track has a complete structure (intro/dev/outro)
-- The artistic intention is captured in the session Thread via `/memorise`
+- The artistic intention is captured in the root `JOURNAL.md` by the scribe
 - Ready to move to production without going back
 
 <!-- END BRIEF — zone below is maintained by /memorise -->
@@ -30,5 +30,5 @@ exploring artistic directions for client briefs.
 Updated: 2026-04-01
 
 ## Thread
-<!-- Appended by /memorise, pruned to the 5 most recent entries. -->
+<!-- Legacy: no longer appended. The session history lives in the root JOURNAL.md (written by the scribe). -->
 <!-- Older entries live in claude-mem (retrievable via mem-search). -->

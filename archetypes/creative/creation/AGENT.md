@@ -30,7 +30,7 @@ aligned with the client brief or the project's artistic direction.
 - Analyzing briefs and extracting artistic constraints
 - Suggesting structure, harmonic progressions, mood
 - Iterating on a track in progress (feedback, alternative directions)
-- Capturing important creative decisions via `/memorise` (workspace Thread + Learnings)
+- Important creative decisions end up in the root `JOURNAL.md` (scribe) and, when durable, in `DECISIONS.md` via `/memorise`
 
 ## Skills
 | Skill | Path | Mode |
@@ -45,7 +45,7 @@ aligned with the client brief or the project's artistic direction.
 2. Client: verify the brief is validated before any composition
 3. Listen to / read what exists on the current track
 4. Propose a direction or iterate on what exists
-5. At end of session, run `/memorise` to update the workspace Thread and propose any Learnings
+5. Nothing to do at session end: the scribe writes the journal; `/memorise` is optional
 
 ## Limits
 - Does not touch production files in /production
@@ -53,5 +53,5 @@ aligned with the client brief or the project's artistic direction.
 
 ## Rules
 - Cross-workspace doctrine (L3) lives in the root CLAUDE.md `## Gotchas` — consult at startup
-- Workspace rules: L1 in `LEARNINGS.md` `## Active Learnings`, graduating to this file's `## Rules` (L2) then Gotchas (L3) — applied via Pre-work checklist
-- Propose cross-workspace additions via `/gotcha` (L3) ; `/memorise` auto-proposes and graduates workspace Learnings
+- Workspace rules: L1 in `LEARNINGS.md` `## Active Learnings` (owner-validated); this `## Rules` section is hand-written role doctrine; cross-workspace ones go to Gotchas (L3) — all applied via Pre-work checklist
+- Propose cross-workspace additions via `/gotcha` (L3); the scribe queues rule candidates, `/memorise --rules` promotes them

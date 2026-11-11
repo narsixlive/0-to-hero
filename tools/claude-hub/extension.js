@@ -230,7 +230,7 @@ function hubHtml(webview, data) {
 <div id="usage"></div>
 <input id="q" placeholder="Filter…" title="↑↓ navigate · Enter open · Ctrl+Enter new window">
 <div id="projects"></div>
-<div class="legend muted">✍ ✓ memory up to date · ✍ ↻ behind, click ✍ to catch up · ✉ N proposals waiting → run /memorise in that project</div>
+<div class="legend muted">✍ ✓ memory up to date · ✍ ↻ behind, click ✍ to catch up · ✉ N items waiting for review (optional: /memorise in that project)</div>
 <script nonce="${nonce}">
 const vscode = acquireVsCodeApi();
 let data = ${json}, sel = 0, list = [];

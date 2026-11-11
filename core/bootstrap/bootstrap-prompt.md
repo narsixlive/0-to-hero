@@ -328,11 +328,11 @@ my-project/                  ← the user's repo/folder
 ├── .claude/
 │   └── settings.json        ← registers the global SessionStart hook (/memorise + /gotcha live globally — never copied here)
 ├── planning/                ← workspace 1
-│   ├── CONTEXT.md           ← brief + Current state (scribe + /memorise) + Thread (/memorise)
+│   ├── CONTEXT.md           ← brief + Current state (scribe, one block per recent session)
 │   ├── LEARNINGS.md         ← workspace rules (Durcir: Active / Candidates / Archived / Drift log)
 │   └── AGENT.md
 ├── src/                     ← workspace 2 (can be an existing folder)
-│   ├── CONTEXT.md           ← brief + Current state (scribe + /memorise) + Thread (/memorise)
+│   ├── CONTEXT.md           ← brief + Current state (scribe, one block per recent session)
 │   ├── LEARNINGS.md         ← workspace rules (Durcir: Active / Candidates / Archived / Drift log)
 │   └── AGENT.md
 └── .skills/
@@ -545,14 +545,14 @@ Short and scannable — if you scroll, it's too long.
 - Numbered process (what the agent does in order)
 - Limits (what it does NOT do, what it never decides alone)
 - Skills section (empty for now, filled at the Catalog step)
-- Rules section (`## Rules`, L2): refer to the root CLAUDE.md Gotchas (L3, cross-workspace) and this workspace's `LEARNINGS.md` `## Active Learnings` (L1); stable/recurring rules graduate into this `## Rules` section (L2); propose cross-workspace additions via `/gotcha` (L3), and `/memorise` auto-proposes workspace Learnings and graduations.
+- Rules section (`## Rules`): the owner's hand-written role doctrine; refer to the root CLAUDE.md Gotchas (L3, cross-workspace) and this workspace's `LEARNINGS.md` `## Active Learnings` (L1); propose cross-workspace additions via `/gotcha` (L3); the scribe queues rule candidates, the owner promotes them with `/memorise --rules`.
 
 Q4 errors (if any) are injected directly into the Gotchas section of the root
 CLAUDE.md, format: `NEVER/ALWAYS [action] ([why])`. No separate GOTCHA.md file.
 
 ### Transversal files
 - **`/memorise` and `/gotcha` are GLOBAL commands — never copied into the project.** They contain only generic logic (no project-specific data), so they live once at `~/.claude/commands/` and resolve in every project automatically. Install/refresh them idempotently from the repo, exactly like the global hook below: if `~/.claude/commands/memorise.md` / `~/.claude/commands/gotcha.md` are missing or not byte-identical to `core/templates/commands/`, copy them over; otherwise leave them untouched. Do **not** write `.claude/commands/*.md` inside the project — a per-project copy freezes the command at bootstrap time and silently drifts from the template (that is exactly how a project ends up never proposing the stack-freshness upgrade after the template gained it).
-  - `/memorise` → drains the scribe inbox (`DECISIONS.md ## Proposals`, `LEARNINGS.md ## Candidates`) + per-workspace CONTEXT.md thread update + Durcir Learnings in LEARNINGS.md (bump/graduate/archive) + facts of record + workspace-map proposal (only if a parent `CLAUDE.md` exists above the project) + a stack-freshness check.
+  - `/memorise` → optional short review of the scribe inbox (`DECISIONS.md ## Proposals`, disputed Facts; `LEARNINGS.md ## Candidates` with `--rules`; Ledger with `--all`): three grouped questions at most, archive never delete, then a stack-freshness check. It does not edit `CONTEXT.md`.
 - **Workspace map (optional, multi-project machines).** If the project's parent folder already holds other bootstrapped projects (sibling folders with `CLAUDE.md`) and no `CLAUDE.md` exists in that parent, offer once to scaffold one from `core/templates/WORKSPACE-MAP.template.md` (see ARCHITECTURE "Workspace map"). It is machine-local: never commit it to a published repo, never copy its content into the project.
   - `/gotcha` → one-line cross-workspace rule appender to the Gotchas section of the root CLAUDE.md (format: `NEVER/ALWAYS [action] ([why])`).
 - **`/bootstrap-upgrade` is a GLOBAL command too — but installed as a thin DELEGATOR STUB, not a copy of the procedure.** Its logic already needs the repo at runtime (it reads the canonical templates), so the global `~/.claude/commands/bootstrap-upgrade.md` only resolves `$REPO` and reads `core/bootstrap/bootstrap-upgrade.md` live — there is one source of truth and it can never go stale. Install/refresh it idempotently from `core/templates/commands/bootstrap-upgrade.md` (the stub). Never install a full copy of the procedure: a frozen full copy silently runs an old architecture *and* hides every later upgrade it should propose (this is the one command whose own staleness is self-concealing).
@@ -702,7 +702,7 @@ Each workspace splits its memory across two files, by lifetime:
 
 **`CONTEXT.md`** — purely situational, two zones separated by the `<!-- END BRIEF -->` marker:
 - **Brief zone** (above marker, stable): Project / Constraints / Deliverable. Regenerated only at bootstrap or major pivot.
-- **Living zone** (below marker, volatile): `## Current state` (overwritten each `/memorise`) + `## Thread` (new entry on top, pruned to 5 most recent).
+- **Living zone** (below marker, volatile): `## Current state` (written by the scribe, one block per recent session) + `## Thread` (legacy, no longer appended: the root `JOURNAL.md` is the history).
 
 **`LEARNINGS.md`** — the workspace rule register (Durcir lifecycle), three sections:
 - `## Active Learnings` — workspace rules `NEVER/ALWAYS [action] ([why]) (since YYYY-MM-DD) [evidence]`. Starts empty. Injected every session. Kept lean (~5). No counter.
@@ -720,4 +720,4 @@ The `SessionStart` hook (`~/.claude/hooks/inject-learnings.sh`):
 3. Extracts each `## Active Learnings` section, labels them by workspace name, plus `## Facts (current)` whole and the 5 newest `## Ledger` lines from root `DECISIONS.md`.
 4. Injects them as `additionalContext` — so agents have workspace rules and durable facts in hand before the first prompt.
 
-Rationale: a workspace agent should resume "where we were" (CONTEXT.md) without being polluted by other workspaces, AND automatically apply hard-earned rules (LEARNINGS.md) without the user re-stating them — while the rule lifecycle (graduation, archival, drift) lives on its own surface so the situational context stays pure. the scribe keeps the record current while the session runs; the hook guarantees the Facts, the Ledger window and the Active Learnings are in the agent's context from turn 0.
+Rationale: a workspace agent should resume "where we were" (JOURNAL.md + CONTEXT.md) without being polluted by other workspaces, AND automatically apply owner-validated rules (LEARNINGS.md) without the user re-stating them — while the rule lifecycle (candidates, archival, drift) lives on its own surface so the situational context stays pure. The scribe keeps the record current while the session runs; the two hooks guarantee the Facts, the Ledger window, the Active Learnings and the recent history are in the agent's context from turn 0.

@@ -153,7 +153,7 @@ process.stdin.on('end', () => {
         hookEventName: 'PreCompact',
         additionalContext:
           `[handover] Compaction at ${stamp}. Facts appended to ${outFile}. ` +
-          `Run /memorise before /clear — it reads this and re-reads the transcript.`,
+          `Nothing to do: the scribe reads the transcript on its own; /memorise (optional) also reads this file.`,
       },
     }));
   } catch {

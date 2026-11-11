@@ -22,9 +22,9 @@ What are we building/producing? For whom? Why?]
 ---
 
 ## Current state
-[Overwritten by the scribe during the session and by /memorise at its end. 3-5 lines: where we are, what's done, what remains. Never park anything here that must survive — a parked fix goes in ## Thread.]
+[Written by the scribe while the session runs: one block per recent session (`Updated: <date> (scribe, session <id>). …`), a parallel session's block is kept 7 days. Injected at SessionStart by inject-journal.sh. Never park anything here that must survive — a parked fix goes in the journal's `Next:` or a Ledger line.]
 Updated: [YYYY-MM-DD]
 
 ## Thread
-<!-- Appended by /memorise, pruned to the 5 most recent entries. -->
-<!-- Older entries are dropped: anything durable in them is already a Ledger line or a Learning. -->
+<!-- Legacy: no longer appended by /memorise. The session history lives in the project root JOURNAL.md (written by the scribe). -->
+<!-- Existing entries stay as they are; anything durable in them is already a Ledger line or a Learning. -->

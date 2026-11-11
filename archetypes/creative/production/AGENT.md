@@ -52,5 +52,5 @@ meets technical standards and client expectations.
 
 ## Rules
 - Cross-workspace doctrine (L3) lives in the root CLAUDE.md `## Gotchas` — consult at startup
-- Workspace rules: L1 in `LEARNINGS.md` `## Active Learnings`, graduating to this file's `## Rules` (L2) then Gotchas (L3) — applied via Pre-work checklist
-- Propose cross-workspace additions via `/gotcha` (L3) ; `/memorise` auto-proposes and graduates workspace Learnings
+- Workspace rules: L1 in `LEARNINGS.md` `## Active Learnings` (owner-validated); this `## Rules` section is hand-written role doctrine; cross-workspace ones go to Gotchas (L3) — all applied via Pre-work checklist
+- Propose cross-workspace additions via `/gotcha` (L3); the scribe queues rule candidates, `/memorise --rules` promotes them
