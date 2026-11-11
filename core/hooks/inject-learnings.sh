@@ -91,7 +91,8 @@ if [[ -f "${cwd}/DECISIONS.md" ]]; then
     ledger="$(awk -v cap="${LEDGER_CAP:-5}" '
         /^## Ledger/ {in_section=1; next}
         /^## / && in_section {in_section=0}
-        in_section && /^-[[:space:]]/ {n++; lines[n]=$0}
+        # "**Key** changed: old → new" lines are skipped: the Facts line already carries the value and its date.
+        in_section && /^-[[:space:]]/ && !/\*\*[^*]+\*\* changed:/ {n++; lines[n]=$0}
         END {
             # Ledger is newest-first: keep the first `cap` entries.
             last = (cap > 0 && n > cap) ? cap : n

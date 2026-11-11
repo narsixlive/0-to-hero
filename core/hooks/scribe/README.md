@@ -50,7 +50,7 @@ On Windows use the full `node.exe` path (and a hidden-console launcher if the St
 | `SCRIBE_SESSION_TOKENS` | 300 000 | per-session cap; raise one session by writing a number into `~/.claude/scribe/<slug>/budget-<session_id>` |
 | `MAX_APPLY_FAILURES` (constant) | 3 | a delta whose apply reports an error (missing destination, race) is re-sent up to 3 times, then dropped with an alert naming the loss |
 | `CANDIDATE_DAYS` / `PROPOSAL_DAYS` (constants) | 30 / 60 | expiry of an unreviewed candidate / proposal to its archive section |
-| `JOURNAL_BLOCKS`, `JOURNAL_BLOCK_CAP`, `JOURNAL_STATE_CAP`, `JOURNAL_MAX_CHARS` | 3, 900, 500, 9000 | `inject-journal.sh` budgets (chars, whole lines only) |
+| `JOURNAL_BLOCKS`, `JOURNAL_BLOCK_CAP`, `JOURNAL_STATE_CAP`, `JOURNAL_MAX_CHARS` | 3, 1800, 500, 9000 | `inject-journal.sh` budgets (chars, whole lines only) |
 | `SCRIBE_DISCORD_WEBHOOK` | unset | webhook URL for budget / failure alerts |
 | `SCRIBE_DISCORD_ENV` | unset | alternative: a `KEY=VALUE` file holding `DISCORD_WEBHOOK_AUDIT` or `DISCORD_WEBHOOK_SESSIONS` |
 

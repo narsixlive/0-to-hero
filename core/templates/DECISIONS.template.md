@@ -30,7 +30,7 @@ via `/gotcha` (root CLAUDE.md), a workspace one is a Learning in `<workspace>/LE
 <!-- /memorise drains this section: y → Facts, n → ## Proposals archive; unreviewed 60 days → archive. Format: `- [fact|fix] … (date) [evidence] why: …` -->
 
 ## Ledger (facts of record)
-<!-- Dated log, newest first. 5 newest injected at SessionStart; grep the rest. -->
+<!-- Dated log, newest first. 5 newest injected at SessionStart ("**Key** changed" lines skipped: Facts carries them); grep the rest. -->
 <!-- Format: `- YYYY-MM-DD — [decision or event]` — one line, factual, no rationale. Routine work is not a ledger line (it lives in JOURNAL.md, written by the scribe). -->
 <!-- Written by /memorise only (the owner validates); the scribe never writes here. -->
 

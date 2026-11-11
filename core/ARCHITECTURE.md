@@ -164,7 +164,7 @@ The scribe is a sorter, not a writer of record: it writes history directly (jour
 
 **Light projects** (no folder with an `AGENT.md`): the root is the only workspace, written as `.` — the scribe puts rule candidates in the root `LEARNINGS.md`, never state (there is no `CONTEXT.md`); the resume point is the root `JOURNAL.md`, written and injected like everywhere else. Once a first workspace exists, `.` is refused and the root file's candidates are moved by the owner (`/memorise --rules`).
 
-**claude-mem** stays installed as the read-only archive of what happened before (`mem-search "…"` over 42k observations) and for `save_memory` notes; its observation and summary capture is disabled (`CLAUDE_MEM_DISABLE_OBSERVATION` / `CLAUDE_MEM_DISABLE_SUMMARY`), which removed one Sonnet call per tool use. Rollback criterion and figures: ADR 2026-11-09.
+**claude-mem** stays installed as the read-only archive of what happened before (`mem-search "…"` over 42k observations) and for `save_memory` notes; its observation and summary capture is disabled (`CLAUDE_MEM_DISABLE_OBSERVATION` / `CLAUDE_MEM_DISABLE_SUMMARY`), which removed one Sonnet call per tool use, and its SessionStart injection is off for the Durcir projects (`CLAUDE_MEM_EXCLUDED_PROJECTS`; this also blocks its work-state and `save_memory` writes there). Rollback criterion and figures: ADR 2026-11-09.
 
 ## Transversal: Learning layer (Durcir)
 
@@ -173,7 +173,7 @@ Self-improving agents, folder-based, opt-in per project. A rule enters the injec
 Three moving parts:
 1. **`LEARNINGS.md` per workspace** — `## Active Learnings` (`ALWAYS/NEVER [action] ([why]) (since date) [evidence]`, injected, ~5) + `## Candidates` (scribe proposals, at most one per run, not injected, 30-day expiry) + `## Archived Learnings` (declined / expired / code-enforced, kept, not injected) + `## Drift log` (rules ignored despite being capitalized). Kept separate from `CONTEXT.md` so the situational context stays pure.
 2. **`/memorise`** — optional, short: three grouped questions at most (disputed Facts, new facts, fixes; rule candidates with `--rules`, Ledger with `--all`). Before a rule is offered, a verdict line from reading the code: enforced already → archive; an obvious fix → the fix, not the rule. Declined → archived, never deleted; skipped → expires on its own.
-3. **Two `SessionStart` hooks** — `inject-learnings.sh` (Active rules + `## Facts (current)` whole + 5 newest Ledger lines, ≤ 9.8k chars) and `inject-journal.sh` (coverage line + 3 newest journal blocks + Current state per workspace, ≤ 9k chars). Two hooks because each output has its own 10k cap: history never competes with rules for the budget.
+3. **Two `SessionStart` hooks** — `inject-learnings.sh` (Active rules + `## Facts (current)` whole + 5 newest Ledger lines, `**Key** changed` lines skipped since Facts carries them, ≤ 9.8k chars) and `inject-journal.sh` (coverage line + 3 newest journal blocks + Current state per workspace, ≤ 9k chars). Two hooks because each output has its own 10k cap: history never competes with rules for the budget.
 
 The ladder:
 - **L1 — Active Learnings** (`LEARNINGS.md`): workspace-scoped, injected, dated, with evidence. No counter: repetition is not authority (the old `×N` counted tool ids, not independent incidents, and drove graduation by feel).

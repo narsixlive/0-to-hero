@@ -1,5 +1,10 @@
 # Architecture decisions — 0 to Hero
 
+> **Historical (2026-04, pre-Durcir v2).** This describes the claude-mem era: claude-mem as the
+> automatic memory, only the Ledger injected. Since 2026-11 the memory is the scribe + `JOURNAL.md`
+> + `DECISIONS.md ## Facts`, and claude-mem is a muted read-only archive. Current design:
+> `core/ARCHITECTURE.md`; why it changed: `core/decisions/adr-archive.md` (2026-11-09, 2026-11-11).
+
 Reference document. Do not load automatically into context.
 Consultable on demand via jCodeMunch or targeted reading.
 

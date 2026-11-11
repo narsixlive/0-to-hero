@@ -315,8 +315,16 @@ addresses the measured ~30 % staleness of auto-written stores; the pain was proc
   the coverage line, the 3 newest journal blocks and each workspace's Current state (≤ 9k chars).
   Two hooks because Claude Code replaces any hook output over 10k chars with a file path and a 2k
   preview the model never reads (observed on the claude-mem payload this very session). The frozen
-  claude-mem SessionStart injection is muted (`CLAUDE_MEM_CONTEXT_*` = 0 / false): two competing
-  histories, one of them eternally dated 9 Nov, sabotaged the resume.
+  claude-mem SessionStart injection is muted: two competing histories, one of them eternally dated
+  9 Nov, sabotaged the resume. *Amended same day:* `CLAUDE_MEM_CONTEXT_*` = 0 / false emptied the
+  observations but claude-mem 14 still injected ~2k chars (an empty "recent context" header, a
+  "Work state" block naming its own to-do tool as canonical, a memory-use guide). The lever that
+  silences all of it is `CLAUDE_MEM_EXCLUDED_PROJECTS` covering the project roots (its context hook
+  returns empty for an excluded cwd; `mem-search` reads are unaffected, its writes there stop).
+  Bootstrap and `/bootstrap-upgrade` now set it in the freeze step. Same pass: the journal block
+  cap went 900 → 1800 chars (900 cut every dated event of a full block), and `inject-learnings.sh`
+  skips `**Key** changed` Ledger lines (the Facts line already carries the value: the same change
+  was injected three times).
 
 **Not done, on purpose.** Soft-injection of unreviewed candidates and silence-as-consent promotion
 (both rejected by the reviewers: an inference would become an instruction, then its own proof);

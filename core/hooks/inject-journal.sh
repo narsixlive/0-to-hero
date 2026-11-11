@@ -23,7 +23,7 @@ done
 
 MAX_CHARS=${JOURNAL_MAX_CHARS:-9000}
 BLOCKS=${JOURNAL_BLOCKS:-3}
-BLOCK_CAP=${JOURNAL_BLOCK_CAP:-900}      # chars per journal block (whole lines)
+BLOCK_CAP=${JOURNAL_BLOCK_CAP:-1800}     # chars per journal block (whole lines); 900 cut every dated event of a full block
 STATE_CAP=${JOURNAL_STATE_CAP:-500}      # chars per workspace Current state (whole lines)
 
 # Clip a text to N chars on whole lines.
