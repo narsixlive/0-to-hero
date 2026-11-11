@@ -39,20 +39,20 @@ If more detail is needed → `mem-search "…"` → then `get_observations` on t
 
 Never put session context in native memory. Never put preferences in claude-mem. Never leave a fact of record only in claude-mem (it gets missed) — it goes to the `DECISIONS.md` ledger.
 
-**Before closing**: `/memorise` → "Memorised." → `/clear`. Never `/clear` without `/memorise`.
+**Closing**: `/clear` whenever you want — the scribe keeps writing from the transcript (queue on disk, nothing lost). `/memorise` is optional: a short popup over what the scribe queued, run it when the statusline `✉` bothers you.
 
 ## Learning mode
 <!-- learning-stack: durcir-v2 -->
 
-This project has the learning layer enabled (Durcir stack v2 — rules harden through 3 levels, a background scribe writes memory while the session runs).
-- **L1 — in-flight workspace rules** → `<workspace>/LEARNINGS.md` → `## Active Learnings` (fed by `/memorise`, auto-injected)
-- **L2 — role doctrine** → `<workspace>/AGENT.md` → `## Rules` (graduated from L1 at ×3 / cross-task / high-criticality)
-- **L3 — cross-workspace doctrine** → Gotchas section below (fed by `/gotcha`, or graduated from L1/L2)
-- **Durable project facts** → `DECISIONS.md` → `## Facts (current)` (states, injected whole) and `## Ledger` (dated events, 5 newest injected) — fed by the scribe and `/memorise`
-- Demotions, archival and the drift log live in `LEARNINGS.md` (`## Archived Learnings`, `## Drift log`) — kept, not injected
+This project has the learning layer enabled (Durcir stack v2 — a background scribe writes memory while the session runs, rules enter only through the owner).
+- **L1 — workspace rules** → `<workspace>/LEARNINGS.md` → `## Active Learnings` (written by the owner in `/memorise --rules`, or from the owner's own correction quoted in session; auto-injected, ~5 per workspace)
+- **L3 — cross-workspace doctrine** → Gotchas section below (fed by `/gotcha` only, cap 12)
+- **Durable project facts** → `DECISIONS.md` → `## Facts (current)` (states, injected whole, one value per key, written by `/memorise`; the scribe only marks a line `⚠ disputed → new`) and `## Ledger` (dated decisions, 5 newest injected, written by `/memorise`)
+- **History** → `JOURNAL.md` (one block per session written by the scribe: did, next, dated events) and `<workspace>/CONTEXT.md ## Current state` (one block per recent session)
+- Archived rules and the drift log live in `LEARNINGS.md` (`## Archived Learnings`, `## Drift log`) — kept, not injected; a candidate unreviewed 30 days and a proposal unreviewed 60 days archive themselves
 - Agents apply all rule layers at task start via the Pre-work checklist in their `AGENT.md`
-- A `SessionStart` hook auto-injects `## Active Learnings` **and `DECISIONS.md` Facts + Ledger** at every new session, plus the memory-inbox line (`✉ N`) when the scribe backlog needs `/memorise`
-- A `Stop` + `SessionEnd` **memory scribe** (global hook) reads the transcript while the session runs. It writes directly only what is deterministic and tool-proven: `CONTEXT.md ## Current state`, the update of an existing `DECISIONS.md ## Facts` key, and an `## Active Learnings` rule when it quotes the owner's own correction. Everything else it finds (new facts, decisions, rules) lands in `DECISIONS.md ## Proposals` and `LEARNINGS.md ## Candidates`, not injected, for `/memorise` to validate. When 10 proposals wait, or one has waited 7 days, every surface (session line, statusline, SessionStart) says so
+- Two `SessionStart` hooks (each under its own 10k cap): `inject-learnings.sh` → Active rules + Facts + 5 Ledger lines; `inject-journal.sh` → coverage line, the 3 newest journal blocks, each workspace's Current state
+- A `Stop` + `SessionEnd` **memory scribe** (global hook) reads the transcript while the session runs. It writes directly: `JOURNAL.md`, `CONTEXT.md ## Current state`, and an `## Active Learnings` rule only when it quotes the owner's own correction. Everything else (a new Facts key, a changed value, a `[fix]` hypothesis, at most one rule candidate per run) goes to `DECISIONS.md ## Proposals` and `LEARNINGS.md ## Candidates`, never injected, never nagged about: the statusline `✉ N` and the VS Code sidebar show the count, `/memorise` reviews it in three grouped questions
 
 ## Gotchas
 

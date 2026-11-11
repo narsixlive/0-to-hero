@@ -101,30 +101,8 @@ if [[ -f "${cwd}/DECISIONS.md" ]]; then
     ' "${cwd}/DECISIONS.md")"
 fi
 
-# Memory inbox: proposals (DECISIONS.md ## Proposals) + candidates (<ws>/LEARNINGS.md ## Candidates) waiting
-# for /memorise. Surfaced as one line when the backlog crosses the threshold (count, or age of the oldest):
-# the content itself is never injected. Thresholds match the scribe worker (SCRIBE_PENDING_MAX / _DAYS).
-inbox=""
-pending_n=0; pending_oldest=""
-count_section() {  # $1 file, $2 heading regex → prints "count oldest-date"
-    awk -v h="$2" '
-        $0 ~ "^## " h "[[:space:]]*$" {in_section=1; next}
-        /^## / && in_section {in_section=0}
-        in_section && /^-[[:space:]]/ { n++; if (match($0, /[0-9]{4}-[0-9]{2}-[0-9]{2}/)) { d=substr($0, RSTART, RLENGTH); if (oldest == "" || d < oldest) oldest=d } }
-        END { print n+0, oldest }
-    ' "$1"
-}
-if [[ -f "${cwd}/DECISIONS.md" ]]; then
-    read -r n d < <(count_section "${cwd}/DECISIONS.md" "Proposals"); pending_n=$((pending_n + n)); [[ -n "$d" && ( -z "$pending_oldest" || "$d" < "$pending_oldest" ) ]] && pending_oldest="$d"
-fi
-while IFS= read -r lf; do
-    read -r n d < <(count_section "${lf}" "Candidates"); pending_n=$((pending_n + n)); [[ -n "$d" && ( -z "$pending_oldest" || "$d" < "$pending_oldest" ) ]] && pending_oldest="$d"
-done < <(find "${cwd}" -maxdepth 2 -name "LEARNINGS.md" -type f -not -path "*/node_modules/*" -not -path "*/.git/*")
-pending_age=0
-if [[ -n "${pending_oldest}" ]]; then pending_age=$(( ( $(date +%s) - $(date -d "${pending_oldest}" +%s 2>/dev/null || echo $(date +%s)) ) / 86400 )); fi
-if [[ ${pending_n} -ge ${SCRIBE_PENDING_MAX:-10} || ( ${pending_n} -gt 0 && ${pending_age} -ge ${SCRIBE_PENDING_DAYS:-7} ) ]]; then
-    inbox="- ✉ ${pending_n} memory proposals waiting for /memorise (oldest ${pending_age}d): facts, decisions and rules the scribe found but may not write alone. Run /memorise before closing this session."
-fi
+# The memory inbox (Proposals + Candidates) is never mentioned here: the stack does not nag in session.
+# The statusline ✉ and the VS Code sidebar show the count passively; /memorise is run when the owner wants.
 
 # Workspace layout drift check.
 # A workspace is, by definition, a folder containing AGENT.md (depth 1 — workspaces always
@@ -143,7 +121,7 @@ if [[ -f "${cwd}/CLAUDE.md" ]]; then
 fi
 
 # If nothing collected (Learnings, Ledger, or layout drift), exit silently.
-if [[ -z "${output}" && -z "${facts}" && -z "${ledger}" && -z "${layout}" && -z "${inbox}" ]]; then
+if [[ -z "${output}" && -z "${facts}" && -z "${ledger}" && -z "${layout}" ]]; then
     exit 0
 fi
 
@@ -177,14 +155,10 @@ fi
 if [[ -n "${layout}" ]]; then
     context+=$'\n# Repo Layout Check\n\nWorkspace folders (have AGENT.md) not declared in CLAUDE.md. Surface to the user so Routing/Structure stays honest:\n'"${layout}"$'\n'
 fi
-if [[ -n "${inbox}" ]]; then
-    context+=$'\n# Memory inbox\n'"${inbox}"$'\n'
-fi
-
 # Final guard on the WHOLE payload (durcir-v2): Learnings + Facts alone can exceed the cap with perfectly valid data
 # (40 keys × 200 chars). Over the cap, the payload is cut and the cut is the FIRST line, never a silent partial view.
 if [[ ${#context} -gt 9800 ]]; then
-    context=$'# ⚠ Memory payload over the 10k-char hook cap ('"${#context}"$' chars): truncated below. Read LEARNINGS.md ## Active Learnings and DECISIONS.md ## Facts directly before relying on them, and trim them with /memorise.\n\n'"${context:0:9500}"
+    context=$'# ⚠ Memory payload over the 10k-char hook cap ('"${#context}"$' chars): truncated below. Read LEARNINGS.md ## Active Learnings and DECISIONS.md ## Facts directly before relying on them.\n\n'"${context:0:9500}"
 fi
 
 # Emit JSON per Claude Code hook schema.

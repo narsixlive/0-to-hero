@@ -57,9 +57,9 @@ Last updated: [date]
 - User validates before activation
 
 ## Rules
-<!-- L2 (Contract) of the Durcir ladder: hardened doctrine for THIS role. Stable rules graduate
-     here from LEARNINGS.md `## Active Learnings` (at ×3 / cross-task / high-criticality):
-     copy the rule verbatim with its (why), then remove it from Active. -->
+<!-- Doctrine for THIS role, written by the owner by hand (process steps, hard limits). Not a maturity
+     rung: workspace rules the owner validates live in LEARNINGS.md `## Active Learnings`; cross-workspace
+     or high-criticality ones go to the root CLAUDE.md `## Gotchas` via /gotcha. -->
 
 - Consult the Gotchas section of the root CLAUDE.md at startup (L3 — cross-workspace doctrine)
 - Consult this workspace's `LEARNINGS.md` `## Active Learnings` (L1 — in-flight rules, also auto-injected)

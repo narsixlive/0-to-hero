@@ -11,14 +11,14 @@ GPS of the project. Read first, always. Loaded at every session for free.
 
 ### Layer 2: CONTEXT.md + LEARNINGS.md — The room
 What you'd give a new colleague — split by lifetime into two files.
-- **CONTEXT.md** (situational): Brief zone (stable: work, project, audience, constraints) + Current state (written by the scribe during the session, by `/memorise` at its end) + Thread (appended by `/memorise`)
-- **LEARNINGS.md** (the workspace rule register, Durcir lifecycle): `## Active Learnings` (`ALWAYS/NEVER [action] ([why]) ×N`, auto-injected) + `## Candidates` (scribe inbox, not injected) + `## Archived Learnings` + `## Drift log`. Rules harden through 3 levels (L1 here → L2 `AGENT.md ## Rules` → L3 root Gotchas)
+- **CONTEXT.md** (situational): Brief zone (stable: work, project, audience, constraints) + Current state (one block per recent session, written by the scribe; injected by `inject-journal.sh`) + Thread (legacy, no longer appended: `JOURNAL.md` is the history)
+- **LEARNINGS.md** (the workspace rule register, Durcir lifecycle): `## Active Learnings` (`ALWAYS/NEVER [action] ([why]) (since date) [evidence]`, auto-injected, no counter) + `## Candidates` (scribe inbox, not injected, expires at 30 days) + `## Archived Learnings` + `## Drift log`. Two levels: L1 here → L3 root Gotchas via `/gotcha`
 - The essentials fit on one screen; 80% work description / 20% behavior max
 
 ### Layer 3: AGENT.md — The specialist
 Brain of the workspace. Transforms Claude into a specialist.
 - Pre-work checklist (header): forces reading `LEARNINGS.md` `## Active Learnings` + this file's `## Rules` and applying every rule before any task
-- `## Rules` is the L2 (Contract) rung of the Durcir ladder — stable workspace rules graduate here from `LEARNINGS.md`
+- `## Rules` is the owner's hand-written doctrine for the role (process steps, hard limits); validated workspace rules live in `LEARNINGS.md`, cross-workspace ones in the root Gotchas
 - Role, capabilities, skills, process, limits
 - Invocation scope: when to call this agent, when NOT to
 - Dense and actionable (no prose, only instructions)
@@ -141,13 +141,19 @@ turn ends ──Stop / SessionEnd hook──▶ scribe-trigger.js ──queue + 
                                        (async, fail-open)                   │ transcript delta from a durable cursor,
                                                                             │ deterministic trim, no call without signal
                                                                             ▼ one lean `claude -p` call per project (≤ 5 min batch)
-<ws>/CONTEXT.md ## Current state ◀── scribe-writer.js ◀── proposal, every evidence id verified against the delta
-DECISIONS.md ## Facts (current)         (EXISTING key, new value, tool-proven → updated in place, change traced in ## Ledger)
-DECISIONS.md ## Proposals               (new facts, decisions — NOT injected, drained by /memorise: y → Facts / Ledger, n → archive)
-<ws>/LEARNINGS.md ## Candidates         (rules — NOT injected, reaches ## Active Learnings only through /memorise A0 or the owner's quoted correction)
+JOURNAL.md                       ◀── scribe-writer.js ◀── proposal, every evidence id verified against the delta
+                                        (one block per session: did / next / dated events; re-written at each run of that session; 3 newest injected)
+<ws>/CONTEXT.md ## Current state        (one block per recent session; a parallel session's block is kept, not erased)
+DECISIONS.md ## Facts (current)         (NEVER overwritten: a changed value marks the line `⚠ disputed → new (date)` and queues a proposal)
+DECISIONS.md ## Proposals               (new key, changed value, [fix] hypothesis — NOT injected, /memorise: y → Facts, n → archive; 60 days → archive)
+<ws>/LEARNINGS.md ## Candidates         (at most one rule per run — NOT injected, reaches ## Active Learnings only through the owner; 30 days → archive)
 ```
 
-The scribe is a sorter, not a writer of record: it writes directly only what is deterministic and tool-proven, and queues everything else for the owner. The queue is on disk, never in anyone's head, so a `/clear` or a week without `/memorise` loses nothing — it only delays. When the inbox crosses 10 items, or one item is 7 days old (`SCRIBE_PENDING_MAX` / `_DAYS`, per project), every surface says `✉ N`: the `scribe:` line after a turn, the terminal statusline, the SessionStart payload, and the VS Code sidebar (`tools/claude-hub/`, for people who never open a terminal). `/memorise` then drains the whole backlog, grouped by evidence strength, one answer per group; a `n` archives, never deletes.
+The scribe is a sorter, not a writer of record: it writes history directly (journal, current state) and queues every judgement for the owner. The queue is on disk, never in anyone's head, so a `/clear` or a month without `/memorise` loses nothing: unreviewed items expire to their archive sections, nothing injected changes without the owner. **The stack never nags**: no line in the session, no threshold; the terminal statusline `✉ N` and the VS Code sidebar (`tools/claude-hub/`) show the count passively. `/memorise` is a short popup (three grouped `AskUserQuestion`s at most: disputed Facts, new facts, fixes; rules with `--rules`), skippable without consequence.
+
+**History at session start.** A second SessionStart hook, `inject-journal.sh`, injects under its own 10k cap: a coverage line ("history covered up to <date>; N turns not yet read"), the 3 newest `JOURNAL.md` blocks and each workspace's Current state. This is the part claude-mem used to provide (20 observation titles + the last session summary), now produced by the scribe at no extra model cost, and bounded.
+
+**Evidence rules the model cannot bend.** A tool id that is a Read of a memory file (LEARNINGS / DECISIONS / CONTEXT / JOURNAL / handovers) is never evidence: memory cannot be its own proof. A candidate rule whose wording appears inside a tool RESULT (a README, a web page, a mail) is dropped: data mirrored as an instruction. One candidate per run at most; an obvious code/hook/test fix is queued as `[fix]` instead of a rule.
 
 - **Writes evidence or nothing.** A fact or state line without a `toolu_…` id (or an owner quote) found in the delta is rejected. Candidates are deduped fuzzily against Active / Archived / Candidates.
 - **Bounded cost.** Per-session and machine-wide daily token caps hold the delta instead of dropping it; a cap hit prints at the next Stop and, if configured, posts to Discord. One run ≈ 25-30k tokens (≈ $0.15-0.20 list).
@@ -162,24 +168,21 @@ The scribe is a sorter, not a writer of record: it writes directly only what is 
 
 ## Transversal: Learning layer (Durcir)
 
-Self-improving agents, folder-based, opt-in per project. Workspace rules **harden** through three levels instead of piling up in one list.
+Self-improving agents, folder-based, opt-in per project. A rule enters the injected set only through the owner; everything the machine finds waits, bounded, and expires.
 
 Three moving parts:
-1. **`LEARNINGS.md` per workspace** — `## Active Learnings` (in-flight `ALWAYS/NEVER [action] ([why]) ×N` rules, injected) + `## Candidates` (scribe proposals, promoted by `/memorise` A0 or an owner correction) + `## Archived Learnings` (demoted / non-recurrent, kept, not injected) + `## Drift log` (rules ignored despite being capitalized). Kept separate from `CONTEXT.md` so the situational context stays pure.
-2. **`/memorise` (Durcir lifecycle)** — at session end it proposes Learnings, **bumps `×N` on recurrence instead of skipping a duplicate** (the duplicate is the signal), proposes **graduation** at the thresholds, archives stale ones, logs drift. The user validates each write.
-3. **`SessionStart` hook** (`~/.claude/hooks/inject-learnings.sh`) — scans `LEARNINGS.md` (and legacy `CONTEXT.md`) files, injects each `## Active Learnings` section + `DECISIONS.md ## Facts (current)` whole + the 5 newest `## Ledger` lines (+ the `✉ N` inbox line when the scribe backlog needs `/memorise`) as `additionalContext`, capped at 9.8k chars.
+1. **`LEARNINGS.md` per workspace** — `## Active Learnings` (`ALWAYS/NEVER [action] ([why]) (since date) [evidence]`, injected, ~5) + `## Candidates` (scribe proposals, at most one per run, not injected, 30-day expiry) + `## Archived Learnings` (declined / expired / code-enforced, kept, not injected) + `## Drift log` (rules ignored despite being capitalized). Kept separate from `CONTEXT.md` so the situational context stays pure.
+2. **`/memorise`** — optional, short: three grouped questions at most (disputed Facts, new facts, fixes; rule candidates with `--rules`, Ledger with `--all`). Before a rule is offered, a verdict line from reading the code: enforced already → archive; an obvious fix → the fix, not the rule. Declined → archived, never deleted; skipped → expires on its own.
+3. **Two `SessionStart` hooks** — `inject-learnings.sh` (Active rules + `## Facts (current)` whole + 5 newest Ledger lines, ≤ 9.8k chars) and `inject-journal.sh` (coverage line + 3 newest journal blocks + Current state per workspace, ≤ 9k chars). Two hooks because each output has its own 10k cap: history never competes with rules for the budget.
 
 The ladder:
-- **L1 — Active Learnings** (`LEARNINGS.md`): in-flight, injected, counted (`×N`).
-- **L2 — Role doctrine** (`AGENT.md ## Rules`): a rule graduates here at ×3 / when it stabilises / when it blocks work. Workspace-scoped.
-- **L3 — Cross-workspace doctrine** (root `CLAUDE.md ## Gotchas`, via `/gotcha`): cross-workspace or high-criticality rules; a critical rule may jump straight to L3.
-
-Graduating copies the rule verbatim (with its `why`) to the higher level and **removes it from Active — the list drains upward instead of growing**. Demotion is possible (never just to lighten a file). The `## Drift log` measures how long a rule takes to harden; a rule that drifts < 7 days repeatedly is in the wrong layer → graduate it straight to L3.
+- **L1 — Active Learnings** (`LEARNINGS.md`): workspace-scoped, injected, dated, with evidence. No counter: repetition is not authority (the old `×N` counted tool ids, not independent incidents, and drove graduation by feel).
+- **L3 — Cross-workspace doctrine** (root `CLAUDE.md ## Gotchas`, via `/gotcha` only, cap 12): cross-workspace or high-criticality rules. A rule moved here is removed from Active. The former L2 (`AGENT.md ## Rules` as a maturity step) is gone: same scope and injection as L1, no criterion once the counter went; `AGENT.md ## Rules` remains what the owner writes by hand.
 
 Why this shape:
-- **Recurrence over recency**: a rule earns its place by recurring (`×N`), not by being newest. Bump-not-skip turns the old dedup check into the graduation engine.
-- **Purity by flow**: `CONTEXT.md` stays clean because winners leave Active (graduate) and losers leave too (archive) — separation by lifetime, not by stuffing everything in one file.
-- **Two-stage gating**: the LLM proposes, the user validates. Prevents prompt pollution and drift.
+- **Blast radius decides the gate, not who writes**: history (journal, state) is written automatically because it is append-only, dated, not an instruction; facts and rules change what every session believes, so they wait for the owner.
+- **Decay instead of review**: what nobody confirms disappears from the inbox on its own, so the inbox is bounded without a human and the stack never needs to interrupt.
+- **Two-stage gating**: the LLM proposes, the user validates. Prevents prompt pollution and drift. Confirmed independently (2026-11-11) by two models designing a memory stack from scratch: every other agent auto-writes and measures ~30 % stale facts.
 - **Deterministic injection**: the hook guarantees agents see the Active rules; the Pre-work checklist in `AGENT.md` is the belt-and-suspenders backup (covers subagents the hook cannot reach).
 
 Lineage: Jake Van Clief's "durcir tes règles capitalisées" / edit-source principle applied to a folder-based system, aligned with Anthropic's "keep the hot context lean, push detail to scoped files" and Karpathy's RAM/disk context model (Active = RAM injected, Archived/Drift = disk).
@@ -200,8 +203,8 @@ Installed at bootstrap, not per workspace. Transparent to the user.
 | RTK | All | CLI proxy, 60-90% output compression (`rtk git`, `rtk grep`, `rtk ls`, …) — wraps shell commands only; harness tools (Grep/Glob/Read) are used directly |
 | ccusage | All | Session token monitoring from local JSONL files |
 | Memory scribe | All | Background memory sorter, one lean model call per project per 5 min at most (`core/hooks/scribe/`) |
-| Claude Hub | All (VS Code) | Sidebar: usage, recent projects, scribe badge, memory inbox `✉ N`, "run the scribe now" (`tools/claude-hub/`) |
-| claude-mem | All | Read-only archive of past sessions (`mem-search`); capture disabled since 2026-11-09 |
+| Claude Hub | All (VS Code) | Sidebar: usage, recent projects, scribe badge, passive memory inbox `✉ N`, "run the scribe now" (`tools/claude-hub/`) |
+| claude-mem | All | Read-only archive of sessions before 2026-11-09 (`mem-search`); capture and SessionStart injection disabled (a frozen feed was two competing histories) |
 | jCodeMunch | Technical | Symbol-level code retrieval via AST — replaces full-file reads of code |
 | context7 | Technical | Current library/framework docs — replaces web search |
 

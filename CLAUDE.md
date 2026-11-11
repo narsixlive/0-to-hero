@@ -73,7 +73,7 @@ If more detail is needed → `mem-search "…"` → then `get_observations` on t
 
 Never put session context in native memory. Never put preferences in claude-mem.
 
-**Before closing**: `/memorise` → "Memorised." → `/clear`. Never `/clear` without `/memorise`.
+**Closing**: `/clear` whenever you want — the scribe keeps writing from the transcript (queue on disk, nothing lost). `/memorise` is optional: a short popup over what the scribe queued, run it when the statusline `✉` bothers you.
 
 ## Learning mode
 <!-- learning-stack: durcir-v2 -->

@@ -46,7 +46,7 @@ const L = () => fs.readFileSync(path.join(light, 'LEARNINGS.md'), 'utf8');
 assert.deepStrictEqual(run(light, '.', 'NEVER push without a build (CI breaks)', 'toolu_1').done, ['. +1 candidate']);
 assert.ok(/^# light — Learnings/m.test(L()), 'root LEARNINGS.md created with the project name');
 run(light, '.', 'NEVER push without a build (CI breaks)', 'toolu_2');
-assert.ok(/seen ×2/.test(L()), 'recurrence bumps ×2 at the root');
+assert.ok(/^- NEVER push without a build \(CI breaks\) \(\d{4}-\d{2}-\d{2}\) \[toolu_1\] \[toolu_2\] \(last seen \d{4}-\d{2}-\d{2}\)$/m.test(L()), 'recurrence adds evidence at the root, no counter: ' + L());
 assert.strictEqual(run(light, 'src', 'ALWAYS a b c d', 'toolu_3').rejected, 1, 'light: unknown workspace rejected');
 assert.strictEqual(run(light, '..', 'ALWAYS a b c d', 'toolu_4').rejected, 1, 'light: ".." rejected');
 assert.strictEqual(writer.countPending(light, wsOf(light)).candidates, 1, 'inbox counts the root candidate');

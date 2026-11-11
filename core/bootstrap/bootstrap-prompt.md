@@ -4,8 +4,8 @@ You're going to help me create the structure of my project using the
 0-to-Hero system (3-layer architecture: CLAUDE.md with routing + gotchas,
 Workspaces with CONTEXT.md + AGENT.md + LEARNINGS.md, skills; plus a DECISIONS.md record,
 a background memory scribe and an opt-in Learning layer (Durcir stack) where workspace rules
-harden through 3 levels — L1 `LEARNINGS.md` → L2 `AGENT.md ## Rules` → L3 root Gotchas —
-fed via `/memorise` and auto-injected at session start via a hook).
+enter only through the owner — L1 `LEARNINGS.md` (per workspace) → L3 root Gotchas (via `/gotcha`) —
+and are auto-injected at session start via two hooks, rules and history under separate caps).
 
 ---
 
@@ -530,11 +530,11 @@ Short and scannable — if you scroll, it's too long.
   - `## Thread` (new entry appended on top, pruned to 5 most recent)
 
 **LEARNINGS.md** (workspace rules — Durcir lifecycle, starts empty at bootstrap)
-- `## Active Learnings` — in-flight rules `- ALWAYS/NEVER [action] ([why]) ×N`, auto-injected at SessionStart, grown/bumped by `/memorise`
-- `## Candidates` — rules the scribe found, NOT injected; promoted by `/memorise` (clause A0) or by the owner's correction in session
+- `## Active Learnings` — workspace rules `- ALWAYS/NEVER [action] ([why]) (since YYYY-MM-DD) [evidence]`, auto-injected at SessionStart, written by the owner (`/memorise --rules`) or from the owner's quoted correction
+- `## Candidates` — rules the scribe found (at most one per run), NOT injected; promoted by the owner or by the owner's correction in session; unreviewed 30 days → Archived (expired)
 - `## Archived Learnings` — demoted / non-recurrent rules, kept, NOT injected
 - `## Drift log` — audit trail of rules ignored despite being capitalized, NOT injected
-- Rules graduate L1 (here) → L2 (`AGENT.md ## Rules`) → L3 (root `CLAUDE.md ## Gotchas`)
+- Two levels: L1 (here, workspace) → L3 (root `CLAUDE.md ## Gotchas`, via `/gotcha`, cross-workspace or high-criticality). `AGENT.md ## Rules` is the owner's hand-written role doctrine, not a rung.
 
 **AGENT.md** (the specialist — dense and actionable)
 - Heading: `# [Workspace Name] — [Professional Role]`. Specific seniority + domain + angle (e.g., "Api — Senior Backend Engineer (REST design, auth, observability)"). Never generic ("Assistant", "Helper"). Embed the workspace name so the agent is scoped by default.
@@ -566,10 +566,10 @@ CLAUDE.md, format: `NEVER/ALWAYS [action] ([why])`. No separate GOTCHA.md file.
     }
   }
   ```
-  The nesting matters: Claude Code expects matcher groups (`[{ "hooks": [...] }]`), and a flat `[{ "type": "command", ... }]` entry is rejected silently — the hook never runs and nothing gets injected. The hook script itself lives globally at `~/.claude/hooks/inject-learnings.sh` (install once from `core/hooks/inject-learnings.sh` in the 0-to-Hero repo). At every new session, it scans the project's `LEARNINGS.md` files (and legacy `CONTEXT.md` for un-migrated projects), extracts each `## Active Learnings` section, plus `## Facts (current)` whole and the 5 newest `## Ledger` lines from the root `DECISIONS.md`, injecting all of it as `additionalContext` (capped at 9.8k chars) — so agents have workspace rules and durable project facts in hand before the first user prompt.
-- **Memory scribe (global, once per machine — not per project).** Check that `~/.claude/hooks/scribe/` exists and that the global `~/.claude/settings.json` registers `scribe-trigger.js` on BOTH `Stop` and `SessionEnd` (same nested form as above, `"async": true`, `"timeout": 10`). If not, install it from `core/hooks/scribe/` (README there: env variables, Windows launcher). Nothing to add to the project: the trigger watches every Durcir project by itself (root `CLAUDE.md` + `DECISIONS.md` or a `<ws>/AGENT.md`), restricted to `SCRIBE_ROOTS` when that variable is set. Tell the user the visible effects: a `scribe: …` line after some turns, the `✍` / `✉` segments in the terminal statusline (`core/hooks/claude-statusline.js`, optional), and — for users who work in VS Code without a terminal — the sidebar in `tools/claude-hub/` (badge per project, memory inbox `✉ N` → `/memorise`, "run the scribe now"), offered once, never required.
+  The nesting matters: Claude Code expects matcher groups (`[{ "hooks": [...] }]`), and a flat `[{ "type": "command", ... }]` entry is rejected silently — the hook never runs and nothing gets injected. The hook script itself lives globally at `~/.claude/hooks/inject-learnings.sh` (install once from `core/hooks/inject-learnings.sh` in the 0-to-Hero repo). At every new session, it scans the project's `LEARNINGS.md` files (and legacy `CONTEXT.md` for un-migrated projects), extracts each `## Active Learnings` section, plus `## Facts (current)` whole and the 5 newest `## Ledger` lines from the root `DECISIONS.md`, injecting all of it as `additionalContext` (capped at 9.8k chars) — so agents have workspace rules and durable project facts in hand before the first user prompt. A second global hook, `~/.claude/hooks/inject-journal.sh` (registered once in `~/.claude/settings.json` `SessionStart`, silent outside Durcir projects), injects the recent history under its own 10k cap: a coverage line, the 3 newest `JOURNAL.md` blocks written by the scribe, and each workspace's `CONTEXT.md ## Current state`.
+- **Memory scribe (global, once per machine — not per project).** Check that `~/.claude/hooks/scribe/` exists and that the global `~/.claude/settings.json` registers `scribe-trigger.js` on BOTH `Stop` and `SessionEnd` (same nested form as above, `"async": true`, `"timeout": 10`). If not, install it from `core/hooks/scribe/` (README there: env variables, Windows launcher). Nothing to add to the project: the trigger watches every Durcir project by itself (root `CLAUDE.md` + `DECISIONS.md` or a `<ws>/AGENT.md`), restricted to `SCRIBE_ROOTS` when that variable is set. Also check that `inject-journal.sh` is registered in the same global file's `SessionStart` (install from `core/hooks/`). Tell the user the visible effects: a `scribe: …` line after some turns, the `✍` / `✉` segments in the terminal statusline (`core/hooks/claude-statusline.js`, optional; `✉ N` is a passive count, nothing ever asks for `/memorise`), and — for users who work in VS Code without a terminal — the sidebar in `tools/claude-hub/` (badge per project, memory inbox, "run the scribe now"), offered once, never required.
 - **Freeze claude-mem capture if the plugin is installed (global, once per machine).** Installed = `~/.claude/settings.json` `enabledPlugins` has a `claude-mem@…` key, or `~/.claude-mem/claude-mem.db` exists. Check the same file's `env` for `CLAUDE_MEM_DISABLE_OBSERVATION=1` and `CLAUDE_MEM_DISABLE_SUMMARY=1`; if either is missing, back up `~/.claude-mem/claude-mem.db` to `claude-mem.db.bak-<date>` beside it first (sqlite3 `.backup`, or python `Connection.backup()` when the CLI is absent; `PRAGMA integrity_check` must return `ok`), then add both. Both present → no-op, no backup. The archive stays searchable (`mem-search`). One-line why for the user: one model turn per tool use, re-reading the whole context, for a capture the memory files already carry. Same step as `/bootstrap-upgrade` step 3.
-- `DECISIONS.md` — scaffolded from `core/templates/DECISIONS.template.md`. Four zones: `## Facts (current)` — the project as it stands (domain, app name, prod host, accounts, pricing, commitments), one line per key, **injected whole at every SessionStart**, upserted by the scribe and `/memorise`; `## Proposals` — the scribe's inbox, NOT injected, drained by `/memorise`; `## Ledger (facts of record)` — dated decisions and irreversible events, newest first, 5 newest injected; `## ADR archive` — narrative rationale ("why did we choose X?"), NOT injected, consulted on demand. Do NOT leave the file empty: it starts with all four headers and their format comments, so the record exists and gets used from session one. Rationale: an empty, on-demand, never-injected file is invisible and stays unused — the injected ledger is what keeps important facts from being lost.
+- `DECISIONS.md` — scaffolded from `core/templates/DECISIONS.template.md`. Four zones: `## Facts (current)` — the project as it stands (domain, app name, prod host, accounts, pricing, commitments), one line per key, **injected whole at every SessionStart**, written by `/memorise` (the scribe never overwrites a value: it marks the line `⚠ disputed → new` and queues a proposal); `## Proposals` — the scribe's inbox, NOT injected, drained by `/memorise`, self-archiving after 60 days; `## Ledger (facts of record)` — dated decisions and irreversible events, newest first, 5 newest injected; `## ADR archive` — narrative rationale ("why did we choose X?"), NOT injected, consulted on demand. Do NOT leave the file empty: it starts with all four headers and their format comments, so the record exists and gets used from session one. Rationale: an empty, on-demand, never-injected file is invisible and stays unused — the injected ledger is what keeps important facts from being lost.
 - `.skills/INDEX.md` — empty table, ready to receive.
 
 ## Recommendations (skills + token reducers)
@@ -690,8 +690,8 @@ Iterate until the user has validated.
 - Each file has ONE job. No duplicated content between files.
 - Standard reading order: LEARNINGS.md (`## Active Learnings`) + CONTEXT.md (brief + state) → AGENT.md (`## Rules`) → CLAUDE.md (Gotchas section)
 - Skills in always or on-demand mode, never globally
-- Durcir ladder for rules: L1 workspace `LEARNINGS.md` `## Active Learnings` (via `/memorise`) → L2 `AGENT.md` `## Rules` (graduated when stable/recurring) → L3 root CLAUDE.md Gotchas (via `/gotcha`, cross-workspace). All use the format `NEVER/ALWAYS [action] ([why])`.
-- Memory is routed: the scribe for in-session capture (Current state, existing Facts keys; everything else queued in `## Proposals` / `## Candidates`), `/memorise` for the drain + workspace Learnings (LEARNINGS.md) + facts of record (DECISIONS.md), `/gotcha` for cross-workspace doctrine (CLAUDE.md Gotchas), `DECISIONS.md` for durable project facts (`## Facts` injected whole, `## Ledger` dated) and structural rationale (`## ADR archive`, on-demand), "remember forever" for permanent preferences (Claude native memory).
+- Durcir levels for rules: L1 workspace `LEARNINGS.md` `## Active Learnings` (written by the owner in `/memorise --rules` or from the owner's quoted correction) → L3 root CLAUDE.md Gotchas (via `/gotcha`, cross-workspace or high-criticality). `AGENT.md ## Rules` is hand-written role doctrine. All use the format `NEVER/ALWAYS [action] ([why])`.
+- Memory is routed: the scribe for in-session capture (`JOURNAL.md`, Current state; facts, fixes and at most one rule candidate per run queued in `## Proposals` / `## Candidates`, self-expiring), `/memorise` for the short grouped review (Facts, fixes, rules on request, Ledger on request), `/gotcha` for cross-workspace doctrine (CLAUDE.md Gotchas), `DECISIONS.md` for durable project facts (`## Facts` injected whole, `## Ledger` dated) and structural rationale (`## ADR archive`, on-demand), "remember forever" for permanent preferences (Claude native memory).
 - Token-efficient: no prose, no filler
 - Generate custom content based on the answers — no generic content
 - Content must be realistic and specific to the profile, not placeholders
@@ -705,17 +705,14 @@ Each workspace splits its memory across two files, by lifetime:
 - **Living zone** (below marker, volatile): `## Current state` (overwritten each `/memorise`) + `## Thread` (new entry on top, pruned to 5 most recent).
 
 **`LEARNINGS.md`** — the workspace rule register (Durcir lifecycle), three sections:
-- `## Active Learnings` — in-flight rules `NEVER/ALWAYS [action] ([why]) ×N`. Starts empty. Injected every session. Kept lean (~5).
-- `## Archived Learnings` — demoted / non-recurrent rules. Kept, NOT injected.
+- `## Active Learnings` — workspace rules `NEVER/ALWAYS [action] ([why]) (since YYYY-MM-DD) [evidence]`. Starts empty. Injected every session. Kept lean (~5). No counter.
+- `## Candidates` — the scribe's rule proposals (at most one per run). NOT injected; expire to Archived after 30 days unreviewed.
+- `## Archived Learnings` — declined / expired / code-enforced rules. Kept, NOT injected.
 - `## Drift log` — rules ignored despite being capitalized. NOT injected.
 
-Rules harden through 3 levels: **L1** `LEARNINGS.md ## Active Learnings` → **L2** `AGENT.md ## Rules` (role doctrine, graduated when a rule hits ×3 / stabilises / blocks) → **L3** root `CLAUDE.md ## Gotchas` (cross-workspace, via `/gotcha` or graduation). Graduating copies the rule verbatim to the higher level and removes it from Active — the Active list drains upward instead of growing.
+Two levels: **L1** `LEARNINGS.md ## Active Learnings` (workspace, written by the owner or from the owner's quoted correction) and **L3** root `CLAUDE.md ## Gotchas` (cross-workspace or high-criticality, via `/gotcha` only, cap 12). A rule moved to L3 is removed from Active.
 
-The `/memorise` command:
-1. Drains the scribe inbox (`DECISIONS.md ## Proposals`, `LEARNINGS.md ## Candidates`): `y` → Facts / Ledger / Active, `n` → archive, never deleted.
-2. Identifies the workspace(s) touched, updates each `CONTEXT.md` (Current state + Thread only — never the brief).
-3. For each touched workspace's `LEARNINGS.md`: proposes new Learnings; on a recurring rule it **bumps `×N`** instead of skipping (and logs a `## Drift log` line if the rule was ignored); proposes graduations at the thresholds; archives stale ones. User validates each write.
-4. Proposes facts of record for the `DECISIONS.md` ledger, then runs a stack-freshness check.
+The `/memorise` command (optional, short): one `AskUserQuestion` per topic, three topics at most — disputed Facts, new facts, fixes; rule candidates with `--rules`, Ledger events with `--all`. Declined items are archived, never deleted; skipped ones expire on their own. It never edits `CONTEXT.md` (the scribe owns Current state, `JOURNAL.md` is the history) and ends with a stack-freshness check.
 
 The `SessionStart` hook (`~/.claude/hooks/inject-learnings.sh`):
 1. Runs automatically when Claude Code opens a session in this project.

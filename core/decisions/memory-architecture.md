@@ -66,11 +66,10 @@ Every token of CLAUDE.md is loaded at every message, every session, every compac
 
 Workspace rules live in `<workspace>/LEARNINGS.md` (not `CONTEXT.md`) and harden through three levels rather than accumulating in one list:
 
-- **L1 — `LEARNINGS.md ## Active Learnings`**: in-flight rules, `ALWAYS/NEVER [action] ([why]) ×N`, injected at SessionStart. `/memorise` bumps `×N` on recurrence (it does not skip a duplicate — the duplicate is the signal).
-- **L2 — `AGENT.md ## Rules`**: a rule graduates here at ×3 / when stable / when it blocks work. Role-scoped doctrine.
-- **L3 — `CLAUDE.md ## Gotchas`**: cross-workspace or high-criticality rules (via `/gotcha`, or graduated up).
+- **L1 — `LEARNINGS.md ## Active Learnings`**: workspace rules, `ALWAYS/NEVER [action] ([why]) (since date) [evidence]`, injected at SessionStart. Written only by the owner (`/memorise --rules`) or from the owner's own correction quoted in session. No counter since 2026-11-11: repetition is not authority (a counter bumped on tool ids, not on independent incidents, and drove graduation by feel).
+- **L3 — `CLAUDE.md ## Gotchas`**: cross-workspace or high-criticality rules, via `/gotcha` only, cap 12. The former L2 (`AGENT.md ## Rules` as a maturity step) is gone: same scope as L1, same injection, no criterion once the counter went; `AGENT.md ## Rules` stays a place the owner writes by hand.
 
-Graduation copies the rule verbatim a level up and removes it from Active, so the injected list **drains upward instead of growing**. `## Archived Learnings` holds demoted / non-recurrent rules (kept, not injected); `## Drift log` records rules ignored despite being capitalized (a rule drifting < 7 days repeatedly is in the wrong layer → straight to L3).
+`## Candidates` (scribe, at most one per run, not injected) expire to `## Archived Learnings` after 30 days unreviewed; `## Archived Learnings` holds declined / expired / code-enforced rules (kept, not injected); `## Drift log` records rules ignored despite being capitalized (a rule that drifts repeatedly wants a fix at the seam or `/gotcha`, not a louder line).
 
 A `<!-- learning-stack: durcir-vN -->` marker in CLAUDE.md (current: `durcir-v2`, which adds the memory scribe and `LEARNINGS.md ## Candidates`) lets `/memorise` detect a stale project and offer `/bootstrap-upgrade`. The injection hook reads both `LEARNINGS.md` and legacy `CONTEXT.md`, so un-migrated projects keep working until migrated. Full detail: `core/ARCHITECTURE.md` → "Learning layer (Durcir)".
 

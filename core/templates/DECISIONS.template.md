@@ -20,17 +20,17 @@ choice in the **ADR archive**. A behavioral rule is none of these — a cross-wo
 via `/gotcha` (root CLAUDE.md), a workspace one is a Learning in `<workspace>/LEARNINGS.md`.
 
 ## Facts (current)
-<!-- One line per key, upserted by the scribe and /memorise. Injected whole at SessionStart: only what is true now. -->
-<!-- Format: `- **Key**: value (since YYYY-MM-DD)` — reuse a key when the same thing changes; a change is also logged in ## Ledger. -->
+<!-- One line per key, written by /memorise. Injected whole at SessionStart: only what is true now. -->
+<!-- Format: `- **Key**: value (since YYYY-MM-DD)` — reuse a key when the same thing changes. The scribe never overwrites a value: it marks the line `⚠ disputed → new (date)` and queues a proposal. -->
 
 ## Proposals
-<!-- Written by the memory scribe, NOT injected: what it found but may not write on its own (new key, owner statement as evidence, dated decision). -->
-<!-- /memorise drains this section: y → Facts / Ledger, n → ## Proposals archive. Format: `- [fact|log] … (date) [evidence] why: … · seen ×N` -->
+<!-- Written by the memory scribe, NOT injected: a new Facts key, a changed value (the Facts line is marked ⚠ disputed), or a [fix] hypothesis. -->
+<!-- /memorise drains this section: y → Facts, n → ## Proposals archive; unreviewed 60 days → archive. Format: `- [fact|fix] … (date) [evidence] why: …` -->
 
 ## Ledger (facts of record)
 <!-- Dated log, newest first. 5 newest injected at SessionStart; grep the rest. -->
-<!-- Format: `- YYYY-MM-DD — [decision or event]` — one line, factual, no rationale. Routine work is not a ledger line. -->
-<!-- Append-only via the scribe and /memorise (user validates). -->
+<!-- Format: `- YYYY-MM-DD — [decision or event]` — one line, factual, no rationale. Routine work is not a ledger line (it lives in JOURNAL.md, written by the scribe). -->
+<!-- Written by /memorise only (the owner validates); the scribe never writes here. -->
 
 ---
 

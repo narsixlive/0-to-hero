@@ -274,3 +274,62 @@ accepted / refused, share of routine noise (kill at 10 %), new keys and synonyms
 - claude-mem leaves the bootstrap's install list: optional archive, never the memory base.
 
 **Not done.** The in-session "y / n / fix" on a candidate still has no owner beyond the quoted correction and `/memorise` A0; the hub applies no project-root walk-up (a session started in a sub-folder is invisible to its lag badge). Both are noted, not fixed.
+
+## 2026-11-11 — Memory v3: history written, judgement queued, nothing nags
+
+**Context.** Measured on 2026-11-10 across three active projects: 15-27 scribe runs and 22-33 inbox
+items per project per day, against a `/memorise` threshold of 10 items; the "→ /memorise" line was
+printed at every run once over it, on four surfaces, and the review itself was a 20-minute, 23 KB
+procedure. A 90-day simulation on those rates: v2 without `/memorise` reaches 1 092 items; weekly
+`/memorise` costs 7h40 of review per quarter. Since claude-mem capture was frozen (2026-11-09) the
+only recent-history feed at SessionStart was frozen at that date, and the scribe's Current state was
+never injected: the owner felt Claude "leaned less on the project's history". A web survey, two
+adversarial reviews (GPT-6 Astra) and a neutral design duel (Fable vs Astra, each with its own web
+research, three rounds, joint text + counter-signature) converged on the same diagnosis: the
+proposed/approved split with provenance is the one design nobody else ships and the one that
+addresses the measured ~30 % staleness of auto-written stores; the pain was procedural.
+
+**Decision.**
+- *History is written automatically, judgement is not.* The scribe writes `JOURNAL.md` (one block per
+  session: did / next / dated events, re-written at each run of that session so a missed SessionEnd
+  never loses it) and `CONTEXT.md ## Current state` as one block per recent session (a parallel
+  session's block is kept 7 days, not erased). `[log]` events live in the journal, not in Proposals.
+- *Facts are never overwritten by the scribe.* A changed value marks the injected line
+  `⚠ disputed → new (date)` and queues a proposal; the owner settles it. New keys are proposals only.
+  The scribe never writes the Ledger. (Mem0 v3: dropping automatic UPDATE gained 20 pts; the
+  reviewers: "a verified result proves a read, not the claim".)
+- *No counter.* `seen ×N` and `×N` are gone: they counted tool ids, not independent incidents, and
+  drove graduation by feel. Repetition adds evidence ids and a `last seen` date, never authority.
+  L2 (`AGENT.md ## Rules` as a maturity step) is dropped with it; L1 → L3 via `/gotcha` remains.
+- *Collection budget and evidence rules.* At most one candidate per run; an obvious code/hook/test
+  change is queued as `[fix]` instead of a rule; a Read of a memory file is never evidence; a rule
+  whose wording sits inside a tool RESULT is dropped (data mirrored as an instruction).
+- *Decay instead of review.* Candidates unreviewed 30 days → `## Archived Learnings (expired)`;
+  proposals 60 days → `## Proposals archive`. Deterministic, in the worker run, no model.
+- *No nag.* The "→ /memorise" line, the SessionStart inbox line and the 10-items / 7-days threshold
+  are removed; `✉ N` stays as a passive count in the statusline and the sidebar. `/clear` is free.
+  `/memorise` becomes an optional popup: three grouped `AskUserQuestion`s at most (disputed Facts,
+  new facts, fixes; rules with `--rules`, Ledger with `--all`), skippable; it no longer edits
+  `CONTEXT.md`.
+- *History injected, under its own cap.* A second SessionStart hook, `inject-journal.sh`, injects
+  the coverage line, the 3 newest journal blocks and each workspace's Current state (≤ 9k chars).
+  Two hooks because Claude Code replaces any hook output over 10k chars with a file path and a 2k
+  preview the model never reads (observed on the claude-mem payload this very session). The frozen
+  claude-mem SessionStart injection is muted (`CLAUDE_MEM_CONTEXT_*` = 0 / false): two competing
+  histories, one of them eternally dated 9 Nov, sabotaged the resume.
+
+**Not done, on purpose.** Soft-injection of unreviewed candidates and silence-as-consent promotion
+(both rejected by the reviewers: an inference would become an instruction, then its own proof);
+DNS/HTTP verifiers renewing facts (availability is not ownership); rule dormancy by silence (a quiet
+safety rule is a rule that works); keyed-event rebuild of Current state (the per-session block is
+the cheap version; revisit if parallel sessions still collide). Stack marker stays `durcir-v2`: the
+file formats are backward compatible (a `×N` is tolerated, not written); a `durcir-v3` migration is
+only worth writing once these defaults have run for a few weeks.
+
+**Rollback.** `git revert` of this commit plus `cp core/hooks/... ~/.claude/hooks/` restores v2;
+`~/.claude-mem/settings.json.bak-20261111` and `~/.claude/settings.json.bak-20261111` restore the
+muted injection and the hook registration. Journal files are additive and harmless either way.
+
+**Measure first after deploy.** Candidates per run (target: mostly 0, never > 1), proposals per
+active day (target ≤ 3), size of both SessionStart payloads (never over cap), and whether the owner
+reports Claude using the recent history unprompted.
