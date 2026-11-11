@@ -11,3 +11,4 @@
 
 # Built VS Code extension (attach to a GitHub Release instead)
 *.vsix
+JOURNAL.md
