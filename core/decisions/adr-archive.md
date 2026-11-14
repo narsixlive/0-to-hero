@@ -341,3 +341,42 @@ muted injection and the hook registration. Journal files are additive and harmle
 **Measure first after deploy.** Candidates per run (target: mostly 0, never > 1), proposals per
 active day (target ≤ 3), size of both SessionStart payloads (never over cap), and whether the owner
 reports Claude using the recent history unprompted.
+
+## 2026-11-14 — Memory v3.1: the inbox drains itself, `/memorise` decides
+
+**Measured after three days of v3.** 77 items waited across 8 projects (42 proposals, 35
+candidates), against a target of ≤ 3 proposals per active day. Half of them had no way out:
+13 lines already settled by `/memorise` but tagged in place instead of moved (still counted),
+11 `[log]` proposals from before the journal (no `/memorise` topic for them), 25 candidates from
+the counter era. "One candidate per run" did not bound anything at 30 to 47 runs a day, and facts
+had no cap and a definition wide enough for any passing status. On the review side the owner
+followed the recommendation almost every time and declined every fact reviewed in this repo (4/4).
+
+**Decision.**
+- *The recommendation is the decision.* `/memorise` reaches a verdict on every line from reading
+  the code, the hooks and the Facts, applies it, and asks only about what it cannot settle. One
+  pass empties the queue: no topic cap, candidates always reviewed (`--rules` is accepted and
+  does nothing), fixes applied when surgical, parked in the journal's `Next:` otherwise.
+- *Every reviewed line leaves with its outcome* (`accepted` / `declined` / `done` / `parked`),
+  moved to its archive section, never tagged in place. The outcomes are the data that was missing
+  to decide which kinds the scribe may settle alone later; three days of v3 left six of them.
+- *The inbox drains itself.* A second, synchronous `Stop` registration of the trigger (`--inbox`)
+  holds the turn once per attended session when 5 items wait or the oldest is 3 days old; the
+  session runs `/memorise` in a background subagent and asks one grouped question for the
+  undecided lines and the fixes to apply. This reverses v3's "nothing nags": the owner asked for
+  a memory that needs no command typed. Headless sessions are skipped (no one to answer).
+- *The scribe queues less and never twice.* A passing status, a version, a count or a draft's
+  path is not a fact (a change that reshapes the repo is). A proposal already settled is not
+  queued again when seen another day. The scribe extracts nothing from a drain turn.
+- *Deterministic hygiene in `expire()`.* Lines already carrying an outcome and leftover `[log]`
+  proposals move to the archive at each run.
+- *The correction is the moment.* The SessionStart injector tells the session to offer a rule
+  right when the owner corrects how it works: the session has the whole context, the scribe only
+  a trimmed transcript. An injected instruction, so less certain than a hook.
+
+**Not done, on purpose.** The scribe still never writes a Fact by itself: 0 of 4 reviewed facts
+were kept, and a wrong fact is injected into every session. Revisit when the archived outcomes
+show the tightened definition holds.
+
+**Rollback.** Remove the `--inbox` entry from `Stop`: `/memorise` is a manual command again and
+nothing else changes.

@@ -8,13 +8,13 @@
 ## Active Learnings
 <!-- Workspace rules, injected every session. Keep lean (~5). -->
 <!-- Format: `- ALWAYS/NEVER [action] ([why]) (since YYYY-MM-DD) [evidence ids]` — no counter: repetition is not authority. -->
-<!-- Written only by the owner (/memorise --rules) or by the scribe when it quotes the owner's own correction in session. -->
+<!-- Written only by the owner (/memorise) or by the scribe when it quotes the owner's own correction in session. -->
 <!-- Cross-workspace or high-criticality (security, personal data, money, legal) → /gotcha into root CLAUDE.md `## Gotchas`, then REMOVE it from here. -->
 
 ## Candidates
 <!-- Written by the background memory scribe (Stop/SessionEnd hook), at most one per run, NOT injected. -->
 <!-- Format: `- ALWAYS/NEVER [action] ([why]) (YYYY-MM-DD) [evidence id] (last seen YYYY-MM-DD)` -->
-<!-- Promoted into Active Learnings by the owner (/memorise --rules) or by the owner's correction in session. Unreviewed 30 days → Archived Learnings (expired). -->
+<!-- Promoted into Active Learnings by the owner (/memorise) or by the owner's correction in session. Unreviewed 30 days → Archived Learnings (expired). -->
 
 ## Archived Learnings
 <!-- Declined, expired or no-longer-needed rules (the code now enforces it). Kept for reference, NOT injected. -->

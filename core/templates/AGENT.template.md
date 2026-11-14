@@ -64,5 +64,5 @@ Last updated: [date]
 - Consult the Gotchas section of the root CLAUDE.md at startup (L3 — cross-workspace doctrine)
 - Consult this workspace's `LEARNINGS.md` `## Active Learnings` (L1 — workspace rules, also auto-injected)
 - A cross-workspace or high-criticality rule goes via `/gotcha` to root CLAUDE.md (L3); this section is the owner's hand-written role doctrine
-- The scribe queues rule candidates in `LEARNINGS.md ## Candidates`; the owner promotes them with `/memorise --rules`
+- The scribe queues rule candidates in `LEARNINGS.md ## Candidates`; the owner promotes them with `/memorise`
 - Format in all cases: `NEVER/ALWAYS [action] ([why])`

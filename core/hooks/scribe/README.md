@@ -11,9 +11,9 @@ Rationale and measured numbers: `core/decisions/adr-archive.md` (2026-11-08, 202
 
 | File | Role |
 |------|------|
-| `scribe-trigger.js` | `Stop` + `SessionEnd` hook. Queues the turn, prints the previous run's report, spawns the worker (one run per project per 5 min; `SessionEnd` = flush). Fail-open, never blocks. |
+| `scribe-trigger.js` | `Stop` + `SessionEnd` hook. Queues the turn, prints the previous run's report, spawns the worker (one run per project per 5 min; `SessionEnd` = flush). Fail-open, never blocks. Registered a second time on `Stop` as `--inbox` (synchronous): holds the turn once per attended session when the memory inbox is full, so the session drains it. |
 | `scribe-worker.js` | Background worker. Trims the transcript delta from a durable cursor, one lean `claude -p` call per project, verifies every evidence id (a Read of a memory file is never evidence; a rule worded like a tool RESULT is dropped; one candidate per run), applies through the writer, runs the expiry pass, logs tokens, journals the run. |
-| `scribe-writer.js` | Bounded, deterministic writes. Only the destinations above, atomic temp+rename, fuzzy dedup of candidates, `expire()`. `node scribe-writer.js --selftest`. |
+| `scribe-writer.js` | Bounded, deterministic writes. Only the destinations above, atomic temp+rename, fuzzy dedup of candidates, a proposal the owner already settled is never queued again, `expire()` (30 / 60 days, plus lines already tagged with an outcome and leftover `[log]` proposals). `node scribe-writer.js --selftest`. |
 | `scribe-worker.check.js` | Offline check of verify / signal filter / cursor / lock. `node scribe-worker.check.js`. |
 | `root.check.js` | Offline check of project-root resolution (JS and the bash injector agree, a `cd` does not move it) and of the light-project `.` workspace. `node root.check.js`. |
 | `../inject-journal.sh` | Second `SessionStart` hook: coverage line, 3 newest journal blocks, Current state per workspace, under its own 9k cap. |
@@ -34,9 +34,12 @@ The repo's `.claude/settings.json` calls `~/.claude/hooks/inject-learnings.sh`: 
 
 ```json
 "SessionStart": [{ "hooks": [{ "type": "command", "command": "bash ~/.claude/hooks/inject-journal.sh", "timeout": 10 }] }],
-"Stop":         [{ "hooks": [{ "type": "command", "command": "node ~/.claude/hooks/scribe/scribe-trigger.js", "timeout": 10, "async": true }] }],
+"Stop":         [{ "hooks": [{ "type": "command", "command": "node ~/.claude/hooks/scribe/scribe-trigger.js", "timeout": 10, "async": true },
+                              { "type": "command", "command": "node ~/.claude/hooks/scribe/scribe-trigger.js --inbox", "timeout": 10 }] }],
 "SessionEnd":   [{ "hooks": [{ "type": "command", "command": "node ~/.claude/hooks/scribe/scribe-trigger.js", "timeout": 10, "async": true }] }]
 ```
+
+The second `Stop` entry (`--inbox`, synchronous, optional) makes the review automatic: when a project's inbox reaches 5 items, or its oldest item has waited 3 days, the hook holds the turn once per session and the session drains the inbox itself — a background subagent follows `/memorise`, decides from reading, and the owner is asked only about what it could not settle and about fixes to apply. Attended sessions only (`CLAUDE_CODE_SESSION_ATTENDED=1`); without that entry `/memorise` stays a manual command.
 
 On Windows use the full `node.exe` path (and a hidden-console launcher if the Stop hook flashes a window).
 

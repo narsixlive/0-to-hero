@@ -1,6 +1,8 @@
 #!/usr/bin/env node
 // scribe-trigger.js — Stop hook (async). Queues the turn for the memory scribe and spawns the
 // worker when none is running. Never blocks the session: fail-open everywhere.
+// Registered a second time on Stop as `scribe-trigger.js --inbox` (synchronous): that mode only checks the
+// memory inbox and, over the threshold, has the session drain it (see --inbox below).
 //
 // Scope: 0-to-Hero projects under SCRIBE_ROOTS only (pilot). Main agent only (no agent_id).
 // Visibility: the previous worker run leaves <state>/report.txt; this hook prints it once as a
@@ -17,6 +19,7 @@ const SCRIBE_ROOTS = (process.env.SCRIBE_ROOTS || '').split(';').filter(Boolean)
 const STATE_ROOT = path.join(os.homedir(), '.claude', 'scribe');
 const MIN_GAP_MS = 5 * 60 * 1000;   // batch: one worker run per project per 5 min
 const LOCK_STALE_MS = 10 * 60 * 1000;
+const INBOX_MIN = 5, INBOX_DAYS = 3;   // --inbox fires at 5 waiting items, or when the oldest has waited 3 days
 
 // State dir per project. The cwd's drive-letter case varies between hosts (D:\ vs d:\), the slug must not:
 // reuse an existing dir that matches case-insensitively, else create it lowercase.
@@ -58,6 +61,27 @@ process.stdin.on('end', () => {
     const slug = slugify(cwd);
     const dir = path.join(STATE_ROOT, slug);
     fs.mkdirSync(dir, { recursive: true });
+
+    // --inbox: the second Stop registration, synchronous (an async hook cannot hold the turn). When the memory
+    // inbox is over the threshold, the session drains it itself: once per session, attended sessions only
+    // (a headless run has no owner to answer a question), never from a turn a Stop hook already continued.
+    if (process.argv.includes('--inbox')) {
+      if (j.hook_event_name !== 'Stop' || j.stop_hook_active || process.env.CLAUDE_CODE_SESSION_ATTENDED !== '1') process.exit(0);
+      const mark = path.join(dir, `inbox-${j.session_id}`);
+      if (fs.existsSync(mark)) process.exit(0);
+      const p = JSON.parse(fs.readFileSync(path.join(dir, 'pending.json'), 'utf8'));   // absent (just drained) → catch → exit 0
+      const age = p.oldest ? Math.floor((Date.now() - Date.parse(p.oldest)) / 86400000) : 0;
+      if (!(p.total >= INBOX_MIN || (p.total > 0 && age >= INBOX_DAYS))) process.exit(0);
+      fs.writeFileSync(mark, '');
+      process.stdout.write(JSON.stringify({ decision: 'block', reason:
+        `Memory inbox: ${p.total} item(s) waiting in ${cwd} (oldest ${age} d). Drain it before stopping, without asking the owner to type anything. ` +
+        `If your last message asked the owner something, or left their request unfinished, do nothing and stop: that comes first. ` +
+        `Otherwise launch ONE background subagent briefed to follow ~/.claude/commands/memorise.md for the project root ${cwd}, with two changes: it asks no question and applies no fix. ` +
+        `It applies every decision it can reach from reading, and returns (a) one line per decision, (b) the items it could not settle, (c) the fixes it would apply (file, size of the change). ` +
+        `Tell the owner in one line that the memory inbox is being processed, then end your turn. When the subagent reports: print (a) in a few lines; ` +
+        `if (b) or (c) is not empty, ask ONE AskUserQuestion (multiSelect) covering them and apply the answer as memorise.md says; then delete ${path.join(dir, 'pending.json')}.` }));
+      process.exit(0);
+    }
 
     // 1. queue this turn (SessionEnd = flush: the worker processes the session's delta now,
     //    whatever its size, and the batch gap does not apply)

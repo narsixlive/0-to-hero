@@ -67,14 +67,14 @@ If more detail is needed → `mem-search "…"` → then `get_observations` on t
 
 | I say | Destination | Content |
 |---|---|---|
-| `/memorise` (optional) | `DECISIONS.md` (Facts, Ledger) + root `LEARNINGS.md` (rules, with `--rules`) | Short grouped review of what the scribe queued: disputed Facts, new facts, fixes; three questions at most, skippable |
+| `/memorise` (automatic, or by hand) | `DECISIONS.md` (Facts, Ledger) + root `LEARNINGS.md` (rules) | Empties the scribe's queue: decides each fact, fix and rule candidate from reading the code, asks only about what it cannot settle; every declined line is archived with its outcome |
 | (scribe, automatic) | `JOURNAL.md` | Session history: did / next / dated events, one block per session, injected at SessionStart |
 | `/gotcha` | Gotchas section below | One-line cross-workspace rule: `NEVER/ALWAYS [action] ([why])` |
 | `remember forever` | Claude native memory | Permanent preferences, conventions, identity only |
 
 Never put session context in native memory. Never put preferences in claude-mem.
 
-**Closing**: `/clear` whenever you want — the scribe keeps writing from the transcript (queue on disk, nothing lost). `/memorise` is optional: a short popup over what the scribe queued, run it when the statusline `✉` bothers you.
+**Closing**: `/clear` whenever you want — the scribe keeps writing from the transcript (queue on disk, nothing lost). The memory inbox drains itself: at 5 waiting items, or one older than 3 days, the session runs `/memorise` in a background agent at the end of a turn and asks only about what it could not settle. `/memorise` by hand does the same at any time.
 
 ## Learning mode
 <!-- learning-stack: durcir-v2 -->

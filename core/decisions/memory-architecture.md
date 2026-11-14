@@ -71,7 +71,7 @@ Every token of CLAUDE.md is loaded at every message, every session, every compac
 
 Workspace rules live in `<workspace>/LEARNINGS.md` (not `CONTEXT.md`) and harden through three levels rather than accumulating in one list:
 
-- **L1 — `LEARNINGS.md ## Active Learnings`**: workspace rules, `ALWAYS/NEVER [action] ([why]) (since date) [evidence]`, injected at SessionStart. Written only by the owner (`/memorise --rules`) or from the owner's own correction quoted in session. No counter since 2026-11-11: repetition is not authority (a counter bumped on tool ids, not on independent incidents, and drove graduation by feel).
+- **L1 — `LEARNINGS.md ## Active Learnings`**: workspace rules, `ALWAYS/NEVER [action] ([why]) (since date) [evidence]`, injected at SessionStart. Written by `/memorise` (a verdict from reading the code) or from the owner's own correction quoted in session. No counter since 2026-11-11: repetition is not authority (a counter bumped on tool ids, not on independent incidents, and drove graduation by feel).
 - **L3 — `CLAUDE.md ## Gotchas`**: cross-workspace or high-criticality rules, via `/gotcha` only, cap 12. The former L2 (`AGENT.md ## Rules` as a maturity step) is gone: same scope as L1, same injection, no criterion once the counter went; `AGENT.md ## Rules` stays a place the owner writes by hand.
 
 `## Candidates` (scribe, at most one per run, not injected) expire to `## Archived Learnings` after 30 days unreviewed; `## Archived Learnings` holds declined / expired / code-enforced rules (kept, not injected); `## Drift log` records rules ignored despite being capitalized (a rule that drifts repeatedly wants a fix at the seam or `/gotcha`, not a louder line).

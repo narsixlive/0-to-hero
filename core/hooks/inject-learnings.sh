@@ -102,7 +102,7 @@ if [[ -f "${cwd}/DECISIONS.md" ]]; then
     ' "${cwd}/DECISIONS.md")"
 fi
 
-# The memory inbox (Proposals + Candidates) is never mentioned here: the stack does not nag in session.
+# The memory inbox (Proposals + Candidates) is never mentioned here: draining it is the Stop hook's job (scribe-trigger.js --inbox).
 # The statusline ✉ and the VS Code sidebar show the count passively; /memorise is run when the owner wants.
 
 # Workspace layout drift check.
@@ -132,7 +132,8 @@ fi
 # BEFORE emission: the ledger (newest-first, least critical tail) is trimmed entry by entry
 # until the whole payload fits, and the trim is stated in the payload itself.
 MAX_CHARS=9000   # leaves room for the trim note under the 10,000 cap
-context=""
+# The moment a rule is cheapest to capture is the correction itself: the session has the whole context, the scribe only a trimmed transcript.
+context=$'# When the owner corrects you\n\nIf the owner corrects HOW you work (not a one-off fix of content), ask right then with AskUserQuestion whether to make it a rule. On yes, append `- ALWAYS/NEVER [action] ([why]) (owner YYYY-MM-DD: « their words »)` under `## Active Learnings` of that workspace LEARNINGS.md (the root LEARNINGS.md when the project has no workspace). Ask once per correction, never for a rule already listed below.\n\n'
 if [[ -n "${output}" ]]; then
     context+=$'# Workspace Learnings\n\nDurable rules scoped per workspace. Apply every ALWAYS/NEVER as a binding constraint when working in that workspace.\n'"${output}"$'\n'
 fi

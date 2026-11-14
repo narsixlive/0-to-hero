@@ -14,7 +14,7 @@ An open-source system based on a 3-layer architecture + a transversal learning l
 - **AGENT.md** — The specialist: role, skills, process, Pre-work checklist that binds the rules at task start
 - **LEARNINGS.md** *(learning layer)* — workspace rules that *harden* through 3 levels (Durcir): Active (auto-injected) → `AGENT.md` Rules → Gotchas
 
-A `SessionStart` hook auto-injects the Facts, the newest Ledger lines and each workspace's Active Learnings into every new session; a `Stop`/`SessionEnd` scribe keeps them current from the transcript while you work and queues what it may not write alone for `/memorise` (an optional VS Code sidebar, `tools/claude-hub/`, shows the backlog). Each workspace is isolated. Claude knows exactly who it is when it enters a room.
+A `SessionStart` hook auto-injects the Facts, the newest Ledger lines and each workspace's Active Learnings into every new session; a `Stop`/`SessionEnd` scribe keeps them current from the transcript while you work and queues what it may not write alone for `/memorise`, which the session runs by itself when the queue fills (an optional VS Code sidebar, `tools/claude-hub/`, shows the backlog). Each workspace is isolated. Claude knows exactly who it is when it enters a room.
 
 ---
 

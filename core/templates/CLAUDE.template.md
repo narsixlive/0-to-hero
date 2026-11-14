@@ -32,27 +32,27 @@ If more detail is needed → `mem-search "…"` → then `get_observations` on t
 
 | I say | Destination | Content |
 |---|---|---|
-| `/memorise` (optional) | `DECISIONS.md` (Facts, Ledger) + workspace `LEARNINGS.md` (rules, with `--rules`) | Short grouped review of what the scribe queued: disputed Facts, new facts, fixes; three questions at most, skippable |
+| `/memorise` (automatic, or by hand) | `DECISIONS.md` (Facts, Ledger) + workspace `LEARNINGS.md` (rules) | Empties the scribe's queue: decides each fact, fix and rule candidate from reading the code, asks only about what it cannot settle; every declined line is archived with its outcome |
 | `/gotcha` | Gotchas section below | One-line cross-workspace rule: `NEVER/ALWAYS [action] ([why])` |
 | (scribe, automatic) | `JOURNAL.md` + `<workspace>/CONTEXT.md ## Current state` | Session history: did / next / dated events, one block per session, injected at SessionStart |
 | `remember forever` | Claude native memory | Permanent preferences, conventions, identity only |
 
 Never put session context in native memory. Never put preferences in claude-mem. Never leave a fact of record only in claude-mem (it gets missed) — it goes to the `DECISIONS.md` ledger.
 
-**Closing**: `/clear` whenever you want — the scribe keeps writing from the transcript (queue on disk, nothing lost). `/memorise` is optional: a short popup over what the scribe queued, run it when the statusline `✉` bothers you.
+**Closing**: `/clear` whenever you want — the scribe keeps writing from the transcript (queue on disk, nothing lost). The memory inbox drains itself: at 5 waiting items, or one older than 3 days, the session runs `/memorise` in a background agent at the end of a turn and asks only about what it could not settle. `/memorise` by hand does the same at any time.
 
 ## Learning mode
 <!-- learning-stack: durcir-v2 -->
 
 This project has the learning layer enabled (Durcir stack v2 — a background scribe writes memory while the session runs, rules enter only through the owner).
-- **L1 — workspace rules** → `<workspace>/LEARNINGS.md` → `## Active Learnings` (written by the owner in `/memorise --rules`, or from the owner's own correction quoted in session; auto-injected, ~5 per workspace)
+- **L1 — workspace rules** → `<workspace>/LEARNINGS.md` → `## Active Learnings` (written by the owner in `/memorise`, or from the owner's own correction quoted in session; auto-injected, ~5 per workspace)
 - **L3 — cross-workspace doctrine** → Gotchas section below (fed by `/gotcha` only, cap 12)
 - **Durable project facts** → `DECISIONS.md` → `## Facts (current)` (states, injected whole, one value per key, written by `/memorise`; the scribe only marks a line `⚠ disputed → new`) and `## Ledger` (dated decisions, 5 newest injected, written by `/memorise`)
 - **History** → `JOURNAL.md` (one block per session written by the scribe: did, next, dated events) and `<workspace>/CONTEXT.md ## Current state` (one block per recent session)
 - Archived rules and the drift log live in `LEARNINGS.md` (`## Archived Learnings`, `## Drift log`) — kept, not injected; a candidate unreviewed 30 days and a proposal unreviewed 60 days archive themselves
 - Agents apply all rule layers at task start via the Pre-work checklist in their `AGENT.md`
 - Two `SessionStart` hooks (each under its own 10k cap): `inject-learnings.sh` → Active rules + Facts + 5 Ledger lines; `inject-journal.sh` → coverage line, the 3 newest journal blocks, each workspace's Current state
-- A `Stop` + `SessionEnd` **memory scribe** (global hook) reads the transcript while the session runs. It writes directly: `JOURNAL.md`, `CONTEXT.md ## Current state`, and an `## Active Learnings` rule only when it quotes the owner's own correction. Everything else (a new Facts key, a changed value, a `[fix]` hypothesis, at most one rule candidate per run) goes to `DECISIONS.md ## Proposals` and `LEARNINGS.md ## Candidates`, never injected, never nagged about: the statusline `✉ N` and the VS Code sidebar show the count, `/memorise` reviews it in three grouped questions
+- A `Stop` + `SessionEnd` **memory scribe** (global hook) reads the transcript while the session runs. It writes directly: `JOURNAL.md`, `CONTEXT.md ## Current state`, and an `## Active Learnings` rule only when it quotes the owner's own correction. Everything else (a new Facts key, a changed value, a `[fix]` hypothesis, at most one rule candidate per run) goes to `DECISIONS.md ## Proposals` and `LEARNINGS.md ## Candidates`, never injected until reviewed: the statusline `✉ N` and the VS Code sidebar show the count, and the queue drains itself — at 5 items (or one older than 3 days) the session runs `/memorise` in a background agent, which decides from reading the code and asks only about what it cannot settle
 
 ## Gotchas
 

@@ -8,7 +8,8 @@
 //   DECISIONS.md      ## Proposals            (new key, changed value, fix hypothesis — NOT injected, drained by /memorise)
 //   <ws>/LEARNINGS.md ## Candidates           (append; NOT injected; no counter: evidence ids accumulate) — or ## Active Learnings
 //                                              when the owner's own correction is quoted (owner_correction)
-//   expire(): candidates untouched 30 days → ## Archived Learnings (expired); proposals 60 days → ## Proposals archive.
+//   expire(): candidates untouched 30 days → ## Archived Learnings (expired); proposals 60 days → ## Proposals archive;
+//             a line already tagged (declined …)/(done …) and a leftover [log] proposal are moved to the archive too.
 // Never: AGENT.md, CLAUDE.md, ## Thread, ## Ledger, anything under _private/. Atomic: temp file + rename.
 //
 // Run `node scribe-writer.js --selftest` for the one runnable check.
@@ -150,6 +151,7 @@ function applyFactKV(root, f) {
   const old = (current.match(/^- \*\*[^*]+\*\*: (.*?)(?: \(since \d{4}-\d{2}-\d{2}\))?$/) || [, ''])[1].trim();
   if (old === value) return null;                               // strict: `1.5` and `15` are different values
   const queued = applyProposal(root, 'fact', f);                // proposal first (same file, re-read below)
+  if (queued === false) return null;                            // the owner already declined this very value: no new dispute
   const text2 = readText(file);
   const lines2 = (sectionBody(text2, 'Facts') || '').split('\n');
   const marked = `${current} ⚠ disputed → ${clip(value, 120)} (${f.date})`;
@@ -181,8 +183,12 @@ function applyProposal(root, kind, f) {
   if (!text) return 'proposal error: no ## Ledger in DECISIONS.md to anchor ## Proposals';
   const ev = clip(String(f.evidence).replace(/[\[\]\n]/g, ' ').trim(), 80);
   const why = f.why ? ` why: ${clip(String(f.why).replace(/\n/g, ' ').trim(), 160)}` : '';
+  const head = l => l.slice(0, l.indexOf(' [', 9) > 0 ? l.indexOf(' [', 9) : undefined).replace(/^- \[\w+\] /, '');
+  // Already settled by the owner in /memorise (same content, whatever the day it is seen again): never queued twice.
+  const undated = s => normFact(s.replace(/ \(\d{4}-\d{2}-\d{2}\)$/, ''));
+  if ((sectionBody(text, 'Proposals archive') || '').split('\n').some(l => l.startsWith(`- [${kind}] `) && /\((declined|done|accepted|parked) \d{4}-/.test(l) && undated(head(l)) === undated(content))) return false;
   const lines = sectionBody(text, 'Proposals').split('\n');
-  const idx = lines.findIndex(l => l.startsWith(`- [${kind}] `) && normFact(l.slice(0, l.indexOf(' [', 9) > 0 ? l.indexOf(' [', 9) : undefined).replace(/^- \[\w+\] /, '')) === normFact(content));
+  const idx = lines.findIndex(l => l.startsWith(`- [${kind}] `) && normFact(head(l)) === normFact(content));
   if (idx >= 0) {
     if (lines[idx].includes(ev)) return null;                              // same evidence restated
     lines[idx] = lines[idx].replace(/\]( why: |$)/, `, ${ev}]$1`);         // evidence accumulates in the bracket
@@ -197,7 +203,9 @@ function applyProposal(root, kind, f) {
 // a proposal older than PROPOSAL_DAYS → ## Proposals archive. Nothing is deleted, nothing injected changes.
 const CANDIDATE_DAYS = 30, PROPOSAL_DAYS = 60;
 const ARCHIVE_HEADER = '## Proposals archive\n<!-- Proposals the owner declined or that expired unreviewed (60 days). Kept, never injected. -->\n\n';
-const lineDate = l => (l.match(/\b\d{4}-\d{2}-\d{2}\b/g) || []).sort().pop() || null;   // newest date on the line
+// A line the owner already settled in /memorise but that was tagged in place instead of moved: the decision is on the line, so move it.
+const SETTLED = /\((declined|done) \d{4}-\d{2}-\d{2}[^)]*\)\s*$/;
+const lineDate = l =>(l.match(/\b\d{4}-\d{2}-\d{2}\b/g) || []).sort().pop() || null;   // newest date on the line
 function expire(root, wss = []) {
   const done = [];
   for (const ws of [...new Set([...wss, '.'])]) {
@@ -205,25 +213,37 @@ function expire(root, wss = []) {
     if (!fs.existsSync(file)) continue;
     let text = readText(file);
     const cand = sectionBody(text, 'Candidates'); if (cand === null) continue;
-    const stale = cand.split('\n').filter(l => l.startsWith('- ') && lineDate(l) && daysAgo(lineDate(l)) >= CANDIDATE_DAYS);
-    if (!stale.length) continue;
-    text = replaceSection(text, 'Candidates', cand.split('\n').filter(l => !stale.includes(l)).join('\n'));
+    const items = cand.split('\n').filter(l => l.startsWith('- '));
+    const settled = items.filter(l => SETTLED.test(l));
+    const stale = items.filter(l => !SETTLED.test(l) && lineDate(l) && daysAgo(lineDate(l)) >= CANDIDATE_DAYS);
+    if (!settled.length && !stale.length) continue;
+    text = replaceSection(text, 'Candidates', cand.split('\n').filter(l => !settled.includes(l) && !stale.includes(l)).join('\n'));
     if (sectionBody(text, 'Archived Learnings') === null) text = text.replace(/\s*$/, '') + '\n\n## Archived Learnings\n<!-- demoted / non-recurrent rules — kept, not injected -->\n';
+    for (const l of settled) text = appendTo(text, 'Archived Learnings', l);
     for (const l of stale) text = appendTo(text, 'Archived Learnings', `${l} (expired ${today()})`);
     atomicWrite(file, text);
-    done.push(`${ws} ${stale.length} candidate(s) expired`);
+    if (settled.length) done.push(`${ws} ${settled.length} settled candidate(s) archived`);
+    if (stale.length) done.push(`${ws} ${stale.length} candidate(s) expired`);
   }
   const dec = path.join(root, 'DECISIONS.md');
   if (fs.existsSync(dec)) {
     let text = readText(dec);
     const props = sectionBody(text, 'Proposals');
-    const stale = props === null ? [] : props.split('\n').filter(l => l.startsWith('- ') && lineDate(l) && daysAgo(lineDate(l)) >= PROPOSAL_DAYS);
-    if (stale.length) {
-      text = replaceSection(text, 'Proposals', props.split('\n').filter(l => !stale.includes(l)).join('\n'));
+    const items = props === null ? [] : props.split('\n').filter(l => l.startsWith('- '));
+    const settled = items.filter(l => SETTLED.test(l));
+    // [log] proposals are a pre-journal leftover: /memorise has no topic for them, so they would wait forever.
+    const retired = items.filter(l => !SETTLED.test(l) && l.startsWith('- [log] '));
+    const stale = items.filter(l => !SETTLED.test(l) && !retired.includes(l) && lineDate(l) && daysAgo(lineDate(l)) >= PROPOSAL_DAYS);
+    if (settled.length || retired.length || stale.length) {
+      text = replaceSection(text, 'Proposals', props.split('\n').filter(l => !settled.includes(l) && !retired.includes(l) && !stale.includes(l)).join('\n'));
       if (sectionBody(text, 'Proposals archive') === null) text = /^## ADR archive/m.test(text) ? text.replace(/^## ADR archive/m, ARCHIVE_HEADER + '## ADR archive') : text.replace(/\s*$/, '') + '\n\n' + ARCHIVE_HEADER;
+      for (const l of settled) text = appendTo(text, 'Proposals archive', l);
+      for (const l of retired) text = appendTo(text, 'Proposals archive', `${l} (retired ${today()}: events live in JOURNAL.md)`);
       for (const l of stale) text = appendTo(text, 'Proposals archive', `${l} (expired ${today()})`);
       atomicWrite(dec, text);
-      done.push(`${stale.length} proposal(s) expired`);
+      if (settled.length) done.push(`${settled.length} settled proposal(s) archived`);
+      if (retired.length) done.push(`${retired.length} [log] proposal(s) retired`);
+      if (stale.length) done.push(`${stale.length} proposal(s) expired`);
     }
   }
   return done;
@@ -244,7 +264,7 @@ function countPending(root, wss = []) {
 }
 
 // Same layout as core/templates/LEARNINGS.template.md: Active → Candidates → Archived → Drift log.
-const CANDIDATES_HEADER = '## Candidates\n<!-- scribe proposals, NOT injected — promoted to Active by the owner (/memorise --rules) or by the owner\'s correction in session; unreviewed 30 days → Archived (expired) -->\n';
+const CANDIDATES_HEADER = '## Candidates\n<!-- scribe proposals, NOT injected — promoted to Active by the owner (/memorise) or by the owner\'s correction in session; unreviewed 30 days → Archived (expired) -->\n';
 function ensureLearnings(file, ws) {
   if (fs.existsSync(file)) {
     let t = readText(file);
@@ -396,6 +416,20 @@ if (require.main === module && process.argv.includes('--selftest')) {
   assert(!/## Proposals\n[\s\S]*?\*\*Stale\*\*[\s\S]*?## Ledger/.test(dec3) && /## Proposals archive[\s\S]*\*\*Stale\*\*: s \([\d-]+\) \[toolu_s\] \(expired [\d-]+\)/.test(dec3) && sectionBody(dec3, 'Proposals').includes('**Domain**'), 'old proposal archived below the Ledger, fresh kept: ' + dec3);
   assert(dec3.indexOf('## Proposals archive') > dec3.indexOf('## Ledger') && dec3.indexOf('## Proposals archive') < dec3.indexOf('## ADR archive'), 'archive sits between Ledger and ADR archive');
   assert.deepStrictEqual(expire(root, ['web']), [], 'expire is idempotent');
+  // Settled in place by /memorise, or a leftover [log]: moved to the archive, the fresh line stays, the count drops.
+  fs.writeFileSync(path.join(root, 'DECISIONS.md'), replaceSection(dec3, 'Proposals', sectionBody(dec3, 'Proposals').replace(/\s*$/, '') + `\n- [fact] **Tagged**: t (${old(1)}) [toolu_t] (declined ${old(0)})\n- [log] ${old(1)} — leftover event [toolu_l]\n`));
+  fs.writeFileSync(path.join(root, 'web', 'LEARNINGS.md'), replaceSection(lrn3, 'Candidates', sectionBody(lrn3, 'Candidates').replace(/\s*$/, '') + `\n- NEVER do TAGGED (why) (${old(1)}) [toolu_c] (declined ${old(0)})\n`));
+  const before4 = countPending(root, ['web']);
+  const ex4 = expire(root, ['web']);
+  const dec4 = fs.readFileSync(path.join(root, 'DECISIONS.md'), 'utf8'), lrn4 = fs.readFileSync(path.join(root, 'web', 'LEARNINGS.md'), 'utf8');
+  assert(ex4.includes('1 settled proposal(s) archived') && ex4.includes('1 [log] proposal(s) retired') && ex4.includes('web 1 settled candidate(s) archived'), 'settled report: ' + ex4);
+  assert(!/Tagged|leftover/.test(sectionBody(dec4, 'Proposals')) && /\*\*Tagged\*\*: t .*\(declined [\d-]+\)\n/.test(sectionBody(dec4, 'Proposals archive')) && /leftover event \[toolu_l\] \(retired /.test(sectionBody(dec4, 'Proposals archive')) && sectionBody(dec4, 'Proposals').includes('**Domain**'), 'settled + [log] proposals moved, fresh kept: ' + dec4);
+  assert(!sectionBody(lrn4, 'Candidates').includes('TAGGED') && sectionBody(lrn4, 'Archived Learnings').includes('NEVER do TAGGED') && sectionBody(lrn4, 'Candidates').includes('ALWAYS do RECENT'), 'settled candidate moved, recent kept: ' + lrn4);
+  const after4 = countPending(root, ['web']);
+  assert(after4.proposals === before4.proposals - 2 && after4.candidates === before4.candidates - 1, 'inbox count drops by the moved lines');
+  // A fact the owner declined is not queued again when the scribe sees it another day; a different value still is.
+  assert(applyFactKV(root, { date: old(0), key: 'Tagged', value: 't', evidence: 'toolu_again' }) === false && !sectionBody(fs.readFileSync(path.join(root, 'DECISIONS.md'), 'utf8'), 'Proposals').includes('Tagged'), 'declined fact stays declined');
+  assert(applyFactKV(root, { date: old(0), key: 'Tagged', value: 'other', evidence: 'toolu_again' }) === '+1 proposal (fact)', 'a new value of a declined key is a new proposal');
   // Replay of the first proposal: nothing new written (evidence restated), files byte-identical.
   const before = fs.readFileSync(path.join(root, 'DECISIONS.md'), 'utf8');
   const rounds = apply(root, p, ['abcd1234-x', 'efgh5678-y']);
