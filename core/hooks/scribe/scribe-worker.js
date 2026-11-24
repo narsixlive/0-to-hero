@@ -284,6 +284,13 @@ ${delta}`;
 function claudeBin() {
   if (process.env.SCRIBE_CLAUDE_BIN) return process.env.SCRIBE_CLAUDE_BIN; // test seam
   if (process.platform !== 'win32') return 'claude';
+  // newest VS Code extension binary: its folder name changes on every extension update, so a pinned path goes stale
+  const extDir = path.join(os.homedir(), '.vscode', 'extensions');
+  const ver = (d) => (d.match(/claude-code-([\d.]+)/)[1]).split('.').map(Number);
+  const newest = (fs.existsSync(extDir) ? fs.readdirSync(extDir) : []).filter((d) => /^anthropic\.claude-code-[\d.]+-win32/.test(d))
+    .map((d) => path.join(extDir, d, 'resources', 'native-binary', 'claude.exe')).filter((p) => fs.existsSync(p))
+    .sort((a, b) => { const x = ver(a), y = ver(b); for (let i = 0; i < 3; i++) if (x[i] !== y[i]) return y[i] - x[i]; return 0; })[0];
+  if (newest) return newest;
   const exe = path.join(process.env.APPDATA || '', 'npm', 'node_modules', '@anthropic-ai', 'claude-code', 'bin', 'claude.exe');
   return fs.existsSync(exe) ? exe : 'claude.exe';
 }
